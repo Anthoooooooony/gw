@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/gw-cli/gw/filter"
+	filtergit "github.com/gw-cli/gw/filter/git"
 	"github.com/gw-cli/gw/internal"
 	"github.com/spf13/cobra"
 )
@@ -32,6 +33,8 @@ func runExec(cmd *cobra.Command, args []string) {
 
 	// 2. ROUTE: 从注册表查找匹配的过滤器
 	registry := filter.DefaultRegistry()
+	registry.Register(&filtergit.StatusFilter{})
+	registry.Register(&filtergit.LogFilter{})
 	matched := registry.Find(cmdName, cmdArgs)
 
 	// 3. EXECUTE: 本地执行命令
