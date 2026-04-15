@@ -8,9 +8,10 @@ import (
 var Verbose bool
 
 var rootCmd = &cobra.Command{
-	Use:   "gw",
-	Short: "gw - 命令输出过滤代理",
-	Long:  "gw 拦截 shell 命令，本地执行后过滤输出，减少 LLM token 消耗。",
+	Use:              "gw",
+	Short:            "gw - 命令输出过滤代理",
+	Long:             "gw 拦截 shell 命令，本地执行后过滤输出，减少 LLM token 消耗。",
+	TraverseChildren: true,
 }
 
 func init() {
