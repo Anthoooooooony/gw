@@ -6,6 +6,7 @@ import (
 
 	"github.com/gw-cli/gw/filter"
 	filtergit "github.com/gw-cli/gw/filter/git"
+	"github.com/gw-cli/gw/filter/java"
 	"github.com/gw-cli/gw/internal"
 	"github.com/spf13/cobra"
 )
@@ -35,6 +36,9 @@ func runExec(cmd *cobra.Command, args []string) {
 	registry := filter.DefaultRegistry()
 	registry.Register(&filtergit.StatusFilter{})
 	registry.Register(&filtergit.LogFilter{})
+	registry.Register(&java.MavenFilter{})
+	registry.Register(&java.GradleFilter{})
+	registry.Register(&java.SpringBootFilter{})
 	matched := registry.Find(cmdName, cmdArgs)
 
 	// 3. EXECUTE: 本地执行命令
