@@ -1,0 +1,36 @@
+> Task :compileJava
+> Task :processResources
+> Task :classes
+> Task :compileTestJava
+> Task :processTestResources NO-SOURCE
+> Task :testClasses
+> Task :test
+
+com.example.demo.UserServiceTest > testGetUser PASSED
+com.example.demo.UserServiceTest > testListUsers PASSED
+com.example.demo.AuthServiceTest > testLogin FAILED
+    org.opentest4j.AssertionFailedError: expected: <200> but was: <401>
+        at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:55)
+        at com.example.demo.AuthServiceTest.testLogin(AuthServiceTest.java:35)
+
+com.example.demo.AuthServiceTest > testLogout FAILED
+    java.lang.NullPointerException: Cannot invoke method on null reference
+        at com.example.demo.AuthServiceTest.testLogout(AuthServiceTest.java:52)
+
+4 tests completed, 2 failed
+
+> Task :test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+> There were failing tests. See the report at: file:///home/user/demo/build/reports/tests/test/index.html
+
+* Try:
+> Run with --stacktrace option to get the full stack trace of this exception.
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 8s
+7 actionable tasks: 7 executed
