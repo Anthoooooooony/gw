@@ -1,0 +1,14 @@
+[kubectl.get]
+match = "kubectl get"
+strip_ansi = true
+max_lines = 50
+
+[kubectl.describe]
+match = "kubectl describe"
+strip_ansi = true
+max_lines = 100
+
+[kubectl.logs]
+match = "kubectl logs"
+strip_ansi = true
+tail_lines = 100

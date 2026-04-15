@@ -1,0 +1,14 @@
+[docker.ps]
+match = "docker ps"
+strip_ansi = true
+max_lines = 50
+
+[docker.images]
+match = "docker images"
+strip_ansi = true
+max_lines = 30
+
+[docker.logs]
+match = "docker logs"
+strip_ansi = true
+tail_lines = 50
