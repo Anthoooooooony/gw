@@ -136,3 +136,99 @@ func TestMavenFilter_ApplyOnError(t *testing.T) {
 		t.Error("不应包含下载完成日志")
 	}
 }
+
+func TestMavenFilter_RealProject_Failure(t *testing.T) {
+	f := &MavenFilter{}
+	fixture := loadFixture(t, "mvn_compile_real_failure.txt")
+
+	result := f.ApplyOnError(filter.FilterInput{
+		Cmd:      "mvn",
+		Args:     []string{"compile"},
+		Stdout:   fixture,
+		ExitCode: 1,
+	})
+
+	if result == nil {
+		t.Fatal("ApplyOnError 不应返回 nil")
+	}
+
+	content := result.Content
+	fixtureLines := len(strings.Split(fixture, "\n"))
+	contentLines := len(strings.Split(content, "\n"))
+	compression := 1.0 - float64(contentLines)/float64(fixtureLines)
+
+	t.Logf("原始行数: %d, 过滤后行数: %d, 压缩率: %.1f%%", fixtureLines, contentLines, compression*100)
+	t.Logf("--- 过滤后内容 ---\n%s\n--- 结束 ---", content)
+
+	// 应包含 BUILD FAILURE
+	if !strings.Contains(content, "BUILD FAILURE") {
+		t.Error("应该保留 BUILD FAILURE")
+	}
+
+	// 应包含 Total time
+	if !strings.Contains(content, "Total time:") {
+		t.Error("应该保留 Total time")
+	}
+
+	// 应包含 Reactor 条目（SUCCESS 或 FAILURE）
+	if !strings.Contains(content, "SUCCESS") && !strings.Contains(content, "FAILURE") {
+		t.Error("应该保留 Reactor Summary 条目")
+	}
+
+	// 应包含至少一个 Unresolved reference 错误
+	if !strings.Contains(content, "Unresolved reference") {
+		t.Error("应该保留 Unresolved reference 错误")
+	}
+
+	// 不应包含 LATEST or RELEASE 警告
+	if strings.Contains(content, "LATEST or RELEASE") {
+		t.Error("不应包含 LATEST or RELEASE 警告")
+	}
+
+	// 不应包含 Kotlin 编译器 WARNING（file:/// 开头的）
+	if strings.Contains(content, "file:///") && strings.Contains(content, "WARNING") {
+		t.Error("不应包含 Kotlin 编译器 WARNING")
+	}
+
+	// 不应包含帮助建议
+	if strings.Contains(content, "To see the full stack trace") {
+		t.Error("不应包含帮助建议")
+	}
+	if strings.Contains(content, "[Help 1]") {
+		t.Error("不应包含 [Help 1]")
+	}
+
+	// 不应包含下载行
+	if strings.Contains(content, "Downloading from") || strings.Contains(content, "Downloaded from") {
+		t.Error("不应包含下载行")
+	}
+
+	// 压缩率应大于 90%
+	if compression < 0.90 {
+		t.Errorf("压缩率 %.1f%% 低于 90%%", compression*100)
+	}
+}
+
+func TestMavenFilter_RealProject_Apply(t *testing.T) {
+	f := &MavenFilter{}
+	fixture := loadFixture(t, "mvn_compile_real_failure.txt")
+
+	output := f.Apply(filter.FilterInput{
+		Cmd:      "mvn",
+		Args:     []string{"compile"},
+		Stdout:   fixture,
+		ExitCode: 0,
+	})
+
+	fixtureLines := len(strings.Split(fixture, "\n"))
+	contentLines := len(strings.Split(output.Content, "\n"))
+	compression := 1.0 - float64(contentLines)/float64(fixtureLines)
+
+	t.Logf("原始行数: %d, 过滤后行数: %d, 压缩率: %.1f%%", fixtureLines, contentLines, compression*100)
+	t.Logf("--- 过滤后内容（成功模式）---\n%s\n--- 结束 ---", output.Content)
+
+	// 压缩率应大于 90%
+	if compression < 0.90 {
+		t.Errorf("压缩率 %.1f%% 低于 90%%", compression*100)
+	}
+}
