@@ -17,6 +17,8 @@ type FilterOutput struct {
 
 // Filter 定义了命令输出过滤器的接口
 type Filter interface {
+	// Name 返回过滤器的描述性名称
+	Name() string
 	// Match 判断当前过滤器是否匹配该命令
 	Match(cmd string, args []string) bool
 	// Apply 在命令成功执行时(exit==0)应用过滤

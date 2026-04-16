@@ -9,6 +9,8 @@ import (
 // SpringBootFilter 过滤 Spring Boot 启动日志，压缩 banner 和内部引擎信息
 type SpringBootFilter struct{}
 
+func (f *SpringBootFilter) Name() string { return "java/springboot" }
+
 func (f *SpringBootFilter) Match(cmd string, args []string) bool {
 	if cmd != "java" {
 		return false

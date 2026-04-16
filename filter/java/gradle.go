@@ -10,6 +10,8 @@ import (
 // GradleFilter 过滤 Gradle 构建输出，压缩任务进度和守护进程启动信息
 type GradleFilter struct{}
 
+func (f *GradleFilter) Name() string { return "java/gradle" }
+
 func (f *GradleFilter) Match(cmd string, args []string) bool {
 	base := filepath.Base(cmd)
 	return base == "gradle" || base == "gradlew"

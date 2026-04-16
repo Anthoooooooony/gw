@@ -9,6 +9,8 @@ import (
 // MavenFilter 过滤 Maven 构建输出，使用状态机压缩噪音
 type MavenFilter struct{}
 
+func (f *MavenFilter) Name() string { return "java/maven" }
+
 // actionType 表示对一行的处理动作
 type actionType int
 
