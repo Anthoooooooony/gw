@@ -110,6 +110,46 @@ func TestSplitChainedCommands(t *testing.T) {
 	}
 }
 
+func TestAnalyzeCommand_EdgeCases(t *testing.T) {
+	tests := []struct {
+		cmd        string
+		canRewrite bool
+		segments   int
+	}{
+		// Nested quotes: single quote containing double quote
+		{`echo '"hello"'`, true, 1},
+		// Double quote containing single quote
+		{`echo "it's fine"`, true, 1},
+		// Empty command
+		{"", false, 0},
+		// Only whitespace
+		{"   ", false, 0},
+		// Escaped quote
+		{`echo \"hello\"`, true, 1},
+		// && inside quotes (should NOT split)
+		{`echo "a && b"`, true, 1},
+		// Multiple chains
+		{"cmd1 && cmd2 || cmd3 ; cmd4", true, 4},
+		// Pipe inside single quotes
+		{`grep 'foo|bar' file.txt`, true, 1},
+		// $( inside single quotes (single quotes don't expand)
+		{`echo '$(date)'`, true, 1},
+		// Real-world: git log with format
+		{`git log --pretty=format:"%H|%an|%s" -10`, true, 1},
+		// Real-world: mvn with -D property containing special chars
+		{`mvn test -Dtest="MyTest#method"`, true, 1},
+	}
+	for _, tt := range tests {
+		canRewrite, segments := AnalyzeCommand(tt.cmd)
+		if canRewrite != tt.canRewrite {
+			t.Errorf("AnalyzeCommand(%q) canRewrite = %v, want %v", tt.cmd, canRewrite, tt.canRewrite)
+		}
+		if canRewrite && len(segments) != tt.segments {
+			t.Errorf("AnalyzeCommand(%q) segments = %d, want %d", tt.cmd, len(segments), tt.segments)
+		}
+	}
+}
+
 func TestAnalyzeCommand(t *testing.T) {
 	tests := []struct {
 		name         string
