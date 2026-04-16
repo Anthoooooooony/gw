@@ -75,8 +75,8 @@ func isSpringBootBannerLine(trimmed string) bool {
 
 // isSpringBootNoise 判断是否为 Spring Boot 启动噪音行
 func isSpringBootNoise(line string) bool {
-	// Hibernate HHH000 日志
-	if strings.Contains(line, "HHH0") || strings.Contains(line, "HHH9") {
+	// Hibernate 日志（通过 logger name 匹配，而非内容匹配，避免误伤业务日志）
+	if strings.Contains(line, "org.hibernate") || strings.Contains(line, "o.hibernate") || strings.Contains(line, "o.h.") {
 		return true
 	}
 	// Tomcat 引擎内部信息
