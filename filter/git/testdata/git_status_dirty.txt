@@ -1,19 +1,15 @@
-On branch feature/add-filters
-Your branch is ahead of 'origin/feature/add-filters' by 2 commits.
-  (use "git push" to publish your local commits)
-
+On branch feature/user-auth
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
-	new file:   filter/git/status.go
-	modified:   filter/registry.go
+	new file:   src/api/routes.go
+	new file:   src/auth/handler.go
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
   (use "git restore <file>..." to discard changes in working directory)
-	modified:   cmd/exec.go
-	modified:   internal/runner.go
+	modified:   README.md
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-	filter/git/log.go
-	testdata/
+	src/auth/middleware.go
+

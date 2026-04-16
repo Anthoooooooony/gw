@@ -1,29 +1,47 @@
-Starting a Gradle Daemon (subsequent builds will be faster)
-
-> Configure project :app
-w: file:///home/user/app/build.gradle.kts:15:5 'compile' is deprecated. Use 'implementation' instead.
-
-> Task :lib:compileKotlin UP-TO-DATE
-> Task :lib:compileJava NO-SOURCE
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :lib:compileJava
 > Task :lib:processResources NO-SOURCE
-> Task :lib:classes UP-TO-DATE
-> Task :app:compileKotlin
-w: file:///home/user/app/src/main/kotlin/App.kt:10:14 Parameter 'unused' is never used
-w: file:///home/user/app/src/main/kotlin/App.kt:25:32 The corresponding parameter in the supertype is named 'other'
-> Task :app:compileJava NO-SOURCE
-> Task :app:processResources UP-TO-DATE
-> Task :app:classes UP-TO-DATE
-> Task :app:compileTestKotlin UP-TO-DATE
-> Task :app:compileTestJava NO-SOURCE
+> Task :lib:classes
+> Task :lib:jar
+> Task :app:compileJava
+> Task :app:processResources NO-SOURCE
+> Task :app:classes
+> Task :app:jar
+> Task :app:assemble
+> Task :app:compileTestJava
 > Task :app:processTestResources NO-SOURCE
-> Task :app:testClasses UP-TO-DATE
+> Task :app:testClasses
+
 > Task :app:test
 
-com.example.UserServiceTest > testLogin PASSED
-com.example.UserServiceTest > testRegister PASSED
-com.example.OrderServiceTest > testCreate PASSED
+MainTest > singleChar() PASSED
 
+MainTest > integration() PASSED
+
+> Task :app:check
 > Task :app:build
+> Task :lib:assemble
+> Task :lib:compileTestJava
+> Task :lib:processTestResources NO-SOURCE
+> Task :lib:testClasses
 
-BUILD SUCCESSFUL in 12s
-7 actionable tasks: 2 executed, 5 up-to-date
+> Task :lib:test
+
+StringUtilsTest > reverseEmpty() PASSED
+
+StringUtilsTest > reverse() PASSED
+
+> Task :lib:check
+> Task :lib:build
+
+[Incubating] Problems report is available at: file:///app/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 7s
+8 actionable tasks: 8 executed
