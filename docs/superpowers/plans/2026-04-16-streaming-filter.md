@@ -4,9 +4,19 @@
 
 **Goal:** 为 gw 增加流式过滤能力，支持逐行读取 + 实时过滤 + 即时输出，解锁长驻进程（Spring Boot、dev server）的输出压缩。同时保持批量模式作为默认路径不受影响。
 
-**Architecture:** 新增 `StreamFilter` 接口和 `RunCommandStreaming()` 执行器。流式过滤不依赖 exit code，使用统一的"流式策略"（噪音始终丢弃，错误始终保留，普通插件输出用小缓冲区延迟决策）。批量模式和流式模式通过 Filter 接口的类型断言自动选择。Maven 状态机无需改动，天然支持逐行处理。
+**Architecture:** 新增 `StreamFilter` 接口和 `RunCommandStreaming()` 执行器。StreamFilter 设计为**有状态实例**——每次执行创建新实例，状态作为 struct 字段持有，接口不传递 state 参数。流式过滤不依赖 exit code，使用统一策略（噪音始终丢弃，错误始终保留）。Action 只有 Drop/Emit 两种，缓冲由实现内部封装。信号中断场景保证 Flush 被调用。
 
 **Tech Stack:** Go, bufio.Scanner, exec.StdoutPipe/StderrPipe, 无新依赖
+
+**Plan Review 修正记录（8 项 → 全部 fix）：**
+1. ~~StreamBuffer action~~ → 删除，只保留 Drop/Emit
+2. ~~Flush 返回 string~~ → 改为 `[]string`
+3. ~~SIGINT 时 Flush 不调用~~ → signal kill 返回 exit code 而非 error
+4. ~~state interface{} 类型断言~~ → 有状态 struct，ProcessLine 不传 state
+5. ~~流式 token 估算 lines*20~~ → 累计字符数用 EstimateTokens
+6. ~~tracking goroutine 被 os.Exit 杀~~ → 加 channel 等待
+7. ~~集成测试没覆盖流式路径~~ → 用假 mvn 脚本
+8. ~~scanner.Err() 未检查~~ → 循环后检查
 
 ---
 
@@ -182,6 +192,12 @@ func RunCommandStreamingFull(name string, args []string, onLine func(string), st
 		onLine(scanner.Text())
 	}
 
+	// 检查 scanner 错误（如超长行）
+	if scanErr := scanner.Err(); scanErr != nil {
+		// 记录但不阻断——输出可能不完整，但进程仍需正常结束
+		fmt.Fprintf(os.Stderr, "[gw] scanner error: %v\n", scanErr)
+	}
+
 	// 等待进程退出
 	err = cmd.Wait()
 	if err != nil {
@@ -189,7 +205,8 @@ func RunCommandStreamingFull(name string, args []string, onLine func(string), st
 		if errors.As(err, &exitErr) {
 			return exitErr.ExitCode(), nil
 		}
-		return 0, err
+		// 信号中断也视为正常退出（返回 -1），确保 Flush 能被调用
+		return -1, nil
 	}
 
 	return 0, nil
@@ -230,24 +247,35 @@ git commit -m "实现流式执行器 RunCommandStreaming：逐行回调 stdout"
 type StreamAction int
 
 const (
-	StreamDrop   StreamAction = iota // 丢弃此行
-	StreamEmit                       // 立即输出此行
-	StreamBuffer                     // 缓冲此行，待后续决策
+	StreamDrop StreamAction = iota // 丢弃此行
+	StreamEmit                     // 立即输出此行
 )
 
 // StreamFilter 是支持流式（逐行）过滤的接口。
 // 实现此接口的过滤器可以处理长驻进程的输出。
+//
+// 设计：StreamFilter 是有状态的实例。每次命令执行时，调用方通过
+// NewStreamInstance() 创建新实例，状态由实例自身持有。
+// 这避免了 interface{} state 传递的类型安全问题。
+//
 // StreamFilter 同时也必须实现 Filter 接口（用于批量模式）。
 type StreamFilter interface {
 	Filter
 
-	// ProcessLine 处理一行输出，返回决策和处理后的行内容。
-	// state 由调用方维护，首次调用传入 nil，后续传入上次返回的 state。
-	ProcessLine(line string, state interface{}) (action StreamAction, output string, newState interface{})
+	// NewStreamInstance 创建一个新的流式过滤实例（带独立状态）。
+	// 每次命令执行调用一次。
+	NewStreamInstance() StreamProcessor
+}
 
-	// Flush 在进程退出后调用，返回缓冲区中需要输出的内容。
+// StreamProcessor 是单次命令执行的流式处理器。
+// 由 StreamFilter.NewStreamInstance() 创建，持有本次执行的状态。
+type StreamProcessor interface {
+	// ProcessLine 处理一行输出，返回决策和处理后的行内容。
+	ProcessLine(line string) (action StreamAction, output string)
+
+	// Flush 在进程退出后调用，返回缓冲区中需要输出的剩余行。
 	// exitCode 是进程的退出码。
-	Flush(state interface{}, exitCode int) string
+	Flush(exitCode int) []string
 }
 ```
 
@@ -324,6 +352,7 @@ func TestMavenStreamFilter_Interface(t *testing.T) {
 
 func TestMavenStreamFilter_NoiseLinesDropped(t *testing.T) {
 	f := &MavenFilter{}
+	proc := f.NewStreamInstance()
 	noiseLines := []string{
 		"[INFO] Scanning for projects...",
 		"[INFO] ------------------------------------------------------------------------",
@@ -333,10 +362,8 @@ func TestMavenStreamFilter_NoiseLinesDropped(t *testing.T) {
 		"[WARNING] 'dependencies.dependency.version' for ISFJ is LATEST or RELEASE",
 	}
 
-	var state interface{}
 	for _, line := range noiseLines {
-		action, _, newState := f.ProcessLine(line, state)
-		state = newState
+		action, _ := proc.ProcessLine(line)
 		if action != filter.StreamDrop {
 			t.Errorf("expected StreamDrop for noise line %q, got %v", line, action)
 		}
@@ -345,6 +372,7 @@ func TestMavenStreamFilter_NoiseLinesDropped(t *testing.T) {
 
 func TestMavenStreamFilter_KeyLinesEmitted(t *testing.T) {
 	f := &MavenFilter{}
+	proc := f.NewStreamInstance()
 	lines := []string{
 		"[INFO] Scanning for projects...",
 		"[INFO] Building myapp 1.0.0",
@@ -355,11 +383,9 @@ func TestMavenStreamFilter_KeyLinesEmitted(t *testing.T) {
 		"[INFO] Total time:  1.234 s",
 	}
 
-	var state interface{}
 	var emitted []string
 	for _, line := range lines {
-		action, output, newState := f.ProcessLine(line, state)
-		state = newState
+		action, output := proc.ProcessLine(line)
 		if action == filter.StreamEmit {
 			emitted = append(emitted, output)
 		}
@@ -380,6 +406,7 @@ func TestMavenStreamFilter_KeyLinesEmitted(t *testing.T) {
 
 func TestMavenStreamFilter_ErrorsEmitted(t *testing.T) {
 	f := &MavenFilter{}
+	proc := f.NewStreamInstance()
 	lines := []string{
 		"[INFO] Scanning for projects...",
 		"[INFO] Building myapp 1.0.0",
@@ -391,11 +418,9 @@ func TestMavenStreamFilter_ErrorsEmitted(t *testing.T) {
 		"[INFO] Total time:  2.0 s",
 	}
 
-	var state interface{}
 	var emitted []string
 	for _, line := range lines {
-		action, output, newState := f.ProcessLine(line, state)
-		state = newState
+		action, output := proc.ProcessLine(line)
 		if action == filter.StreamEmit {
 			emitted = append(emitted, output)
 		}
@@ -420,24 +445,21 @@ func TestMavenStreamFilter_ErrorsEmitted(t *testing.T) {
 
 func TestMavenStreamFilter_RealProject(t *testing.T) {
 	f := &MavenFilter{}
+	proc := f.NewStreamInstance()
 	fixture := loadFixture(t, "mvn_compile_real_failure.txt")
 	lines := strings.Split(fixture, "\n")
 
-	var state interface{}
 	var emitted []string
 	for _, line := range lines {
-		action, output, newState := f.ProcessLine(line, state)
-		state = newState
+		action, output := proc.ProcessLine(line)
 		if action == filter.StreamEmit {
 			emitted = append(emitted, output)
 		}
 	}
 
 	// Flush（进程退出 exit 1）
-	flushed := f.Flush(state, 1)
-	if flushed != "" {
-		emitted = append(emitted, flushed)
-	}
+	flushed := proc.Flush(1)
+	emitted = append(emitted, flushed...)
 
 	totalEmitted := len(emitted)
 	totalOriginal := len(lines)
@@ -471,148 +493,134 @@ Expected: FAIL — MavenFilter 未实现 StreamFilter
 ```go
 // --- StreamFilter 实现 ---
 
-// mavenStreamState 流式过滤的累积状态
-type mavenStreamState struct {
+// NewStreamInstance 创建流式处理器实例
+func (f *MavenFilter) NewStreamInstance() filter.StreamProcessor {
+	return &mavenStreamProcessor{
+		state:      StateInit,
+		seenErrors: make(map[string]bool),
+	}
+}
+
+// mavenStreamProcessor 是 MavenFilter 的流式处理器，持有单次执行的状态
+type mavenStreamProcessor struct {
 	state      MavenState
 	seenErrors map[string]bool
 	buffer     []string // 插件输出缓冲区
 }
 
-func (f *MavenFilter) ProcessLine(line string, rawState interface{}) (filter.StreamAction, string, interface{}) {
-	// 初始化或恢复状态
-	var s *mavenStreamState
-	if rawState == nil {
-		s = &mavenStreamState{
-			state:      StateInit,
-			seenErrors: make(map[string]bool),
-		}
-	} else {
-		s = rawState.(*mavenStreamState)
-	}
-
+func (p *mavenStreamProcessor) ProcessLine(line string) (filter.StreamAction, string) {
 	lc := classifyLine(line)
-	s.state = nextState(s.state, lc)
+	p.state = nextState(p.state, lc)
 
 	// 全局丢弃：无论在哪个状态都是噪音
 	switch lc {
 	case LineDiscovery, LineSeparator, LineEmpty, LineFinishedAt,
 		LineTransfer, LinePomWarning, LineCompilerWarning,
 		LineProcessNoise, LineHelpSuggestion:
-		return filter.StreamDrop, "", s
+		return filter.StreamDrop, ""
 	}
 
 	// 按状态决策
-	switch s.state {
+	switch p.state {
 	case StateInit, StateDiscovery, StateWarning:
-		return filter.StreamDrop, "", s
+		return filter.StreamDrop, ""
 
 	case StateModuleBuild:
-		// Building xxx — Reactor Summary 已有此信息
-		return filter.StreamDrop, "", s
+		return filter.StreamDrop, ""
 
 	case StateMojo:
-		// --- plugin:ver:goal --- 噪音
-		// 同时清空缓冲区（上一个 mojo 的输出不需要了）
-		s.buffer = nil
-		return filter.StreamDrop, "", s
+		p.buffer = nil
+		return filter.StreamDrop, ""
 
 	case StatePluginOutput:
 		if lc == LineError {
-			// 错误始终输出（带去重）
 			stripped := stripPrefix(line)
 			dedupeKey := extractErrorKey(stripped)
 			if dedupeKey != "" {
-				if s.seenErrors[dedupeKey] {
-					return filter.StreamDrop, "", s
+				if p.seenErrors[dedupeKey] {
+					return filter.StreamDrop, ""
 				}
-				s.seenErrors[dedupeKey] = true
+				p.seenErrors[dedupeKey] = true
 			}
-			// flush 缓冲区（错误前的上下文可能有用）
-			// 但流式模式不回溯，直接输出错误
-			s.buffer = nil
-			return filter.StreamEmit, stripped, s
+			p.buffer = nil
+			return filter.StreamEmit, stripped
 		}
 		if lc == LineStackTrace {
-			return filter.StreamEmit, strings.TrimSpace(line), s
+			return filter.StreamEmit, strings.TrimSpace(line)
 		}
-		// 普通插件输出：缓冲（限制大小）
-		if len(s.buffer) < 10 {
-			s.buffer = append(s.buffer, line)
+		if len(p.buffer) < 10 {
+			p.buffer = append(p.buffer, line)
 		}
-		return filter.StreamDrop, "", s
+		return filter.StreamDrop, ""
 
 	case StateTestOutput:
 		switch lc {
 		case LineTestHeader:
-			return filter.StreamDrop, "", s
+			return filter.StreamDrop, ""
 		case LineTestSummary:
-			return filter.StreamEmit, stripPrefix(line), s
+			return filter.StreamEmit, stripPrefix(line)
 		case LineTestRunning:
-			return filter.StreamDrop, "", s
+			return filter.StreamDrop, ""
 		case LineError:
 			stripped := stripPrefix(line)
 			dedupeKey := extractErrorKey(stripped)
-			if dedupeKey != "" && s.seenErrors[dedupeKey] {
-				return filter.StreamDrop, "", s
+			if dedupeKey != "" && p.seenErrors[dedupeKey] {
+				return filter.StreamDrop, ""
 			}
 			if dedupeKey != "" {
-				s.seenErrors[dedupeKey] = true
+				p.seenErrors[dedupeKey] = true
 			}
-			return filter.StreamEmit, stripped, s
+			return filter.StreamEmit, stripped
 		case LineStackTrace:
-			return filter.StreamEmit, strings.TrimSpace(line), s
+			return filter.StreamEmit, strings.TrimSpace(line)
 		}
-		return filter.StreamDrop, "", s
+		return filter.StreamDrop, ""
 
 	case StateReactor:
 		if lc == LineReactorEntry {
-			return filter.StreamEmit, stripPrefix(line), s
+			return filter.StreamEmit, stripPrefix(line)
 		}
-		return filter.StreamDrop, "", s
+		return filter.StreamDrop, ""
 
 	case StateResult:
 		if lc == LineBuildResult {
-			return filter.StreamEmit, stripPrefix(line), s
+			return filter.StreamEmit, stripPrefix(line)
 		}
-		return filter.StreamDrop, "", s
+		return filter.StreamDrop, ""
 
 	case StateStats:
 		if lc == LineStats {
-			return filter.StreamEmit, stripPrefix(line), s
+			return filter.StreamEmit, stripPrefix(line)
 		}
-		return filter.StreamDrop, "", s
+		return filter.StreamDrop, ""
 
 	case StateErrorReport:
 		if lc == LineError {
 			stripped := stripPrefix(line)
 			dedupeKey := extractErrorKey(stripped)
-			if dedupeKey != "" && s.seenErrors[dedupeKey] {
-				return filter.StreamDrop, "", s
+			if dedupeKey != "" && p.seenErrors[dedupeKey] {
+				return filter.StreamDrop, ""
 			}
 			if dedupeKey != "" {
-				s.seenErrors[dedupeKey] = true
+				p.seenErrors[dedupeKey] = true
 			}
-			return filter.StreamEmit, stripped, s
+			return filter.StreamEmit, stripped
 		}
 		if lc == LineStackTrace {
-			return filter.StreamEmit, strings.TrimSpace(line), s
+			return filter.StreamEmit, strings.TrimSpace(line)
 		}
-		return filter.StreamDrop, "", s
+		return filter.StreamDrop, ""
 	}
 
-	return filter.StreamDrop, "", s
+	return filter.StreamDrop, ""
 }
 
-func (f *MavenFilter) Flush(rawState interface{}, exitCode int) string {
-	if rawState == nil {
-		return ""
-	}
+func (p *mavenStreamProcessor) Flush(exitCode int) []string {
 	// 进程退出后，如果有缓冲的插件输出且退出码非零，输出它们
-	s := rawState.(*mavenStreamState)
-	if exitCode != 0 && len(s.buffer) > 0 {
-		return strings.Join(s.buffer, "\n")
+	if exitCode != 0 && len(p.buffer) > 0 {
+		return p.buffer
 	}
-	return ""
+	return nil
 }
 ```
 
@@ -672,24 +680,18 @@ if streamFilter != nil {
 ```go
 func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 	start := time.Now()
-	var state interface{}
-	var originalLines int
-	var filteredLines int
+	proc := sf.NewStreamInstance()
+	var originalChars int
+	var filteredChars int
 
 	// 流式执行 + 逐行过滤
 	var stderrBuf strings.Builder
 	exitCode, err := internal.RunCommandStreamingFull(cmdName, cmdArgs, func(line string) {
-		originalLines++
-		action, output, newState := sf.ProcessLine(line, state)
-		state = newState
-		switch action {
-		case filter.StreamEmit:
-			filteredLines++
+		originalChars += len(line)
+		action, output := proc.ProcessLine(line)
+		if action == filter.StreamEmit {
+			filteredChars += len(output)
 			fmt.Println(output)
-		case filter.StreamDrop:
-			// 静默丢弃
-		case filter.StreamBuffer:
-			// 由 ProcessLine 内部管理缓冲
 		}
 	}, &stderrBuf)
 
@@ -704,21 +706,25 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 	}
 
 	// Flush 缓冲区
-	flushed := sf.Flush(state, exitCode)
-	if flushed != "" {
-		fmt.Print(flushed)
+	flushedLines := proc.Flush(exitCode)
+	for _, line := range flushedLines {
+		filteredChars += len(line)
+		fmt.Println(line)
 	}
 
-	// TRACK
+	// TRACK（带 channel 等待，避免 os.Exit 杀 goroutine）
 	elapsed := time.Since(start)
+	inputTokens := track.EstimateTokens(strings.Repeat("x", originalChars))
+	outputTokens := track.EstimateTokens(strings.Repeat("x", filteredChars))
+
 	if Verbose {
-		saved := originalLines - filteredLines
-		fmt.Fprintf(os.Stderr, "[gw:stream] %d → %d lines (saved %d, elapsed %dms)\n",
-			originalLines, filteredLines, saved, elapsed.Milliseconds())
+		fmt.Fprintf(os.Stderr, "[gw:stream] %d → %d tokens (saved %d, elapsed %dms)\n",
+			inputTokens, outputTokens, inputTokens-outputTokens, elapsed.Milliseconds())
 	}
 
-	// 异步写 tracking DB
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		db, err := track.NewDB(track.DefaultDBPath())
 		if err != nil {
 			return
@@ -728,13 +734,14 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 			Timestamp:    time.Now(),
 			Command:      cmdName + " " + strings.Join(cmdArgs, " "),
 			ExitCode:     exitCode,
-			InputTokens:  originalLines * 20, // 粗略估算
-			OutputTokens: filteredLines * 20,
-			SavedTokens:  (originalLines - filteredLines) * 20,
+			InputTokens:  inputTokens,
+			OutputTokens: outputTokens,
+			SavedTokens:  inputTokens - outputTokens,
 			ElapsedMs:    elapsed.Milliseconds(),
 			FilterUsed:   sf.Name() + ":stream",
 		})
 	}()
+	<-done
 
 	os.Exit(exitCode)
 }
