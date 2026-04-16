@@ -6,9 +6,13 @@ import (
 	"github.com/gw-cli/gw/filter"
 )
 
-func init() {
-	filter.Register(&SpringBootFilter{})
-}
+// 注意：SpringBootFilter 未注册到全局注册表。
+// java -jar 启动的 Spring Boot 应用是长驻进程，gw 的批量过滤模型（等待进程退出后过滤）
+// 不适合长驻进程。这些过滤规则保留供未来流式过滤模式复用。
+//
+// func init() {
+// 	filter.Register(&SpringBootFilter{})
+// }
 
 // SpringBootFilter 过滤 Spring Boot 启动日志，压缩 banner 和内部引擎信息
 type SpringBootFilter struct{}

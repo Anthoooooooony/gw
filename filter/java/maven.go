@@ -24,8 +24,29 @@ const (
 	ActionKeepError                   // 保留 + 去重
 )
 
+// longRunningGoals 是可能导致长驻进程的 Maven goal
+var longRunningGoals = []string{
+	"spring-boot:run",
+	"jetty:run",
+	"tomcat7:run",
+	"liberty:run",
+	"quarkus:dev",
+	"exec:java",
+}
+
 func (f *MavenFilter) Match(cmd string, args []string) bool {
-	return cmd == "mvn"
+	if cmd != "mvn" {
+		return false
+	}
+	// 排除长驻进程的 goal
+	for _, arg := range args {
+		for _, goal := range longRunningGoals {
+			if arg == goal {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (f *MavenFilter) Apply(input filter.FilterInput) filter.FilterOutput {
