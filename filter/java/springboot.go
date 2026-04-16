@@ -75,6 +75,56 @@ func (f *SpringBootFilter) Apply(input filter.FilterInput) filter.FilterOutput {
 			continue
 		}
 
+		// 去除 HikariCP 连接池
+		if strings.Contains(line, "HikariPool") || strings.Contains(line, "HikariDataSource") {
+			continue
+		}
+
+		// 去除 Actuator endpoints
+		if strings.Contains(line, "Exposing") && strings.Contains(line, "endpoint") {
+			continue
+		}
+
+		// 去除 Security filter chain
+		if strings.Contains(line, "DefaultSecurityFilterChain") || strings.Contains(line, "Will not secure any request") {
+			continue
+		}
+
+		// 去除 JMX registration
+		if strings.Contains(line, "Registering beans for JMX") || strings.Contains(line, "JMX registrations") {
+			continue
+		}
+
+		// 去除 Liquibase/Flyway
+		if strings.Contains(line, "liquibase") || strings.Contains(line, "flywaydb") || strings.Contains(line, "Applied migration") {
+			continue
+		}
+
+		// 去除 WebApplicationContext initialization
+		if strings.Contains(line, "Root WebApplicationContext") {
+			continue
+		}
+
+		// 去除 Servlet engine startup
+		if strings.Contains(line, "Starting Servlet engine") || strings.Contains(line, "Initializing Spring embedded") {
+			continue
+		}
+
+		// 去除 JPA EntityManagerFactory
+		if strings.Contains(line, "EntityManagerFactory") || strings.Contains(line, "PersistenceUnitInfo") {
+			continue
+		}
+
+		// 去除 JTA platform
+		if strings.Contains(line, "JtaPlatformInitiator") {
+			continue
+		}
+
+		// 去除 Bean definition overriding
+		if strings.Contains(line, "Overriding bean definition") {
+			continue
+		}
+
 		filtered = append(filtered, line)
 	}
 

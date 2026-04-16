@@ -49,7 +49,7 @@ func TestSpringBootFilter_Apply(t *testing.T) {
 	}
 
 	// 应保留 Started 消息
-	if !strings.Contains(output.Content, "Started DemoApplication") {
+	if !strings.Contains(output.Content, "Started MyApplication") {
 		t.Error("应该保留 Started 消息")
 	}
 
@@ -84,6 +84,58 @@ func TestSpringBootFilter_Apply(t *testing.T) {
 	// 不应包含 profile fallback
 	if strings.Contains(output.Content, "falling back to") {
 		t.Error("不应包含 profile fallback 行")
+	}
+
+	// 不应包含 HikariPool
+	if strings.Contains(output.Content, "HikariPool") {
+		t.Error("不应包含 HikariPool 行")
+	}
+
+	// 不应包含 Actuator endpoints
+	if strings.Contains(output.Content, "Exposing") && strings.Contains(output.Content, "endpoint") {
+		t.Error("不应包含 Actuator endpoint 行")
+	}
+
+	// 不应包含 DefaultSecurityFilterChain
+	if strings.Contains(output.Content, "DefaultSecurityFilterChain") {
+		t.Error("不应包含 Security filter chain 行")
+	}
+
+	// 不应包含 Root WebApplicationContext
+	if strings.Contains(output.Content, "Root WebApplicationContext") {
+		t.Error("不应包含 Root WebApplicationContext 行")
+	}
+
+	// 不应包含 EntityManagerFactory
+	if strings.Contains(output.Content, "EntityManagerFactory") {
+		t.Error("不应包含 EntityManagerFactory 行")
+	}
+
+	// 不应包含 JtaPlatformInitiator
+	if strings.Contains(output.Content, "JtaPlatformInitiator") {
+		t.Error("不应包含 JtaPlatformInitiator 行")
+	}
+
+	// 不应包含 PersistenceUnitInfo
+	if strings.Contains(output.Content, "PersistenceUnitInfo") {
+		t.Error("不应包含 PersistenceUnitInfo 行")
+	}
+
+	// 不应包含 Starting Servlet engine / Initializing Spring embedded
+	if strings.Contains(output.Content, "Starting Servlet engine") {
+		t.Error("不应包含 Starting Servlet engine 行")
+	}
+	if strings.Contains(output.Content, "Initializing Spring embedded") {
+		t.Error("不应包含 Initializing Spring embedded 行")
+	}
+
+	// 压缩率 > 50%
+	origLen := len(fixture)
+	filtLen := len(output.Content)
+	ratio := float64(filtLen) / float64(origLen) * 100
+	t.Logf("Spring Boot 启动压缩比: %.1f%% (%d -> %d bytes)", ratio, origLen, filtLen)
+	if ratio > 50 {
+		t.Errorf("压缩率不够: %.1f%% (应小于50%%)", ratio)
 	}
 }
 
