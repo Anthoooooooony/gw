@@ -17,9 +17,30 @@ type GradleFilter struct{}
 
 func (f *GradleFilter) Name() string { return "java/gradle" }
 
+// longRunningGradleTasks 是可能导致长驻进程的 Gradle task
+var longRunningGradleTasks = []string{
+	"bootRun",
+	"run",
+	"appRun",
+	"jettyRun",
+	"tomcatRun",
+	"quarkusDev",
+}
+
 func (f *GradleFilter) Match(cmd string, args []string) bool {
 	base := filepath.Base(cmd)
-	return base == "gradle" || base == "gradlew"
+	if base != "gradle" && base != "gradlew" {
+		return false
+	}
+	// 排除长驻进程的 task
+	for _, arg := range args {
+		for _, task := range longRunningGradleTasks {
+			if arg == task {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // ansiRegexp 匹配 ANSI 转义序列
