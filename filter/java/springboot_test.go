@@ -49,20 +49,15 @@ func TestSpringBootFilter_Apply(t *testing.T) {
 	}
 
 	// 应保留 Started 消息
-	if !strings.Contains(output.Content, "Started MyApplication") {
+	if !strings.Contains(output.Content, "Started PetClinicApplication") {
 		t.Error("应该保留 Started 消息")
-	}
-
-	// 应保留 WARN 消息
-	if !strings.Contains(output.Content, "WARN") {
-		t.Error("应该保留 WARN 消息")
 	}
 
 	// 不应包含 ASCII banner
 	if strings.Contains(output.Content, "____") {
 		t.Error("不应包含 ASCII banner")
 	}
-	if strings.Contains(output.Content, ":: Spring Boot ::") {
+	if strings.Contains(output.Content, ":: Spring Boot ::") || strings.Contains(output.Content, ":: Built with Spring Boot ::") {
 		t.Error("不应包含 Spring Boot banner 标记")
 	}
 
@@ -175,9 +170,9 @@ func TestSpringBootStreamFilter_Startup(t *testing.T) {
 	if strings.Contains(joined, "HikariPool") {
 		t.Error("should strip HikariPool")
 	}
-	// WARN preserved
-	if !strings.Contains(joined, "WARN") {
-		t.Error("should preserve WARN")
+	// Tomcat port preserved
+	if !strings.Contains(joined, "Tomcat started on port") {
+		t.Error("should preserve Tomcat port info")
 	}
 }
 

@@ -63,12 +63,14 @@ func (f *SpringBootFilter) Apply(input filter.FilterInput) filter.FilterOutput {
 func isSpringBootBannerLine(trimmed string) bool {
 	return strings.Contains(trimmed, "____") ||
 		strings.Contains(trimmed, ":: Spring Boot ::") ||
+		strings.Contains(trimmed, ":: Built with Spring Boot ::") ||
 		strings.Contains(trimmed, "\\___|") ||
 		strings.Contains(trimmed, "/ ___'") ||
 		strings.Contains(trimmed, "\\___ |") ||
 		strings.Contains(trimmed, "___)| |") ||
 		strings.Contains(trimmed, "|____|") ||
-		strings.Contains(trimmed, "=========|")
+		strings.Contains(trimmed, "=========|") ||
+		strings.Contains(trimmed, "=====/") // Petclinic banner ending pattern
 }
 
 // isSpringBootNoise 判断是否为 Spring Boot 启动噪音行
@@ -145,12 +147,18 @@ func isBannerDecorationLine(trimmed string) bool {
 	if len(trimmed) == 0 {
 		return false
 	}
-	// banner 行通常以这些字符开头
+	// 标准 Spring Boot banner 行前缀
 	bannerPrefixes := []string{"/\\\\", "( (", "\\\\/", "'  |"}
 	for _, p := range bannerPrefixes {
 		if strings.HasPrefix(trimmed, p) {
 			return true
 		}
+	}
+	// Petclinic 风格的 ASCII art banner (cat art)
+	if strings.HasPrefix(trimmed, "|\\") || // cat ear
+		strings.HasPrefix(trimmed, "/,`") || // cat head
+		(strings.HasPrefix(trimmed, "|") && strings.Contains(trimmed, "|") && strings.Count(trimmed, "|") >= 4) { // table-like banner rows
+		return true
 	}
 	return false
 }

@@ -67,12 +67,12 @@ func TestStatusFilter_Dirty(t *testing.T) {
 	})
 
 	// 应保留分支名
-	if !strings.Contains(output.Content, "feature/add-filters") {
+	if !strings.Contains(output.Content, "feature/user-auth") {
 		t.Error("应该保留分支名")
 	}
 
 	// 应保留文件名
-	for _, file := range []string{"filter/git/status.go", "filter/registry.go", "cmd/exec.go", "filter/git/log.go"} {
+	for _, file := range []string{"src/api/routes.go", "src/auth/handler.go", "README.md", "src/auth/middleware.go"} {
 		if !strings.Contains(output.Content, file) {
 			t.Errorf("应该保留文件名 %s", file)
 		}

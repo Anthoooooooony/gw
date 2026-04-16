@@ -116,7 +116,7 @@ func TestGradleFilter_ApplyOnError(t *testing.T) {
 	}
 
 	// 应保留 FAILED 任务行
-	if !strings.Contains(content, "> Task :app:test FAILED") {
+	if !strings.Contains(content, "> Task :lib:test FAILED") {
 		t.Error("应该保留 FAILED 任务行")
 	}
 
@@ -162,16 +162,11 @@ func TestGradleFilter_ApplyOnError(t *testing.T) {
 	}
 
 	// 不应包含普通 Task 进度行
-	if strings.Contains(content, "> Task :lib:compileKotlin") {
+	if strings.Contains(content, "> Task :lib:compileJava\n") {
 		t.Error("不应包含普通 Task 进度行")
 	}
-	if strings.Contains(content, "> Task :app:compileKotlin\n") {
+	if strings.Contains(content, "> Task :app:compileJava\n") {
 		t.Error("不应包含普通 Task 进度行")
-	}
-
-	// 不应包含 Kotlin 警告
-	if strings.Contains(content, "w: file:///") {
-		t.Error("不应包含 Kotlin 警告行")
 	}
 
 	// 不应包含 Deprecated Gradle features

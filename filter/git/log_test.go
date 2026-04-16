@@ -41,18 +41,18 @@ func TestLogFilter_Apply(t *testing.T) {
 	})
 
 	// 应包含短哈希（7字符）
-	if !strings.Contains(output.Content, "a1b2c3d") {
-		t.Error("应该包含短哈希 a1b2c3d")
+	if !strings.Contains(output.Content, "dcd2ec7") {
+		t.Error("应该包含短哈希 dcd2ec7")
 	}
-	if !strings.Contains(output.Content, "b2c3d4e") {
-		t.Error("应该包含短哈希 b2c3d4e")
+	if !strings.Contains(output.Content, "cc98397") {
+		t.Error("应该包含短哈希 cc98397")
 	}
-	if !strings.Contains(output.Content, "c3d4e5f") {
-		t.Error("应该包含短哈希 c3d4e5f")
+	if !strings.Contains(output.Content, "c1d1511") {
+		t.Error("应该包含短哈希 c1d1511")
 	}
 
 	// 不应包含完整哈希
-	if strings.Contains(output.Content, "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0") {
+	if strings.Contains(output.Content, "dcd2ec767b338e397425187b545f50670990bfe3") {
 		t.Error("不应该包含完整哈希")
 	}
 

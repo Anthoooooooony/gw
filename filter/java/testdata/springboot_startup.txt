@@ -1,30 +1,54 @@
+target/spring-petclinic-4.0.0-SNAPSHOT.jar
 
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
 
- :: Spring Boot ::                (v3.2.0)
+              |\      _,,,--,,_
+             /,`.-'`'   ._  \-;;,_
+  _______ __|,4-  ) )_   .;.(__`'-'__     ___ __    _ ___ _______
+ |       | '---''(_/._)-'(_\_)   |   |   |   |  |  | |   |       |
+ |    _  |    ___|_     _|       |   |   |   |   |_| |   |       | __ _ _
+ |   |_| |   |___  |   | |       |   |   |   |       |   |       | \ \ \ \
+ |    ___|    ___| |   | |      _|   |___|   |  _    |   |      _|  \ \ \ \
+ |   |   |   |___  |   | |     |_|       |   | | |   |   |     |_    ) ) ) )
+ |___|   |_______| |___| |_______|_______|___|_|  |__|___|_______|  / / / /
+ ==================================================================/_/_/_/
 
-2026-04-15T10:30:00.123+08:00  INFO 12345 --- [           main] com.example.MyApplication                : Starting MyApplication v1.0.0 using Java 21.0.1 with PID 12345
-2026-04-15T10:30:00.234+08:00  INFO 12345 --- [           main] com.example.MyApplication                : No active profile set, falling back to 1 default profile: "default"
-2026-04-15T10:30:01.456+08:00  INFO 12345 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-04-15T10:30:01.567+08:00  INFO 12345 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 89 ms. Found 8 JPA repository interfaces.
-2026-04-15T10:30:02.345+08:00  INFO 12345 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2026-04-15T10:30:02.456+08:00  INFO 12345 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2026-04-15T10:30:02.567+08:00  INFO 12345 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
-2026-04-15T10:30:02.789+08:00  INFO 12345 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2026-04-15T10:30:02.890+08:00  INFO 12345 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2567 ms
-2026-04-15T10:30:03.123+08:00  INFO 12345 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2026-04-15T10:30:03.234+08:00  INFO 12345 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.4.0.Final
-2026-04-15T10:30:03.345+08:00  INFO 12345 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available
-2026-04-15T10:30:03.456+08:00  INFO 12345 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-04-15T10:30:03.567+08:00  INFO 12345 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-04-15T10:30:03.789+08:00  INFO 12345 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2026-04-15T10:30:04.012+08:00  INFO 12345 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 13 endpoint(s) beneath base path '/actuator'
-2026-04-15T10:30:04.123+08:00  WARN 12345 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default.
-2026-04-15T10:30:04.234+08:00  INFO 12345 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [...]
-2026-04-15T10:30:05.234+08:00  INFO 12345 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2026-04-15T10:30:05.345+08:00  INFO 12345 --- [           main] com.example.MyApplication                : Started MyApplication in 5.222 seconds (process running for 5.678)
+:: Built with Spring Boot :: 4.0.3
+
+
+2026-04-16T08:48:07.669Z  INFO 191 --- [           main] o.s.s.petclinic.PetClinicApplication     : Starting PetClinicApplication v4.0.0-SNAPSHOT using Java 17.0.2 with PID 191 (/app/target/spring-petclinic-4.0.0-SNAPSHOT.jar started by root in /app)
+2026-04-16T08:48:07.673Z  INFO 191 --- [           main] o.s.s.petclinic.PetClinicApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-04-16T08:48:08.119Z  INFO 191 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-16T08:48:08.145Z  INFO 191 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 21 ms. Found 3 JPA repository interfaces.
+2026-04-16T08:48:08.488Z  INFO 191 --- [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-04-16T08:48:08.496Z  INFO 191 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-16T08:48:08.496Z  INFO 191 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-04-16T08:48:08.509Z  INFO 191 --- [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 800 ms
+2026-04-16T08:48:08.607Z  INFO 191 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-16T08:48:08.695Z  INFO 191 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:50b6cd9c-73be-45f4-a0ac-6d6e5221004b user=SA
+2026-04-16T08:48:08.696Z  INFO 191 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-16T08:48:08.772Z  INFO 191 --- [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-04-16T08:48:08.803Z  INFO 191 --- [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-04-16T08:48:08.984Z  INFO 191 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-16T08:48:09.017Z  INFO 191 --- [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:h2:mem:50b6cd9c-73be-45f4-a0ac-6d6e5221004b]
+	Database driver: H2 JDBC Driver
+	Database dialect: H2Dialect
+	Database version: 2.4.240
+	Default catalog/schema: 50B6CD9C-73BE-45F4-A0AC-6D6E5221004B/PUBLIC
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: 100
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-04-16T08:48:09.429Z  INFO 191 --- [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-16T08:48:09.432Z  INFO 191 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-16T08:48:09.472Z  INFO 191 --- [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-16T08:48:10.074Z  INFO 191 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 13 endpoints beneath base path '/actuator'
+2026-04-16T08:48:10.120Z  INFO 191 --- [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-04-16T08:48:10.125Z  INFO 191 --- [           main] o.s.s.petclinic.PetClinicApplication     : Started PetClinicApplication in 2.676 seconds (process running for 2.931)
+2026-04-16T08:48:52.208Z  INFO 191 --- [ionShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-04-16T08:48:52.221Z  INFO 191 --- [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-04-16T08:48:52.228Z  INFO 191 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-04-16T08:48:52.230Z  INFO 191 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-04-16T08:48:52.233Z  INFO 191 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
