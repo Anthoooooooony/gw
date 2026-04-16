@@ -148,11 +148,16 @@ func classifyLine(line string) MavenLineClass {
 
 // isHelpSuggestionContent 判断 [ERROR] 后的内容是否为帮助建议
 func isHelpSuggestionContent(content string) bool {
+	// 保留恢复构建命令（mvn <args> -rf :module），对 AI 有操作价值
+	if strings.Contains(content, "-rf :") {
+		return false
+	}
 	suggestions := []string{
 		"To see the full stack trace",
 		"Re-run Maven",
 		"[Help 1]",
 		"After correcting",
+		"For more information about the errors",
 	}
 	for _, s := range suggestions {
 		if strings.Contains(content, s) {
