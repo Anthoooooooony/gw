@@ -10,69 +10,126 @@ type Segment struct {
 	Sep string // 该片段后面的分隔符，最后一个片段为 ""
 }
 
-// ShouldRewrite 判断命令是否可以被改写
-// 包含管道 |、重定向 > >> <、子 shell $( 或反引号的命令不可改写
-// 注意 || 是链式操作符，允许改写
-func ShouldRewrite(command string) bool {
-	// 将 || 替换为占位符，避免误判
-	replaced := strings.ReplaceAll(command, "||", "\x00\x00")
+// AnalyzeCommand 对 shell 命令进行引号感知的单遍扫描，返回：
+// - canRewrite: 命令是否可以安全改写（不含管道、重定向、子 shell 等）
+// - segments: 按链式操作符（&&、||、;）分割的命令片段
+// 引号内的特殊字符视为普通文本，不触发拒绝或分割。
+func AnalyzeCommand(command string) (bool, []Segment) {
+	runes := []rune(command)
+	n := len(runes)
 
-	// 检查剩余的 | （管道）
-	if strings.Contains(replaced, "|") {
-		return false
+	var inQuote rune
+	escaped := false
+
+	segStart := 0
+	var segments []Segment
+
+	i := 0
+	for i < n {
+		c := runes[i]
+
+		// 处理转义：上一个字符是 \，跳过当前字符
+		if escaped {
+			escaped = false
+			i++
+			continue
+		}
+
+		// 引号内：只关注关闭引号（双引号内还支持转义）
+		if inQuote != 0 {
+			if inQuote == '"' && c == '\\' {
+				escaped = true
+			} else if c == inQuote {
+				inQuote = 0
+			}
+			i++
+			continue
+		}
+
+		// 正常模式：检测特殊字符
+		switch {
+		case c == '\\':
+			escaped = true
+			i++
+			continue
+		case c == '\'' || c == '"':
+			inQuote = c
+			i++
+			continue
+		case c == '|':
+			if i+1 < n && runes[i+1] == '|' {
+				// || 链式操作符，安全
+				segments = append(segments, Segment{
+					Cmd: strings.TrimSpace(string(runes[segStart:i])),
+					Sep: "||",
+				})
+				i += 2
+				segStart = i
+				continue
+			}
+			// 单独的 | 是管道，不安全
+			return false, nil
+		case c == '&':
+			if i+1 < n && runes[i+1] == '&' {
+				// && 链式操作符，安全
+				segments = append(segments, Segment{
+					Cmd: strings.TrimSpace(string(runes[segStart:i])),
+					Sep: "&&",
+				})
+				i += 2
+				segStart = i
+				continue
+			}
+			// 单独的 & 是后台执行，不安全
+			return false, nil
+		case c == ';':
+			segments = append(segments, Segment{
+				Cmd: strings.TrimSpace(string(runes[segStart:i])),
+				Sep: ";",
+			})
+			i++
+			segStart = i
+			continue
+		case c == '>' || c == '<':
+			// 重定向，不安全
+			return false, nil
+		case c == '$':
+			if i+1 < n && runes[i+1] == '(' {
+				// 子 shell $()，不安全
+				return false, nil
+			}
+			i++
+			continue
+		case c == '`':
+			// 反引号子 shell，不安全
+			return false, nil
+		default:
+			i++
+			continue
+		}
 	}
 
-	// 检查重定向
-	if strings.Contains(command, ">>") || strings.Contains(command, ">") || strings.Contains(command, "<") {
-		return false
+	// 添加最后一个片段
+	last := strings.TrimSpace(string(runes[segStart:]))
+	if last != "" {
+		segments = append(segments, Segment{Cmd: last, Sep: ""})
 	}
 
-	// 检查子 shell
-	if strings.Contains(command, "$(") {
-		return false
+	if len(segments) == 0 {
+		return false, nil
 	}
 
-	// 检查反引号
-	if strings.Contains(command, "`") {
-		return false
-	}
-
-	return true
+	return true, segments
 }
 
-// SplitChainedCommands 将链式命令按 &&、||、; 分割
+// ShouldRewrite 判断命令是否可以被改写（向后兼容包装）
+func ShouldRewrite(command string) bool {
+	canRewrite, _ := AnalyzeCommand(command)
+	return canRewrite
+}
+
+// SplitChainedCommands 将链式命令按 &&、||、; 分割（向后兼容包装）
 func SplitChainedCommands(command string) []Segment {
-	var segments []Segment
-	remaining := command
-
-	for len(remaining) > 0 {
-		// 查找最近的分隔符
-		minIdx := -1
-		minSep := ""
-
-		for _, sep := range []string{"&&", "||", ";"} {
-			idx := strings.Index(remaining, sep)
-			if idx >= 0 && (minIdx < 0 || idx < minIdx) {
-				minIdx = idx
-				minSep = sep
-			}
-		}
-
-		if minIdx < 0 {
-			// 没有更多分隔符
-			segments = append(segments, Segment{
-				Cmd: strings.TrimSpace(remaining),
-				Sep: "",
-			})
-			break
-		}
-
-		segments = append(segments, Segment{
-			Cmd: strings.TrimSpace(remaining[:minIdx]),
-			Sep: minSep,
-		})
-		remaining = remaining[minIdx+len(minSep):]
-	}
-
+	_, segments := AnalyzeCommand(command)
 	return segments
 }
