@@ -133,6 +133,11 @@ func classifyLine(line string) MavenLineClass {
 		return LinePluginOutput
 	}
 
+	// 无前缀行: 下载/进度（部分 Maven 版本不带 [INFO] 前缀）
+	if strings.HasPrefix(trimmed, "Downloading from") || strings.HasPrefix(trimmed, "Downloaded from") || strings.HasPrefix(trimmed, "Progress (") {
+		return LineTransfer
+	}
+
 	// 无前缀行: 栈追踪
 	if strings.HasPrefix(trimmed, "at ") || strings.HasPrefix(trimmed, "org.") || strings.HasPrefix(trimmed, "java.") {
 		return LineStackTrace
@@ -158,16 +163,23 @@ func isHelpSuggestionContent(content string) bool {
 }
 
 // isSeparatorContent 判断 [INFO] 后的内容是否为分隔线
+// 匹配纯 dash 线和包含项目坐标/包类型的分隔线
 func isSeparatorContent(content string) bool {
 	if len(content) < 10 {
 		return false
 	}
+	// 统计 dash 字符占比
+	dashCount := 0
 	for _, c := range content {
-		if c != '-' {
-			return false
+		if c == '-' {
+			dashCount++
 		}
 	}
-	return true
+	// 如果 dash 占 60% 以上且总长度足够，认为是分隔线
+	if float64(dashCount)/float64(len(content)) > 0.6 {
+		return true
+	}
+	return false
 }
 
 // isProcessNoiseContent 判断 [INFO] 后的内容是否为过程噪音
@@ -175,16 +187,29 @@ func isProcessNoiseContent(content string) bool {
 	noises := []string{
 		"Compiling ",
 		"Nothing to compile",
+		"No sources to compile",
 		"Copying ",
 		"Using '",
 		"Changes detected",
 		"skip non existing",
 		"Using auto detected",
+		"Applied plugin:",
+		"Results:",
 	}
 	for _, n := range noises {
 		if strings.HasPrefix(content, n) {
 			return true
 		}
+	}
+	// javac 编译器告警（deprecation / unchecked）
+	if (strings.Contains(content, "uses or overrides a deprecated API") ||
+		strings.Contains(content, "use or override a deprecated API") ||
+		strings.Contains(content, "Some input files use or override a deprecated API") ||
+		strings.Contains(content, "Recompile with -Xlint:") ||
+		strings.Contains(content, "uses unchecked or unsafe operations") ||
+		strings.Contains(content, "use unchecked or unsafe operations") ||
+		strings.Contains(content, "Some input files use unchecked or unsafe operations")) {
+		return true
 	}
 	return false
 }
