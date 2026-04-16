@@ -100,15 +100,8 @@ func runExec(cmd *cobra.Command, args []string) {
 			inputTokens, outputTokens, savedTokens, elapsedMs)
 	}
 
-	// 异步写入数据库，不阻塞退出
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		db, err := track.NewDB(track.DefaultDBPath())
-		if err != nil {
-			return
-		}
-		defer db.Close()
+	// 写入数据库（同步，在 os.Exit 前完成）
+	if db, err := track.NewDB(track.DefaultDBPath()); err == nil {
 		_ = db.InsertRecord(track.Record{
 			Timestamp:    time.Now().UTC(),
 			Command:      fullCmd,
@@ -119,9 +112,8 @@ func runExec(cmd *cobra.Command, args []string) {
 			ElapsedMs:    elapsedMs,
 			FilterUsed:   filterUsed,
 		})
-	}()
-	// 等待写入完成后再退出，避免数据丢失
-	<-done
+		db.Close()
+	}
 
 	// 7. 使用原始命令的退出码退出
 	os.Exit(result.ExitCode)
@@ -135,10 +127,10 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 
 	var stderrBuf strings.Builder
 	exitCode, err := internal.RunCommandStreamingFull(cmdName, cmdArgs, func(line string) {
-		originalChars += len(line)
+		originalChars += len([]rune(line))
 		action, output := proc.ProcessLine(line)
 		if action == filter.StreamEmit {
-			filteredChars += len(output)
+			filteredChars += len([]rune(output))
 			fmt.Println(output)
 		}
 	}, &stderrBuf)
@@ -156,7 +148,7 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 	// Flush
 	flushedLines := proc.Flush(exitCode)
 	for _, line := range flushedLines {
-		filteredChars += len(line)
+		filteredChars += len([]rune(line))
 		fmt.Println(line)
 	}
 
@@ -174,14 +166,8 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 			inputTokens, outputTokens, inputTokens-outputTokens, elapsed.Milliseconds())
 	}
 
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		db, err := track.NewDB(track.DefaultDBPath())
-		if err != nil {
-			return
-		}
-		defer db.Close()
+	// 写入数据库（同步，在 os.Exit 前完成）
+	if db, err := track.NewDB(track.DefaultDBPath()); err == nil {
 		_ = db.InsertRecord(track.Record{
 			Timestamp:    time.Now().UTC(),
 			Command:      fullCmd,
@@ -192,8 +178,8 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 			ElapsedMs:    elapsed.Milliseconds(),
 			FilterUsed:   sf.Name() + ":stream",
 		})
-	}()
-	<-done
+		db.Close()
+	}
 
 	// 负数退出码（信号终止）映射为 128+signal 的惯例值
 	if exitCode < 0 {

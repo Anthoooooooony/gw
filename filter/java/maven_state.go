@@ -220,6 +220,8 @@ func nextState(current MavenState, lc MavenLineClass) MavenState {
 	switch lc {
 	case LineModuleHeader:
 		return StateModuleBuild
+	case LineMojoHeader:
+		return StateMojo
 	case LineReactorHeader:
 		return StateReactor
 	case LineBuildResult:
@@ -246,25 +248,20 @@ func nextState(current MavenState, lc MavenLineClass) MavenState {
 		}
 
 	case StateModuleBuild:
-		if lc == LineMojoHeader {
-			return StateMojo
-		}
+		// MojoHeader 已在全局转移中处理
 
 	case StateMojo:
+		// 非 MojoHeader 的任何行进入 PluginOutput
 		return StatePluginOutput
 
 	case StatePluginOutput:
-		if lc == LineMojoHeader {
-			return StateMojo
-		}
+		// MojoHeader 已在全局转移中处理
 		if lc == LineTestHeader {
 			return StateTestOutput
 		}
 
 	case StateTestOutput:
-		if lc == LineMojoHeader {
-			return StateMojo
-		}
+		// MojoHeader 已在全局转移中处理
 
 	case StateResult:
 		if lc == LineError {

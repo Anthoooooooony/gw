@@ -71,10 +71,11 @@ func NewDB(path string) (*DB, error) {
 		return nil, fmt.Errorf("创建目录失败: %w", err)
 	}
 
-	sqlDB, err := sql.Open("sqlite3", path+"?_journal_mode=WAL")
+	sqlDB, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_busy_timeout=3000")
 	if err != nil {
 		return nil, fmt.Errorf("打开数据库失败: %w", err)
 	}
+	sqlDB.SetMaxOpenConns(1)
 
 	if _, err := sqlDB.Exec(createTableSQL); err != nil {
 		sqlDB.Close()

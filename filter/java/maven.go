@@ -321,6 +321,7 @@ func (p *mavenStreamProcessor) ProcessLine(line string) (filter.StreamAction, st
 		return filter.StreamDrop, ""
 
 	case StateTestOutput:
+		p.buffer = nil // 离开 PluginOutput，清空旧缓冲
 		if lc == LineTestHeader || lc == LineTestRunning {
 			return filter.StreamDrop, ""
 		}
@@ -344,6 +345,7 @@ func (p *mavenStreamProcessor) ProcessLine(line string) (filter.StreamAction, st
 		return filter.StreamDrop, ""
 
 	case StateReactor:
+		p.buffer = nil // 进入 Reactor，清空旧缓冲
 		if lc == LineReactorEntry {
 			return filter.StreamEmit, stripPrefix(line)
 		}
