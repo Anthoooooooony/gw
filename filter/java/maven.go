@@ -261,3 +261,130 @@ func collapseBlankLines(lines []string) string {
 
 	return strings.Join(result, "\n")
 }
+
+// NewStreamInstance 创建流式处理器实例
+func (f *MavenFilter) NewStreamInstance() filter.StreamProcessor {
+	return &mavenStreamProcessor{
+		state:      StateInit,
+		seenErrors: make(map[string]bool),
+	}
+}
+
+type mavenStreamProcessor struct {
+	state      MavenState
+	seenErrors map[string]bool
+	buffer     []string
+}
+
+func (p *mavenStreamProcessor) ProcessLine(line string) (filter.StreamAction, string) {
+	lc := classifyLine(line)
+	p.state = nextState(p.state, lc)
+
+	// 全局丢弃
+	switch lc {
+	case LineDiscovery, LineSeparator, LineEmpty, LineFinishedAt,
+		LineTransfer, LinePomWarning, LineCompilerWarning,
+		LineProcessNoise, LineHelpSuggestion:
+		return filter.StreamDrop, ""
+	}
+
+	switch p.state {
+	case StateInit, StateDiscovery, StateWarning:
+		return filter.StreamDrop, ""
+
+	case StateModuleBuild:
+		return filter.StreamDrop, ""
+
+	case StateMojo:
+		p.buffer = nil
+		return filter.StreamDrop, ""
+
+	case StatePluginOutput:
+		if lc == LineError {
+			stripped := stripPrefix(line)
+			key := extractErrorKey(stripped)
+			if key != "" {
+				if p.seenErrors[key] {
+					return filter.StreamDrop, ""
+				}
+				p.seenErrors[key] = true
+			}
+			return filter.StreamEmit, stripped
+		}
+		if lc == LineStackTrace {
+			return filter.StreamEmit, stripPrefix(line)
+		}
+		// 缓冲其他行，最多 10 行
+		if len(p.buffer) < 10 {
+			p.buffer = append(p.buffer, stripPrefix(line))
+		}
+		return filter.StreamDrop, ""
+
+	case StateTestOutput:
+		if lc == LineTestHeader || lc == LineTestRunning {
+			return filter.StreamDrop, ""
+		}
+		if lc == LineTestSummary {
+			return filter.StreamEmit, stripPrefix(line)
+		}
+		if lc == LineError {
+			stripped := stripPrefix(line)
+			key := extractErrorKey(stripped)
+			if key != "" {
+				if p.seenErrors[key] {
+					return filter.StreamDrop, ""
+				}
+				p.seenErrors[key] = true
+			}
+			return filter.StreamEmit, stripped
+		}
+		if lc == LineStackTrace {
+			return filter.StreamEmit, stripPrefix(line)
+		}
+		return filter.StreamDrop, ""
+
+	case StateReactor:
+		if lc == LineReactorEntry {
+			return filter.StreamEmit, stripPrefix(line)
+		}
+		return filter.StreamDrop, ""
+
+	case StateResult:
+		if lc == LineBuildResult {
+			return filter.StreamEmit, stripPrefix(line)
+		}
+		return filter.StreamDrop, ""
+
+	case StateStats:
+		if lc == LineStats {
+			return filter.StreamEmit, stripPrefix(line)
+		}
+		return filter.StreamDrop, ""
+
+	case StateErrorReport:
+		if lc == LineError {
+			stripped := stripPrefix(line)
+			key := extractErrorKey(stripped)
+			if key != "" {
+				if p.seenErrors[key] {
+					return filter.StreamDrop, ""
+				}
+				p.seenErrors[key] = true
+			}
+			return filter.StreamEmit, stripped
+		}
+		if lc == LineStackTrace {
+			return filter.StreamEmit, stripPrefix(line)
+		}
+		return filter.StreamDrop, ""
+	}
+
+	return filter.StreamDrop, ""
+}
+
+func (p *mavenStreamProcessor) Flush(exitCode int) []string {
+	if exitCode != 0 && len(p.buffer) > 0 {
+		return p.buffer
+	}
+	return nil
+}
