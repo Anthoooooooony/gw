@@ -25,13 +25,12 @@ func init() {
 func runRewrite(cmd *cobra.Command, args []string) {
 	command := args[0]
 
-	// 1. 检查是否可以改写
-	if !shell.ShouldRewrite(command) {
+	// 1. 分析命令：检查是否可以改写 + 拆分链式命令（单次扫描）
+	canRewrite, segments := shell.AnalyzeCommand(command)
+	if !canRewrite {
 		os.Exit(1)
 	}
 
-	// 2. 拆分链式命令
-	segments := shell.SplitChainedCommands(command)
 	registry := filter.GlobalRegistry()
 
 	// 3. 逐段检查并改写
