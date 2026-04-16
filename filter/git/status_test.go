@@ -11,7 +11,7 @@ import (
 // loadFixture 读取 testdata 目录下的测试数据文件
 func loadFixture(t *testing.T, name string) string {
 	t.Helper()
-	data, err := os.ReadFile("../../testdata/" + name)
+	data, err := os.ReadFile("testdata/" + name)
 	if err != nil {
 		t.Fatalf("无法加载测试数据 %s: %v", name, err)
 	}
