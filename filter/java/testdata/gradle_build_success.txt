@@ -1,20 +1,29 @@
 Starting a Gradle Daemon (subsequent builds will be faster)
 
-> Task :compileJava
-> Task :processResources
-> Task :classes
-> Task :compileTestJava
-> Task :processTestResources NO-SOURCE
-> Task :testClasses
-> Task :test
+> Configure project :app
+w: file:///home/user/app/build.gradle.kts:15:5 'compile' is deprecated. Use 'implementation' instead.
 
-com.example.demo.UserServiceTest > testGetUser PASSED
-com.example.demo.UserServiceTest > testListUsers PASSED
-com.example.demo.AuthServiceTest > testLogin PASSED
-com.example.demo.AuthServiceTest > testLogout PASSED
+> Task :lib:compileKotlin UP-TO-DATE
+> Task :lib:compileJava NO-SOURCE
+> Task :lib:processResources NO-SOURCE
+> Task :lib:classes UP-TO-DATE
+> Task :app:compileKotlin
+w: file:///home/user/app/src/main/kotlin/App.kt:10:14 Parameter 'unused' is never used
+w: file:///home/user/app/src/main/kotlin/App.kt:25:32 The corresponding parameter in the supertype is named 'other'
+> Task :app:compileJava NO-SOURCE
+> Task :app:processResources UP-TO-DATE
+> Task :app:classes UP-TO-DATE
+> Task :app:compileTestKotlin UP-TO-DATE
+> Task :app:compileTestJava NO-SOURCE
+> Task :app:processTestResources NO-SOURCE
+> Task :app:testClasses UP-TO-DATE
+> Task :app:test
 
-> Task :check
-> Task :build
+com.example.UserServiceTest > testLogin PASSED
+com.example.UserServiceTest > testRegister PASSED
+com.example.OrderServiceTest > testCreate PASSED
+
+> Task :app:build
 
 BUILD SUCCESSFUL in 12s
-7 actionable tasks: 7 executed
+7 actionable tasks: 2 executed, 5 up-to-date

@@ -1,36 +1,38 @@
-> Task :compileJava
-> Task :processResources
-> Task :classes
-> Task :compileTestJava
-> Task :processTestResources NO-SOURCE
-> Task :testClasses
-> Task :test
+> Configure project :app
 
-com.example.demo.UserServiceTest > testGetUser PASSED
-com.example.demo.UserServiceTest > testListUsers PASSED
-com.example.demo.AuthServiceTest > testLogin FAILED
+> Task :lib:compileKotlin UP-TO-DATE
+> Task :lib:classes UP-TO-DATE
+> Task :app:compileKotlin
+w: file:///home/user/app/src/main/kotlin/App.kt:10:14 Parameter 'unused' is never used
+> Task :app:classes UP-TO-DATE
+> Task :app:compileTestKotlin UP-TO-DATE
+> Task :app:testClasses UP-TO-DATE
+> Task :app:test FAILED
+
+com.example.UserServiceTest > testLogin FAILED
     org.opentest4j.AssertionFailedError: expected: <200> but was: <401>
-        at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:55)
-        at com.example.demo.AuthServiceTest.testLogin(AuthServiceTest.java:35)
+        at com.example.UserServiceTest.testLogin(UserServiceTest.java:42)
 
-com.example.demo.AuthServiceTest > testLogout FAILED
-    java.lang.NullPointerException: Cannot invoke method on null reference
-        at com.example.demo.AuthServiceTest.testLogout(AuthServiceTest.java:52)
+com.example.UserServiceTest > testRegister PASSED
+com.example.OrderServiceTest > testCreate PASSED
 
-4 tests completed, 2 failed
+3 tests completed, 1 failed
 
-> Task :test FAILED
+> Task :app:test FAILED
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':test'.
-> There were failing tests. See the report at: file:///home/user/demo/build/reports/tests/test/index.html
+Execution failed for task ':app:test'.
+> There were failing tests. See the report at: file:///home/user/app/build/reports/tests/test/index.html
 
 * Try:
-> Run with --stacktrace option to get the full stack trace of this exception.
-> Run with --info option to get more log output.
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
 
 BUILD FAILED in 8s
-7 actionable tasks: 7 executed
+5 actionable tasks: 2 executed, 3 up-to-date
