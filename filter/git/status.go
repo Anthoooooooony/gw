@@ -9,6 +9,8 @@ import (
 // StatusFilter 过滤 git status 输出，去除教学提示信息
 type StatusFilter struct{}
 
+func (f *StatusFilter) Name() string { return "git/status" }
+
 func (f *StatusFilter) Match(cmd string, args []string) bool {
 	return cmd == "git" && len(args) > 0 && args[0] == "status"
 }

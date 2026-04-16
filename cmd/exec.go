@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -53,7 +52,7 @@ func runExec(cmd *cobra.Command, args []string) {
 	originalOutput := result.Stdout + result.Stderr
 
 	if matched != nil {
-		filterUsed = reflect.TypeOf(matched).Elem().Name()
+		filterUsed = matched.Name()
 		input := filter.FilterInput{
 			Cmd:      cmdName,
 			Args:     cmdArgs,

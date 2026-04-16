@@ -10,6 +10,8 @@ import (
 // LogFilter 过滤 git log 输出，转换为紧凑格式
 type LogFilter struct{}
 
+func (f *LogFilter) Name() string { return "git/log" }
+
 func (f *LogFilter) Match(cmd string, args []string) bool {
 	return cmd == "git" && len(args) > 0 && args[0] == "log"
 }

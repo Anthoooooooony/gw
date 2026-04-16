@@ -27,15 +27,23 @@ type Rule struct {
 
 // TomlFilter 基于 TOML 规则的声明式过滤器
 type TomlFilter struct {
-	Rules []Rule
+	Rules       []Rule
+	matchedRule string // 最近一次匹配的规则名
 }
 
 // ansiRegex 匹配 ANSI 转义序列
 var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
 
+func (f *TomlFilter) Name() string { return "toml/" + f.matchedRule }
+
 func (f *TomlFilter) Match(cmd string, args []string) bool {
 	fullCmd := buildFullCmd(cmd, args)
-	return f.findRule(fullCmd) != nil
+	rule := f.findRule(fullCmd)
+	if rule != nil {
+		f.matchedRule = rule.Match
+		return true
+	}
+	return false
 }
 
 func (f *TomlFilter) Apply(input filter.FilterInput) filter.FilterOutput {
