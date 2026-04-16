@@ -730,7 +730,7 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 			return
 		}
 		defer db.Close()
-		_ = db.Record(track.Record{
+		_ = db.InsertRecord(track.Record{
 			Timestamp:    time.Now(),
 			Command:      cmdName + " " + strings.Join(cmdArgs, " "),
 			ExitCode:     exitCode,
@@ -792,41 +792,39 @@ func init() {
 - [ ] **Step 2: 实现 SpringBootFilter 的 StreamFilter 接口**
 
 ```go
-type springBootStreamState struct {
+// NewStreamInstance 创建流式处理器实例
+func (f *SpringBootFilter) NewStreamInstance() filter.StreamProcessor {
+	return &springBootStreamProcessor{}
+}
+
+type springBootStreamProcessor struct {
 	inBanner bool
 }
 
-func (f *SpringBootFilter) ProcessLine(line string, rawState interface{}) (filter.StreamAction, string, interface{}) {
-	var s *springBootStreamState
-	if rawState == nil {
-		s = &springBootStreamState{}
-	} else {
-		s = rawState.(*springBootStreamState)
-	}
-
+func (p *springBootStreamProcessor) ProcessLine(line string) (filter.StreamAction, string) {
 	trimmed := strings.TrimSpace(line)
 
 	// Banner 检测（多行）
 	if strings.Contains(trimmed, "____") || strings.Contains(trimmed, ":: Spring Boot ::") ||
 		strings.Contains(trimmed, "=========|") || isBannerDecorationLine(trimmed) {
-		s.inBanner = true
-		return filter.StreamDrop, "", s
+		p.inBanner = true
+		return filter.StreamDrop, ""
 	}
-	if s.inBanner && trimmed == "" {
-		s.inBanner = false
-		return filter.StreamDrop, "", s
+	if p.inBanner && trimmed == "" {
+		p.inBanner = false
+		return filter.StreamDrop, ""
 	}
 
 	// 噪音行（复用已有规则）
 	if isSpringBootNoise(line) {
-		return filter.StreamDrop, "", s
+		return filter.StreamDrop, ""
 	}
 
-	return filter.StreamEmit, line, s
+	return filter.StreamEmit, line
 }
 
-func (f *SpringBootFilter) Flush(rawState interface{}, exitCode int) string {
-	return ""
+func (p *springBootStreamProcessor) Flush(exitCode int) []string {
+	return nil
 }
 ```
 
@@ -844,14 +842,13 @@ func TestSpringBootStreamFilter_Interface(t *testing.T) {
 
 func TestSpringBootStreamFilter_Startup(t *testing.T) {
 	f := &SpringBootFilter{}
+	proc := f.NewStreamInstance()
 	fixture := loadFixture(t, "springboot_startup.txt")
 	lines := strings.Split(fixture, "\n")
 
-	var state interface{}
 	var emitted []string
 	for _, line := range lines {
-		action, output, newState := f.ProcessLine(line, state)
-		state = newState
+		action, output := proc.ProcessLine(line)
 		if action == filter.StreamEmit {
 			emitted = append(emitted, output)
 		}
