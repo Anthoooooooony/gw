@@ -162,8 +162,8 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 
 	// TRACK
 	elapsed := time.Since(start)
-	inputTokens := track.EstimateTokens(strings.Repeat("x", originalChars))
-	outputTokens := track.EstimateTokens(strings.Repeat("x", filteredChars))
+	inputTokens := track.EstimateTokensByLen(originalChars)
+	outputTokens := track.EstimateTokensByLen(filteredChars)
 	fullCmd := cmdName
 	if len(cmdArgs) > 0 {
 		fullCmd = cmdName + " " + strings.Join(cmdArgs, " ")
@@ -195,5 +195,9 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 	}()
 	<-done
 
+	// 负数退出码（信号终止）映射为 128+signal 的惯例值
+	if exitCode < 0 {
+		exitCode = 130 // SIGINT (Ctrl+C) 的标准退出码
+	}
 	os.Exit(exitCode)
 }
