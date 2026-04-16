@@ -37,3 +37,20 @@ func (r *Registry) Find(cmd string, args []string) Filter {
 	}
 	return nil
 }
+
+// FindStream 查找匹配的 StreamFilter
+func (r *Registry) FindStream(cmd string, args []string) StreamFilter {
+	f := r.Find(cmd, args)
+	if f == nil {
+		return nil
+	}
+	if sf, ok := f.(StreamFilter); ok {
+		return sf
+	}
+	return nil
+}
+
+// FindStream 在全局注册表中查找匹配的 StreamFilter
+func FindStream(cmd string, args []string) StreamFilter {
+	return global.FindStream(cmd, args)
+}
