@@ -36,6 +36,12 @@ func runExec(cmd *cobra.Command, args []string) {
 	cmdArgs := args[1:]
 
 	// 2. ROUTE: 从注册表查找匹配的过滤器
+	// 优先检查流式过滤器
+	if sf := filter.FindStream(cmdName, cmdArgs); sf != nil {
+		runStreamExec(sf, cmdName, cmdArgs)
+		return
+	}
+
 	matched := filter.GlobalRegistry().Find(cmdName, cmdArgs)
 
 	// 3. EXECUTE: 本地执行命令
@@ -119,4 +125,75 @@ func runExec(cmd *cobra.Command, args []string) {
 
 	// 7. 使用原始命令的退出码退出
 	os.Exit(result.ExitCode)
+}
+
+func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
+	start := time.Now()
+	proc := sf.NewStreamInstance()
+	var originalChars int
+	var filteredChars int
+
+	var stderrBuf strings.Builder
+	exitCode, err := internal.RunCommandStreamingFull(cmdName, cmdArgs, func(line string) {
+		originalChars += len(line)
+		action, output := proc.ProcessLine(line)
+		if action == filter.StreamEmit {
+			filteredChars += len(output)
+			fmt.Println(output)
+		}
+	}, &stderrBuf)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "gw exec: 无法执行命令: %v\n", err)
+		os.Exit(127)
+	}
+
+	// stderr 透传
+	if stderrBuf.Len() > 0 {
+		fmt.Fprint(os.Stderr, stderrBuf.String())
+	}
+
+	// Flush
+	flushedLines := proc.Flush(exitCode)
+	for _, line := range flushedLines {
+		filteredChars += len(line)
+		fmt.Println(line)
+	}
+
+	// TRACK
+	elapsed := time.Since(start)
+	inputTokens := track.EstimateTokens(strings.Repeat("x", originalChars))
+	outputTokens := track.EstimateTokens(strings.Repeat("x", filteredChars))
+	fullCmd := cmdName
+	if len(cmdArgs) > 0 {
+		fullCmd = cmdName + " " + strings.Join(cmdArgs, " ")
+	}
+
+	if Verbose {
+		fmt.Fprintf(os.Stderr, "[gw:stream] %d → %d tokens (saved %d, elapsed %dms)\n",
+			inputTokens, outputTokens, inputTokens-outputTokens, elapsed.Milliseconds())
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		db, err := track.NewDB(track.DefaultDBPath())
+		if err != nil {
+			return
+		}
+		defer db.Close()
+		_ = db.InsertRecord(track.Record{
+			Timestamp:    time.Now().UTC(),
+			Command:      fullCmd,
+			ExitCode:     exitCode,
+			InputTokens:  inputTokens,
+			OutputTokens: outputTokens,
+			SavedTokens:  inputTokens - outputTokens,
+			ElapsedMs:    elapsed.Milliseconds(),
+			FilterUsed:   sf.Name() + ":stream",
+		})
+	}()
+	<-done
+
+	os.Exit(exitCode)
 }
