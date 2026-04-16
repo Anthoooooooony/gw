@@ -110,6 +110,31 @@ func TestClassifyLine(t *testing.T) {
 	}
 }
 
+func TestStateTransition_ConsecutiveMojoHeaders(t *testing.T) {
+	// Regression: consecutive --- plugin --- lines should stay in StateMojo
+	state := StateInit
+	state = nextState(state, LineModuleHeader) // -> StateModuleBuild
+	state = nextState(state, LineMojoHeader)   // -> StateMojo (global)
+
+	// First non-mojo line -> PluginOutput
+	state = nextState(state, LinePluginOutput)
+	if state != StatePluginOutput {
+		t.Errorf("after plugin output: got %v, want StatePluginOutput", state)
+	}
+
+	// Second MojoHeader -> back to StateMojo (not PluginOutput!)
+	state = nextState(state, LineMojoHeader)
+	if state != StateMojo {
+		t.Errorf("second MojoHeader from PluginOutput: got %v, want StateMojo", state)
+	}
+
+	// Third MojoHeader directly -> stay StateMojo
+	state = nextState(state, LineMojoHeader)
+	if state != StateMojo {
+		t.Errorf("third consecutive MojoHeader: got %v, want StateMojo", state)
+	}
+}
+
 func TestStateTransition(t *testing.T) {
 	tests := []struct {
 		name     string
