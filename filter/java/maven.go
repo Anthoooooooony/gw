@@ -6,6 +6,10 @@ import (
 	"github.com/gw-cli/gw/filter"
 )
 
+func init() {
+	filter.Register(&MavenFilter{})
+}
+
 // MavenFilter 过滤 Maven 构建输出，使用状态机压缩噪音
 type MavenFilter struct{}
 
