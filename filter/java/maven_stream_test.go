@@ -157,9 +157,9 @@ func TestMavenStreamFilter_RealProject(t *testing.T) {
 		t.Errorf("压缩率 %.1f%% 低于 85%%", compression*100)
 	}
 
-	// 应包含 BUILD
-	if !strings.Contains(content, "BUILD") {
-		t.Error("应该包含 BUILD")
+	// 应包含 BUILD FAILURE 或 BUILD SUCCESS
+	if !strings.Contains(content, "BUILD FAILURE") && !strings.Contains(content, "BUILD SUCCESS") {
+		t.Error("应该包含 BUILD FAILURE 或 BUILD SUCCESS")
 	}
 
 	// 应包含 Unresolved reference
