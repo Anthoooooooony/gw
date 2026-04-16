@@ -1,5 +1,18 @@
 package filter
 
+// global 是通过 init() 自注册填充的全局过滤器注册表
+var global = &Registry{}
+
+// Register 将过滤器注册到全局注册表（由各过滤器包的 init() 调用）
+func Register(f Filter) {
+	global.filters = append(global.filters, f)
+}
+
+// GlobalRegistry 返回全局过滤器注册表
+func GlobalRegistry() *Registry {
+	return global
+}
+
 // Registry 管理已注册的过滤器
 type Registry struct {
 	filters []Filter
@@ -10,8 +23,8 @@ func NewRegistry() *Registry {
 	return &Registry{}
 }
 
-// Register 注册一个过滤器
-func (r *Registry) Register(f Filter) {
+// Add 注册一个过滤器到注册表实例
+func (r *Registry) Add(f Filter) {
 	r.filters = append(r.filters, f)
 }
 
@@ -23,9 +36,4 @@ func (r *Registry) Find(cmd string, args []string) Filter {
 		}
 	}
 	return nil
-}
-
-// DefaultRegistry 返回默认的过滤器注册表（当前为空）
-func DefaultRegistry() *Registry {
-	return NewRegistry()
 }

@@ -10,6 +10,12 @@ import (
 	"github.com/gw-cli/gw/filter"
 )
 
+func init() {
+	if engine, err := LoadBuiltinRules(); err == nil {
+		filter.Register(engine)
+	}
+}
+
 //go:embed rules/*.toml
 var builtinRules embed.FS
 

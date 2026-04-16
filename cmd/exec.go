@@ -36,8 +36,7 @@ func runExec(cmd *cobra.Command, args []string) {
 	cmdArgs := args[1:]
 
 	// 2. ROUTE: 从注册表查找匹配的过滤器
-	registry := buildRegistry()
-	matched := registry.Find(cmdName, cmdArgs)
+	matched := filter.GlobalRegistry().Find(cmdName, cmdArgs)
 
 	// 3. EXECUTE: 本地执行命令
 	result, err := internal.RunCommand(cmdName, cmdArgs)

@@ -7,6 +7,10 @@ import (
 	"github.com/gw-cli/gw/filter"
 )
 
+func init() {
+	filter.Register(&GradleFilter{})
+}
+
 // GradleFilter 过滤 Gradle 构建输出，压缩任务进度和守护进程启动信息
 type GradleFilter struct{}
 

@@ -6,6 +6,10 @@ import (
 	"github.com/gw-cli/gw/filter"
 )
 
+func init() {
+	filter.Register(&StatusFilter{})
+}
+
 // StatusFilter 过滤 git status 输出，去除教学提示信息
 type StatusFilter struct{}
 

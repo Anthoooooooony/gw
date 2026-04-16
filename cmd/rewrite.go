@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gw-cli/gw/filter"
 	"github.com/gw-cli/gw/shell"
 	"github.com/spf13/cobra"
 )
@@ -31,7 +32,7 @@ func runRewrite(cmd *cobra.Command, args []string) {
 
 	// 2. 拆分链式命令
 	segments := shell.SplitChainedCommands(command)
-	registry := buildRegistry()
+	registry := filter.GlobalRegistry()
 
 	// 3. 逐段检查并改写
 	anyRewritten := false

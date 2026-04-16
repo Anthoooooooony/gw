@@ -7,6 +7,10 @@ import (
 	"github.com/gw-cli/gw/filter"
 )
 
+func init() {
+	filter.Register(&LogFilter{})
+}
+
 // LogFilter 过滤 git log 输出，转换为紧凑格式
 type LogFilter struct{}
 
