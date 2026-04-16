@@ -139,6 +139,48 @@ func TestSpringBootFilter_Apply(t *testing.T) {
 	}
 }
 
+func TestSpringBootStreamFilter_Interface(t *testing.T) {
+	var sf filter.StreamFilter = &SpringBootFilter{}
+	_ = sf.NewStreamInstance()
+}
+
+func TestSpringBootStreamFilter_Startup(t *testing.T) {
+	f := &SpringBootFilter{}
+	proc := f.NewStreamInstance()
+	fixture := loadFixture(t, "springboot_startup.txt")
+	lines := strings.Split(fixture, "\n")
+
+	var emitted []string
+	for _, line := range lines {
+		action, output := proc.ProcessLine(line)
+		if action == filter.StreamEmit {
+			emitted = append(emitted, output)
+		}
+	}
+
+	joined := strings.Join(emitted, "\n")
+	// Port info preserved
+	if !strings.Contains(joined, "8080") {
+		t.Error("should preserve port")
+	}
+	// Started preserved
+	if !strings.Contains(joined, "Started") {
+		t.Error("should preserve Started")
+	}
+	// Banner stripped
+	if strings.Contains(joined, "____") {
+		t.Error("should strip banner")
+	}
+	// HikariPool stripped
+	if strings.Contains(joined, "HikariPool") {
+		t.Error("should strip HikariPool")
+	}
+	// WARN preserved
+	if !strings.Contains(joined, "WARN") {
+		t.Error("should preserve WARN")
+	}
+}
+
 func TestSpringBootFilter_ApplyOnError(t *testing.T) {
 	f := &SpringBootFilter{}
 	result := f.ApplyOnError(filter.FilterInput{
