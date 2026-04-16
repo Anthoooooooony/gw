@@ -47,6 +47,11 @@ func TestGradleFilter_ApplySuccess(t *testing.T) {
 		t.Error("应该保留 BUILD SUCCESSFUL")
 	}
 
+	// 应保留 actionable tasks 摘要
+	if !strings.Contains(output.Content, "actionable task") {
+		t.Error("应该保留 actionable tasks 摘要")
+	}
+
 	// 应保留测试结果
 	if !strings.Contains(output.Content, "PASSED") {
 		t.Error("应该保留测试通过结果")
@@ -61,6 +66,27 @@ func TestGradleFilter_ApplySuccess(t *testing.T) {
 	if strings.Contains(output.Content, "Starting a Gradle Daemon") {
 		t.Error("不应包含 Starting Daemon 行")
 	}
+
+	// 不应包含 Configure project
+	if strings.Contains(output.Content, "> Configure project") {
+		t.Error("不应包含 Configure project 行")
+	}
+
+	// 不应包含 Kotlin 警告
+	if strings.Contains(output.Content, "w: file:///") {
+		t.Error("不应包含 Kotlin 警告行")
+	}
+
+	// 不应包含 deprecated 警告
+	if strings.Contains(output.Content, "deprecated") {
+		t.Error("不应包含 deprecated 警告")
+	}
+
+	// 验证压缩效果
+	origLen := len(fixture)
+	filtLen := len(output.Content)
+	ratio := float64(filtLen) / float64(origLen) * 100
+	t.Logf("Gradle 成功构建压缩比: %.1f%% (%d -> %d bytes)", ratio, origLen, filtLen)
 }
 
 func TestGradleFilter_ApplyOnError(t *testing.T) {
@@ -86,16 +112,33 @@ func TestGradleFilter_ApplyOnError(t *testing.T) {
 	}
 
 	// 应保留 FAILED 任务行
-	if !strings.Contains(content, "FAILED") {
-		t.Error("应该保留 FAILED 信息")
+	if !strings.Contains(content, "> Task :app:test FAILED") {
+		t.Error("应该保留 FAILED 任务行")
 	}
 
-	// 应保留测试失败详情
+	// 应保留测试失败详情（断言错误值）
 	if !strings.Contains(content, "401") {
 		t.Error("应该保留断言详情(401)")
 	}
-	if !strings.Contains(content, "NullPointerException") {
-		t.Error("应该保留异常信息")
+
+	// 应保留 FAILURE 行
+	if !strings.Contains(content, "FAILURE:") {
+		t.Error("应该保留 FAILURE 行")
+	}
+
+	// 应保留 What went wrong
+	if !strings.Contains(content, "* What went wrong:") {
+		t.Error("应该保留 What went wrong")
+	}
+
+	// 应保留 actionable tasks 摘要
+	if !strings.Contains(content, "actionable task") {
+		t.Error("应该保留 actionable tasks 摘要")
+	}
+
+	// 应保留 tests completed 摘要
+	if !strings.Contains(content, "tests completed") {
+		t.Error("应该保留 tests completed 摘要")
 	}
 
 	// 不应包含 Try 建议
@@ -105,6 +148,9 @@ func TestGradleFilter_ApplyOnError(t *testing.T) {
 	if strings.Contains(content, "> Run with --info") {
 		t.Error("不应包含 Try 建议行")
 	}
+	if strings.Contains(content, "* Try:") {
+		t.Error("不应包含 * Try: 行")
+	}
 
 	// 不应包含报告链接
 	if strings.Contains(content, "See the report at:") {
@@ -112,7 +158,31 @@ func TestGradleFilter_ApplyOnError(t *testing.T) {
 	}
 
 	// 不应包含普通 Task 进度行
-	if strings.Contains(content, "> Task :compileJava") {
+	if strings.Contains(content, "> Task :lib:compileKotlin") {
 		t.Error("不应包含普通 Task 进度行")
 	}
+	if strings.Contains(content, "> Task :app:compileKotlin\n") {
+		t.Error("不应包含普通 Task 进度行")
+	}
+
+	// 不应包含 Kotlin 警告
+	if strings.Contains(content, "w: file:///") {
+		t.Error("不应包含 Kotlin 警告行")
+	}
+
+	// 不应包含 Deprecated Gradle features
+	if strings.Contains(content, "Deprecated Gradle features") {
+		t.Error("不应包含 Deprecated Gradle features 行")
+	}
+
+	// 不应包含 Configure project
+	if strings.Contains(content, "> Configure project") {
+		t.Error("不应包含 Configure project 行")
+	}
+
+	// 验证压缩效果
+	origLen := len(fixture)
+	filtLen := len(content)
+	ratio := float64(filtLen) / float64(origLen) * 100
+	t.Logf("Gradle 失败构建压缩比: %.1f%% (%d -> %d bytes)", ratio, origLen, filtLen)
 }
