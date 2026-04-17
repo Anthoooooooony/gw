@@ -55,7 +55,7 @@ jobs:
           cp ../README.md ../CHANGELOG.md .
           tar czf "gw_${GITHUB_REF_NAME}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz" \
             gw README.md CHANGELOG.md
-          ls -la *.tar.gz
+          ls -la ./*.tar.gz
 
       - name: Upload archive artifact
         uses: actions/upload-artifact@v4
@@ -82,7 +82,7 @@ jobs:
       - name: Generate checksums.txt
         run: |
           cd dist
-          sha256sum *.tar.gz > checksums.txt
+          sha256sum ./*.tar.gz > checksums.txt
           cat checksums.txt
 
       - name: Extract release notes from CHANGELOG

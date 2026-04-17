@@ -17,6 +17,7 @@ assert_eq() {
 }
 
 # 让 bump.sh 进入 "被 source 模式"——不执行 main
+# shellcheck disable=SC2034  # BUMP_LIB_ONLY 在 bump.sh 里通过 ${BUMP_LIB_ONLY:-} 读
 BUMP_LIB_ONLY=1
 # shellcheck source=./bump.sh
 source "$(dirname "$0")/bump.sh"
