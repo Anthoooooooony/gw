@@ -68,6 +68,12 @@ func RunCommandStreamingFull(name string, args []string, onLine func(string), st
 			pid := cmd.Process.Pid
 			_ = killProcessGroup(pid, syscall.SIGTERM)
 
+			// 非 unix 平台（如 Windows）无 SIGTERM 宽限期，killProcessGroup 一次 Kill 即已终止。
+			if !procGroupSupportsGraceful {
+				sigkillFired.Store(true)
+				return
+			}
+
 			graceTimer := time.NewTimer(timeoutKillGrace)
 			defer graceTimer.Stop()
 			select {

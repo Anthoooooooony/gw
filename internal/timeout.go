@@ -55,9 +55,15 @@ func resolveTimeoutWithStderr(stderr io.Writer) (time.Duration, bool) {
 	return dur, true
 }
 
-// formatTimeoutMessage 生成写入 stderr 的超时提示
+// formatTimeoutMessage 生成写入 stderr 的超时提示。
+// 在不支持 SIGTERM 宽限期的平台（Windows / plan9）上，由于无法区分信号，
+// 直接输出 "(killed)" 而非误导性的 "SIGTERM[, SIGKILL]"。
 func formatTimeoutMessage(dur time.Duration, sigkillFired bool) string {
-	// 统一格式，方便调用方 / 上层 hook 识别
+	if !procGroupSupportsGraceful {
+		// 非 unix 平台降级：一次性 Kill，不存在 SIGTERM 阶段
+		return fmt.Sprintf("\ngw: command timed out after %s (killed)\n", dur)
+	}
+	// unix 两阶段语义
 	signals := "SIGTERM"
 	if sigkillFired {
 		signals = "SIGTERM, SIGKILL"

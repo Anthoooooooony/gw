@@ -66,6 +66,13 @@ func RunCommand(name string, args []string) (*CommandResult, error) {
 			pid := cmd.Process.Pid
 			_ = killProcessGroup(pid, syscall.SIGTERM)
 
+			// 非 unix 平台（如 Windows）killProcessGroup 忽略 sig 参数，
+			// 第一次调用即已 Kill，无 SIGTERM 宽限期概念；标记为已 kill 后直接返回。
+			if !procGroupSupportsGraceful {
+				sigkillFired.Store(true)
+				return
+			}
+
 			// 宽限期后若进程仍在，发 SIGKILL
 			graceTimer := time.NewTimer(timeoutKillGrace)
 			defer graceTimer.Stop()
