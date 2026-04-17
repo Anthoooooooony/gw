@@ -1,6 +1,34 @@
 # CLAUDE.md
 
-本文档记录 gw 项目的开发约定和环境变量配置，供 Claude Code 与协作者参考。
+该文件为 Claude Code（claude.ai/code）在本仓库工作时提供指引，记录开发约定、环境变量与关键不变式。
+
+## 项目概览
+
+gw 是一个 CLI 代理，拦截 shell 命令并过滤输出，减少 LLM token 消耗。详见 `README.md`。
+
+## TOML 规则三级加载
+
+TOML 声明式规则走**三级加载**，由 `filter/toml/loader.go::LoadAllRules` 统一合并。
+按加载顺序从低到高，**高层同 ID 覆盖低层**：
+
+1. **builtin**：`go:embed` 烘进二进制的 `filter/toml/rules/*.toml`
+2. **user**：`os.UserConfigDir()/gw/rules/*.toml`
+   - Linux：`$XDG_CONFIG_HOME/gw/rules/`（默认 `~/.config/gw/rules/`）
+   - macOS：`~/Library/Application Support/gw/rules/`
+   - Windows：`%AppData%\gw\rules\`
+3. **project**：从当前工作目录向上查找 `.gw/rules/*.toml`，遇到 `.git` 目录或文件系统根时停止
+
+规则唯一 ID 用 `section.name`（例如 `docker.ps`）。`disabled = true` 可让高层剔除同 ID 的低层规则。
+解析错误只打 warning 到 stderr，不中断加载（企业环境鲁棒性要求）。
+
+`gw filters list` 查看全部已注册的过滤器及其来源：
+
+```
+NAME              TYPE  SOURCE                                                 MATCH
+git/status        go    builtin                                                git status
+docker.ps         toml  user:///home/u/.config/gw/rules/docker-prod.toml       docker ps
+myapp.logs        toml  project:///workspace/.gw/rules/custom.toml             myapp logs
+```
 
 ## 环境变量
 
@@ -22,41 +50,49 @@
 **退出码约定**：超时场景统一返回 `124`（GNU `timeout(1)` 惯例），stderr 末尾追加 `gw: command timed out after <dur> (SIGTERM[, SIGKILL])`。
 
 **批量 vs 流式**：
-- 批量路径（`internal.RunCommand`）：超时后 `CommandResult.ExitCode = 124`，stderr 追加提示，不返回 Go error，让 `cmd/exec.go` 走正常的 `ApplyOnError` 路径。
-- 流式路径（`internal.RunCommandStreamingFull`）：超时后返回 `exitCode = 124`（非 `-1`），调用方 `proc.Flush(124)` 能拿到非零 exit 从而输出错误上下文。stderr writer 收到超时提示。
+- 批量路径（`internal.RunCommand`）：超时后 `CommandResult.ExitCode = 124`，stderr 追加提示，不返回 Go error，走正常 `ApplyOnError` 路径
+- 流式路径（`internal.RunCommandStreamingFull`）：超时后返回 `exitCode = 124`（非 `-1`），调用方 `proc.Flush(124)` 能拿到非零 exit 从而输出错误上下文
 
 **平台兼容**：
 - 进程组相关代码在 `internal/procgroup_unix.go`，`//go:build unix` 覆盖 macOS / Linux / *BSD
 - 非 unix 平台（如 Windows）在 `internal/procgroup_other.go` 提供仅杀主进程的降级实现
 
-**使用示例**：
+### `GW_STORE_RAW` — 是否持久化原始输出到 SQLite
 
-```bash
-# 默认 10 分钟
-gw exec mvn test
-
-# CI 场景缩短到 5 分钟
-GW_CMD_TIMEOUT=5m gw exec mvn test
-
-# 调试时禁用超时
-GW_CMD_TIMEOUT=off gw exec npm run dev
-
-# 单元测试使用短超时（保持测试运行时间）
-GW_CMD_TIMEOUT=300ms go test ./internal/...
-```
+默认 **不** 把每次执行的原始输出写入 `~/.gw.db`（避免 DB 爆炸）。设为 `1` 后 `gw exec` 会把原始输出存入 `records.raw_output` 字段，供 `gw inspect [id] --raw` 回溯。
 
 ## 执行路径关键不变式
 
-- `RunCommand` 和 `RunCommandStreamingFull` 的函数签名**稳定**，超时只通过环境变量控制，调用方不需要改动
+- `RunCommand` 与 `RunCommandStreamingFull` 的函数签名**稳定**，超时/落盘等只通过环境变量或 flag 控制
 - 流式路径超时后必须保证 `cmd/exec.go` 能调用 `proc.Flush(exitCode)`，即 `RunCommandStreamingFull` 不泄漏 goroutine、不死锁
-- 信号终止（非超时）继续保持 `exitCode = -1` 语义，与超时的 `124` 区分开
+- 信号终止（非超时）保持 `exitCode = -1` 语义，与超时的 `124` 区分开
+- DB schema 演进只走 `ALTER TABLE ADD COLUMN`，**禁止** `DROP TABLE`（用户 `~/.gw.db` 是生产数据）
 
-## 测试
+## Hook 安装约定
 
-```bash
-# 全量测试
-go test -count=1 ./...
+- 写入 `~/.claude/settings.json` 的 hook 条目必须带 `_gw_managed: true` 标记，`gw uninstall` 按此标记清理
+- `gw init --dry-run` / `gw uninstall --dry-run` 只打印变更，不落盘
+- 写入前自动 backup 为 `settings.json.bak`，写入走临时文件 + rename 原子替换
 
-# 超时相关（较慢，含宽限期验证）
-go test -v -count=1 -run Timeout ./internal/ -timeout 60s
-```
+## 关键文件
+
+| 路径 | 职责 |
+|------|------|
+| `filter/toml/loader.go` | TOML 三级加载器、来源追踪、disabled 支持 |
+| `filter/toml/engine.go` | TOML 过滤引擎（7 阶段管道），`LoadEngine` 调用 loader |
+| `filter/registry.go` | 全局注册表 + `List()`（给 `gw filters list` 用） |
+| `cmd/filters.go` | `gw filters list` 命令 |
+| `cmd/version.go` | `gw --version` / `gw version`（ldflags + runtime/debug fallback） |
+| `cmd/inspect.go` | `gw inspect [id]` 查询 DB 历史记录 |
+| `internal/timeout.go` | `GW_CMD_TIMEOUT` 解析 + 超时提示 |
+| `internal/procgroup_*.go` | 进程组 SIGTERM/SIGKILL（跨平台拆分） |
+| `track/db.go` | SQLite 存储 + raw_output 列 migration |
+| `filter/all/all.go` | blank import 聚合过滤器包 |
+
+## 代码规范
+
+- Go 代码注释、日志、错误消息使用中文（项目主语言）
+- 文件末尾统一 `\n` 行结尾
+- 不引新依赖（TOML 解析器固定 `github.com/BurntSushi/toml`）
+- 测试：`go test ./...`；超时相关 `go test -run Timeout ./internal/ -timeout 60s`
+- 加载失败只 warning 不 panic（企业部署稳定性硬要求）
