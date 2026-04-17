@@ -204,7 +204,6 @@ Spring Boot (`java -jar`) 只走流式路径，不走批量路径。
 ```
 gw/
 ├── main.go                         # 入口
-├── CLAUDE.md                       # AI 协作指南
 │
 ├── cmd/                            # CLI 命令
 │   ├── root.go                     # cobra 根命令 + --verbose flag
