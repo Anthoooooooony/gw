@@ -12,9 +12,14 @@
 
 ### Removed
 
-[Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.1.1...HEAD
 [v0.1.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.0
 
+## [v0.1.1] - 2026-04-17
+
+### Fixed
+- fix: 统一错误前缀到 CLAUDE.md 约定（删 [gw] 方括号风格） (#12)
+- fix(bump): 修复 pre-release bug + CHANGELOG 链接自动维护 (#9)
 ## [v0.1.0] - 2026-04-17
 
 ### Added
@@ -42,3 +47,4 @@
 - fix(P1): 流式路径信号终止返回 128+signal 保留真实信号值
 - fix(P1): findProjectRulesDir 识别 .git 为文件的 worktree 场景
 - fix(P0): Windows 降级 killProcessGroup 忽略 sig，避免误导性 SIGTERM 日志
+[v0.1.1]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.1
