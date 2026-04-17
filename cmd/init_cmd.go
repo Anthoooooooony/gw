@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -89,6 +90,10 @@ func marshalSettings(settings map[string]interface{}) ([]byte, error) {
 //  2. 将新内容写入同目录的临时文件；
 //  3. rename 临时文件到目标路径（同文件系统 rename 为原子操作）。
 //
+// 权限策略：
+//   - 原文件已存在：backup 和 tmp 文件保留原文件的 mode（避免把 0600 降级到 0644）
+//   - 首次写入（文件不存在）：新文件使用 0600（保守：hook 命令可能包含敏感内容）
+//
 // 任一步骤失败都不会留下半截的目标文件。
 func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 	data, err := marshalSettings(settings)
@@ -101,9 +106,17 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 		return fmt.Errorf("创建目录 %s 失败: %w", dir, err)
 	}
 
-	// 1. 若目标已存在，生成备份
+	// 探测原文件 mode；不存在则使用保守默认 0600
+	var targetMode os.FileMode = 0o600
+	if info, err := os.Stat(path); err == nil {
+		targetMode = info.Mode().Perm()
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("stat 原文件 %s 失败: %w", path, err)
+	}
+
+	// 1. 若目标已存在，生成备份（权限沿用原文件）
 	if existing, err := os.ReadFile(path); err == nil {
-		if err := os.WriteFile(path+".bak", existing, 0644); err != nil {
+		if err := os.WriteFile(path+".bak", existing, targetMode); err != nil {
 			return fmt.Errorf("写入备份 %s.bak 失败: %w", path, err)
 		}
 	} else if !os.IsNotExist(err) {
@@ -129,7 +142,8 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 	if err := tmp.Close(); err != nil {
 		return fmt.Errorf("关闭临时文件失败: %w", err)
 	}
-	if err := os.Chmod(tmpPath, 0644); err != nil {
+	// 权限与原文件一致（首次写入时为 0600）
+	if err := os.Chmod(tmpPath, targetMode); err != nil {
 		return fmt.Errorf("调整临时文件权限失败: %w", err)
 	}
 
@@ -141,7 +155,14 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 }
 
 // applyInitToSettings 返回插入（或保持）gw hook 后的 settings 及状态。
-// 判定依据是 hook 条目上的 _gw_managed 标记，而不是 hook 命令字面量。
+//
+// 判定优先级：
+//  1. 已有带 _gw_managed=true 标记的条目 → already
+//  2. 已有 hook 字段含 "gw rewrite" 关键字但**无**标记（v0.x 遗留） →
+//     就地迁移：补上 _gw_managed=true 标记，返回 already
+//  3. 否则追加新 gw hook，返回 installed
+//
+// 兼容旧版本可避免升级用户 settings.json 里出现两条重复 hook。
 func applyInitToSettings(settings map[string]interface{}) (map[string]interface{}, string) {
 	// 安全拷贝：避免直接修改入参以便测试断言。
 	// 浅拷贝即可，hooks 数组会在必要时重建。
@@ -164,6 +185,35 @@ func applyInitToSettings(settings map[string]interface{}) (map[string]interface{
 				return out, initStatusAlready
 			}
 		}
+	}
+
+	// 兼容 v0.x：hook 字段含 "gw rewrite" 视为旧版 gw 管理的 hook，补标记迁移。
+	// 使用浅拷贝 + 重建 hooks 数组，避免修改入参底层 map。
+	migrated := false
+	newHooks := make([]interface{}, 0, len(hooks))
+	for _, h := range hooks {
+		m, ok := h.(map[string]interface{})
+		if !ok {
+			newHooks = append(newHooks, h)
+			continue
+		}
+		if !migrated {
+			if hookStr, ok := m["hook"].(string); ok && strings.Contains(hookStr, "gw rewrite") {
+				copied := make(map[string]interface{}, len(m)+1)
+				for k, v := range m {
+					copied[k] = v
+				}
+				copied[gwManagedKey] = true
+				newHooks = append(newHooks, copied)
+				migrated = true
+				continue
+			}
+		}
+		newHooks = append(newHooks, h)
+	}
+	if migrated {
+		out["hooks"] = newHooks
+		return out, initStatusAlready
 	}
 
 	gwHook := map[string]interface{}{
