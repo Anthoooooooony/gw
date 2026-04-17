@@ -1,0 +1,76 @@
+# Rust 生态过滤规则：覆盖 cargo build / test / check / clippy。
+# 设计目标：strip "Compiling/Downloaded/Blocking/Updating crates.io" 等进度行，
+# 保留 warning/error、Finished 摘要以及 test 失败明细。
+
+[cargo.build]
+match = "cargo build"
+strip_ansi = true
+strip_lines = [
+    # crates.io 索引更新
+    "^\\s+Updating crates.io index",
+    "^\\s+Updating git repository",
+    # 下载阶段
+    "^\\s+Downloading ",
+    "^\\s+Downloaded ",
+    "^\\s+Fetching ",
+    # 编译进度（保留 Finished/error/warning，过滤逐 crate Compiling）
+    "^\\s+Compiling [a-zA-Z0-9_-]+ v",
+    "^\\s+Checking [a-zA-Z0-9_-]+ v",
+    # 锁等待
+    "^\\s+Blocking waiting for file lock",
+    # 文档生成
+    "^\\s+Documenting ",
+]
+tail_lines = 120
+on_empty = "cargo build: ok (无变更)"
+
+[cargo.check]
+match = "cargo check"
+strip_ansi = true
+strip_lines = [
+    "^\\s+Updating crates.io index",
+    "^\\s+Updating git repository",
+    "^\\s+Downloading ",
+    "^\\s+Downloaded ",
+    "^\\s+Fetching ",
+    "^\\s+Checking [a-zA-Z0-9_-]+ v",
+    "^\\s+Blocking waiting for file lock",
+]
+tail_lines = 120
+on_empty = "cargo check: ok"
+
+[cargo.clippy]
+match = "cargo clippy"
+strip_ansi = true
+strip_lines = [
+    "^\\s+Updating crates.io index",
+    "^\\s+Downloading ",
+    "^\\s+Downloaded ",
+    "^\\s+Fetching ",
+    "^\\s+Checking [a-zA-Z0-9_-]+ v",
+    "^\\s+Compiling [a-zA-Z0-9_-]+ v",
+]
+tail_lines = 120
+on_empty = "cargo clippy: ok"
+
+[cargo.test]
+match = "cargo test"
+strip_ansi = true
+strip_lines = [
+    "^\\s+Updating crates.io index",
+    "^\\s+Downloading ",
+    "^\\s+Downloaded ",
+    "^\\s+Fetching ",
+    "^\\s+Compiling [a-zA-Z0-9_-]+ v",
+    "^\\s+Finished ",
+    # 单条通过的用例：test foo::bar ... ok（保留 FAILED 行：含 "FAILED"）
+    "^test [a-zA-Z0-9_:]+ \\.\\.\\. ok$",
+    "^test [a-zA-Z0-9_:]+ \\.\\.\\. ignored",
+    # Doc-tests 标题与运行行
+    "^\\s+Doc-tests ",
+    "^\\s+Running ",
+    # 通过用例的统计点
+    "^\\s*\\.+\\s*$",
+]
+tail_lines = 200
+on_empty = "cargo test: ok (全部通过)"
