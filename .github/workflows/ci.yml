@@ -74,7 +74,6 @@ jobs:
         uses: ludeeus/action-shellcheck@master
         with:
           scandir: './scripts'
-          additional_files: 'scripts/bump.sh'   # -x 让 shellcheck 跟踪 source 指令
 
   actionlint:
     name: actionlint (.github/workflows/)
