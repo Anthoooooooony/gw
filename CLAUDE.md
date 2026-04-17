@@ -20,7 +20,22 @@ PARSE → ROUTE → EXECUTE → FILTER → PRINT → TRACK
 
 - **批量路径:** `cmd.Run()` 等待命令退出 → 拿到全部输出 → 过滤（git status/log 等短命令）
 - **流式路径:** `cmd.StdoutPipe()` + `bufio.Scanner` 逐行读取 → 实时过滤（Maven/Spring Boot 等可能长时间运行的命令）
-- 选择逻辑: 过滤器实现了 `StreamFilter` 接口 → 走流式；否则走批量
+
+**判定逻辑:** 唯一依据是**过滤器接口实现**，不看命令本身。
+
+```go
+// cmd/exec.go
+if sf := filter.FindStream(cmd, args); sf != nil {
+    runStreamExec(sf, ...)  // StreamFilter → 流式
+} else {
+    runExec(...)            // 仅 Filter → 批量
+}
+```
+
+新增过滤器时根据命令特征决定：
+- 输出小且会退出（git、TOML 覆盖的长尾命令）→ 只实现 `Filter`
+- 输出大但会退出（Maven 多模块）→ 同时实现 `Filter` + `StreamFilter`
+- 长驻进程（Spring Boot `java -jar`）→ 必须实现 `StreamFilter`（批量会永远阻塞）
 
 ### 双层过滤器
 
@@ -34,13 +49,24 @@ PARSE → ROUTE → EXECUTE → FILTER → PRINT → TRACK
 
 ## 过滤策略设计原则
 
-### 三级错误处理
+### 错误处理（批量 vs 流式不同）
+
+**批量路径 — 三级策略**（依赖 exit code）：
 
 | 场景 | 策略 |
 |------|------|
-| 命令成功 (exit 0) | 激进压缩 |
-| 命令失败 + 有 ApplyOnError | 去噪音但保留错误详情 |
-| 命令失败 + ApplyOnError 返回 nil | 透传原始输出 |
+| 命令成功 (exit 0) | `Apply()` 激进压缩 |
+| 命令失败 + 有 `ApplyOnError` | 去噪音但保留错误详情 |
+| 命令失败 + `ApplyOnError` 返回 nil | 透传原始输出 |
+
+**流式路径 — 两阶段策略**（ProcessLine 阶段不知道 exit code）：
+
+| 阶段 | 逻辑 |
+|------|------|
+| `ProcessLine(line)` | 保守输出：错误/栈追踪立即输出；普通插件输出缓冲（最多 10 行） |
+| `Flush(exitCode)` | 失败则追加 buffer；成功则丢弃 buffer |
+
+流式模式没有"透传"降级路径 —— 实现 `StreamFilter` 的过滤器必须自己处理所有错误场景。
 
 ### 长驻进程排除
 
