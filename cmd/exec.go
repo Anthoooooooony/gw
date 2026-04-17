@@ -165,6 +165,7 @@ func runExec(cmd *cobra.Command, args []string) {
 	}
 
 	// 写入数据库（同步，在 os.Exit 前完成）
+	// DB 打开失败属于非致命降级：verbose 时 warn，生产模式保持静默（主流程不受影响）。
 	if db, err := track.NewDB(track.DefaultDBPath()); err == nil {
 		rec := track.Record{
 			Timestamp:    time.Now().UTC(),
@@ -182,6 +183,8 @@ func runExec(cmd *cobra.Command, args []string) {
 		}
 		_ = db.InsertRecord(rec)
 		db.Close()
+	} else if Verbose {
+		fmt.Fprintf(os.Stderr, "gw: warning: tracking DB open failed: %v\n", err)
 	}
 
 	// 7. 使用原始命令的退出码退出
@@ -258,6 +261,7 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 	}
 
 	// 写入数据库（同步，在 os.Exit 前完成）
+	// DB 打开失败属于非致命降级：verbose 时 warn，生产模式保持静默。
 	if db, err := track.NewDB(track.DefaultDBPath()); err == nil {
 		rec := track.Record{
 			Timestamp:    time.Now().UTC(),
@@ -274,6 +278,8 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 		}
 		_ = db.InsertRecord(rec)
 		db.Close()
+	} else if Verbose {
+		fmt.Fprintf(os.Stderr, "gw: warning: tracking DB open failed: %v\n", err)
 	}
 
 	// 退出码语义：

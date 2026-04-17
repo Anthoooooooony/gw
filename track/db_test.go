@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -106,11 +108,65 @@ func TestEstimateTokens(t *testing.T) {
 }
 
 func TestDefaultDBPath(t *testing.T) {
+	// 清除可能污染的 env
+	os.Unsetenv("GW_DB_PATH")
 	path := DefaultDBPath()
 	home, _ := os.UserHomeDir()
 	expected := filepath.Join(home, ".gw", "tracking.db")
 	if path != expected {
 		t.Errorf("期望 %s，得到 %s", expected, path)
+	}
+}
+
+// TestDefaultDBPath_EnvOverride GW_DB_PATH 优先级最高
+func TestDefaultDBPath_EnvOverride(t *testing.T) {
+	custom := filepath.Join(t.TempDir(), "custom.db")
+	os.Setenv("GW_DB_PATH", custom)
+	defer os.Unsetenv("GW_DB_PATH")
+
+	got := DefaultDBPath()
+	if got != custom {
+		t.Errorf("GW_DB_PATH 未生效: 期望 %s, 得到 %s", custom, got)
+	}
+}
+
+// TestDefaultDBPath_HomeUnwritableFallback HOME 不可写时降级到 os.TempDir
+// 并通过 stderr 打一次 warning。
+func TestDefaultDBPath_HomeUnwritableFallback(t *testing.T) {
+	os.Unsetenv("GW_DB_PATH")
+
+	// 通过把 HOME 指向一个只读的不存在路径（但父目录不可写）来触发降级。
+	// 在 macOS/Linux 上把 HOME 指向 /nonexistent/readonly-home —— MkdirAll 会失败。
+	// 测试走的是 pathResolver，所以我们通过 resolveDBPathWithEnv 注入 homeDir 不可写信号。
+
+	// 重置单次降级 warning 状态，让本测试独立可观察 warn
+	dbWarnOnce = sync.Once{}
+
+	var warnBuf strings.Builder
+	got := resolveDBPathWithEnv("", "/nonexistent/readonly-home", &warnBuf)
+
+	if !strings.HasPrefix(got, os.TempDir()) {
+		t.Errorf("HOME 不可写应降级到 TempDir，得到 %s", got)
+	}
+	if !strings.Contains(warnBuf.String(), "HOME") {
+		t.Errorf("应发出 HOME 相关 warning，得到 %q", warnBuf.String())
+	}
+}
+
+// TestDefaultDBPath_WarnOnce 同一进程内降级 warning 只打一次
+func TestDefaultDBPath_WarnOnce(t *testing.T) {
+	os.Unsetenv("GW_DB_PATH")
+	dbWarnOnce = sync.Once{}
+
+	var w1, w2 strings.Builder
+	_ = resolveDBPathWithEnv("", "/nonexistent/readonly-home", &w1)
+	_ = resolveDBPathWithEnv("", "/nonexistent/readonly-home", &w2)
+
+	if w1.Len() == 0 {
+		t.Error("首次调用应 warn")
+	}
+	if w2.Len() != 0 {
+		t.Errorf("第二次调用不应重复 warn，得到 %q", w2.String())
 	}
 }
 
