@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: gofmt style gate
+        shell: bash
+        run: |
+          files=$(gofmt -l .)
+          if [ -n "$files" ]; then
+            printf '%s\n' "$files" >&2
+            count=$(printf '%s\n' "$files" | wc -l | tr -d ' ')
+            echo "gofmt found $count unformatted file(s); run 'gofmt -w .' locally" >&2
+            exit 1
+          fi
+
+      - name: go test -race
+        env:
+          CGO_ENABLED: '1'
+        run: go test -race -count=1 ./...
+
+  build:
+    name: build (linux-amd64, CGO)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: go build
+        env:
+          CGO_ENABLED: '1'
+        run: go build ./...
