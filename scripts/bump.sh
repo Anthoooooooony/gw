@@ -185,7 +185,7 @@ main() {
   git tag -a "$new_tag" -m "release: $new_tag"
   git push origin master "$new_tag"
 
-  echo "gw bump: 已推送 $new_tag，release.yml 将由 tag push 触发"
+  echo "gw bump: 已推送 ${new_tag}，release.yml 将由 tag push 触发"
 }
 
 # 仅当被直接执行、非 source 时调用 main
