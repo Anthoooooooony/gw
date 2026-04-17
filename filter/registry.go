@@ -28,6 +28,13 @@ func (r *Registry) Add(f Filter) {
 	r.filters = append(r.filters, f)
 }
 
+// List 返回注册表中所有过滤器的快照（副本，遍历期间修改注册表不受影响）
+func (r *Registry) List() []Filter {
+	out := make([]Filter, len(r.filters))
+	copy(out, r.filters)
+	return out
+}
+
 // Find 查找匹配指定命令的第一个过滤器，未找到返回 nil
 func (r *Registry) Find(cmd string, args []string) Filter {
 	for _, f := range r.filters {

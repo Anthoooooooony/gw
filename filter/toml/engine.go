@@ -11,9 +11,7 @@ import (
 )
 
 func init() {
-	if engine, err := LoadBuiltinRules(); err == nil {
-		filter.Register(engine)
-	}
+	filter.Register(LoadEngine())
 }
 
 //go:embed rules/*.toml
@@ -34,7 +32,19 @@ type Rule struct {
 // TomlFilter 基于 TOML 规则的声明式过滤器
 type TomlFilter struct {
 	Rules       []Rule
-	matchedRule string // 最近一次匹配的规则名
+	Loaded      []LoadedRule // 带来源的完整规则信息（可能为空，用于 filters list）
+	matchedRule string       // 最近一次匹配的规则名
+}
+
+// LoadEngine 使用三级加载器（builtin + user + project）构造过滤器实例。
+// 即使加载过程遇到错误也会返回可用的空实例，避免影响主流程。
+func LoadEngine() *TomlFilter {
+	loaded := LoadAllRules()
+	rules := make([]Rule, 0, len(loaded))
+	for _, l := range loaded {
+		rules = append(rules, l.Rule)
+	}
+	return &TomlFilter{Rules: rules, Loaded: loaded}
 }
 
 // ansiRegex 匹配 ANSI 转义序列
