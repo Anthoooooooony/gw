@@ -3,6 +3,7 @@ package cmd_test
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -10,9 +11,15 @@ import (
 const gwBinary = "/tmp/gw-integration-test"
 
 func TestMain(m *testing.M) {
-	// 构建二进制到临时目录
+	// 构建二进制到临时目录。优先使用 GW_SOURCE_ROOT 指向的源树（便于
+	// 在 git worktree 里跑集成测试构建当前 worktree 的代码），
+	// 未设置则回退到 /private/tmp/gw（master）。
+	srcRoot := os.Getenv("GW_SOURCE_ROOT")
+	if srcRoot == "" {
+		srcRoot = "/private/tmp/gw"
+	}
 	build := exec.Command("go", "build", "-o", gwBinary, ".")
-	build.Dir = "/private/tmp/gw"
+	build.Dir = srcRoot
 	if err := build.Run(); err != nil {
 		panic("build failed: " + err.Error())
 	}
@@ -112,6 +119,134 @@ func TestRewrite_NoMatch(t *testing.T) {
 	}
 	if exitErr.ExitCode() == 0 {
 		t.Error("无匹配命令退出码不应为 0")
+	}
+}
+
+// TestExec_DumpRaw_Batch 验证批量路径 --dump-raw 能把原始输出写入指定文件。
+func TestExec_DumpRaw_Batch(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gw-dumpraw-batch")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dumpPath := filepath.Join(tmpDir, "raw.txt")
+	// echo 无专用过滤器，走批量透传路径
+	cmd := exec.Command(gwBinary, "exec", "--dump-raw", dumpPath, "echo", "hello raw world")
+	cmd.Env = append(os.Environ(), "HOME="+tmpDir) // 隔离 tracking.db
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("exec 失败: %v, output: %s", err, out)
+	}
+	got := strings.TrimSpace(string(out))
+	if got != "hello raw world" {
+		t.Errorf("stdout 期望 'hello raw world', 得到 %q", got)
+	}
+
+	data, err := os.ReadFile(dumpPath)
+	if err != nil {
+		t.Fatalf("读取 dump 文件失败: %v", err)
+	}
+	if !strings.Contains(string(data), "hello raw world") {
+		t.Errorf("dump 文件应包含 'hello raw world', 得到 %q", string(data))
+	}
+}
+
+// TestExec_DumpRaw_Equals 验证 --dump-raw=PATH 等号形式同样工作。
+func TestExec_DumpRaw_Equals(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gw-dumpraw-eq")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dumpPath := filepath.Join(tmpDir, "raw.txt")
+	cmd := exec.Command(gwBinary, "exec", "--dump-raw="+dumpPath, "echo", "eq form")
+	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("exec 失败: %v, output: %s", err, out)
+	}
+
+	data, err := os.ReadFile(dumpPath)
+	if err != nil {
+		t.Fatalf("读取 dump 文件失败: %v", err)
+	}
+	if !strings.Contains(string(data), "eq form") {
+		t.Errorf("dump 文件应包含 'eq form', 得到 %q", string(data))
+	}
+}
+
+// TestExec_DumpRaw_WriteFail 写入不存在目录下的文件应给 warning 但不中断主流程。
+func TestExec_DumpRaw_WriteFail(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gw-dumpraw-fail")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// /nonexistent/.../raw.txt 无法创建
+	badPath := "/nonexistent-gw-dir-abc/raw.txt"
+	cmd := exec.Command(gwBinary, "exec", "--dump-raw", badPath, "echo", "still ok")
+	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("exec 不应因 dump 失败而中断: %v, output: %s", err, out)
+	}
+	output := string(out)
+	if !strings.Contains(output, "still ok") {
+		t.Errorf("主输出应包含 'still ok', 得到 %q", output)
+	}
+	if !strings.Contains(output, "warning") {
+		t.Errorf("应包含 warning, 得到 %q", output)
+	}
+}
+
+// TestExec_DumpRaw_Stream 验证流式路径 --dump-raw 也能把原始输出写入文件。
+// 使用 java -jar /nonexistent.jar 触发 SpringBootFilter（StreamFilter），
+// java 会快速报错退出，stderr 含 "Unable to access jarfile"，会写入 raw buffer。
+func TestExec_DumpRaw_Stream(t *testing.T) {
+	if _, err := exec.LookPath("java"); err != nil {
+		t.Skip("java 不可用，跳过流式路径集成测试")
+	}
+	tmpDir, err := os.MkdirTemp("", "gw-dumpraw-stream")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dumpPath := filepath.Join(tmpDir, "raw-stream.txt")
+	cmd := exec.Command(gwBinary, "exec", "--dump-raw", dumpPath,
+		"java", "-jar", "/nonexistent-gw-test.jar")
+	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
+	_, _ = cmd.CombinedOutput()
+	// 退出码可能非零，这里不校验；关键是 dump 文件应存在且含错误文本。
+
+	data, err := os.ReadFile(dumpPath)
+	if err != nil {
+		t.Fatalf("读取 dump 文件失败（流式路径未写入?）: %v", err)
+	}
+	if !strings.Contains(string(data), "nonexistent-gw-test.jar") {
+		t.Errorf("流式 dump 文件应包含 jar 文件名, 得到 %q", string(data))
+	}
+}
+
+// TestVersion_Command 验证 `gw version` 和 `gw --version` 输出版本字符串。
+func TestVersion_Command(t *testing.T) {
+	out, err := exec.Command(gwBinary, "version").CombinedOutput()
+	if err != nil {
+		t.Fatalf("gw version 失败: %v, output: %s", err, out)
+	}
+	if !strings.Contains(string(out), "gw version") {
+		t.Errorf("输出应包含 'gw version', 得到 %q", string(out))
+	}
+
+	out, err = exec.Command(gwBinary, "--version").CombinedOutput()
+	if err != nil {
+		t.Fatalf("gw --version 失败: %v, output: %s", err, out)
+	}
+	if !strings.Contains(string(out), "gw version") {
+		t.Errorf("--version 输出应包含 'gw version', 得到 %q", string(out))
 	}
 }
 
