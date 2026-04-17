@@ -206,6 +206,10 @@ func defaultProjectRulesRoot() string {
 //  1. 找到 .gw/rules 目录，返回它；
 //  2. 当前目录是文件系统根（再往上等于自身）；
 //  3. 当前目录含有 .git（典型项目边界）——此时仍会先检查 .gw/rules。
+//
+// 关于 .git：git worktree / submodule 场景下 .git 可能是**文件**
+// （内含 `gitdir: <path>` 指向主库），仍应视为项目边界。因此只要
+// os.Stat 成功（不管是目录还是文件）就停止向上查找。
 func findProjectRulesDir(start string) string {
 	cur := start
 	for {
@@ -213,8 +217,8 @@ func findProjectRulesDir(start string) string {
 		if info, err := os.Stat(candidate); err == nil && info.IsDir() {
 			return candidate
 		}
-		// 命中项目边界 .git 后停止（不再继续向上）
-		if info, err := os.Stat(filepath.Join(cur, ".git")); err == nil && info.IsDir() {
+		// 命中项目边界 .git 后停止（目录或文件皆可：文件场景对应 git worktree）
+		if _, err := os.Stat(filepath.Join(cur, ".git")); err == nil {
 			return ""
 		}
 		parent := filepath.Dir(cur)

@@ -5,9 +5,6 @@ import (
 	"context"
 	"errors"
 	"os/exec"
-	"sync/atomic"
-	"syscall"
-	"time"
 )
 
 // CommandResult 保存命令执行的结果
@@ -46,44 +43,10 @@ func RunCommand(name string, args []string) (*CommandResult, error) {
 		return nil, err
 	}
 
-	var timedOut atomic.Bool
-	var sigkillFired atomic.Bool
-	// 进程已结束信号，用于唤醒 killer goroutine 提前退出
-	procDone := make(chan struct{})
-	killerDone := make(chan struct{})
-	if enabled {
-		go func() {
-			defer close(killerDone)
-			select {
-			case <-procDone:
-				return
-			case <-ctx.Done():
-				if !errors.Is(ctx.Err(), context.DeadlineExceeded) {
-					return
-				}
-			}
-			timedOut.Store(true)
-			pid := cmd.Process.Pid
-			_ = killProcessGroup(pid, syscall.SIGTERM)
-
-			// 宽限期后若进程仍在，发 SIGKILL
-			graceTimer := time.NewTimer(timeoutKillGrace)
-			defer graceTimer.Stop()
-			select {
-			case <-procDone:
-				return
-			case <-graceTimer.C:
-				sigkillFired.Store(true)
-				_ = killProcessGroup(pid, syscall.SIGKILL)
-			}
-		}()
-	} else {
-		close(killerDone)
-	}
+	stop, sigkillFired, timedOut := startTimeoutKiller(ctx, cmd, timeoutKillGrace)
 
 	waitErr := cmd.Wait()
-	close(procDone)
-	<-killerDone
+	stop()
 
 	exitCode := 0
 	if waitErr != nil {

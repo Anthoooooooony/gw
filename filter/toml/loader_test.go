@@ -220,6 +220,33 @@ func TestFindProjectRulesDir_MissingReturnsEmpty(t *testing.T) {
 	}
 }
 
+// TestFindProjectRulesDir_StopAtGitFile git worktree 场景下 .git 是**文件**
+// （内含 gitdir: 指向主库），同样应被识别为项目边界而停止向上查找。
+func TestFindProjectRulesDir_StopAtGitFile(t *testing.T) {
+	top := t.TempDir()
+	// 顶层放一个 .gw/rules 诱饵（应被屏蔽）
+	if err := os.MkdirAll(filepath.Join(top, ".gw", "rules"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	inner := filepath.Join(top, "worktree")
+	if err := os.MkdirAll(inner, 0755); err != nil {
+		t.Fatal(err)
+	}
+	// .git 是文件（git worktree / submodule 场景）
+	if err := os.WriteFile(filepath.Join(inner, ".git"),
+		[]byte("gitdir: /elsewhere/.git/worktrees/x\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	sub := filepath.Join(inner, "src")
+	if err := os.MkdirAll(sub, 0755); err != nil {
+		t.Fatal(err)
+	}
+	got := findProjectRulesDir(sub)
+	if got != "" {
+		t.Errorf("遇到 .git 文件（worktree 场景）后应停止向上查找，但返回了 %s", got)
+	}
+}
+
 // TestLoadEngine_IntegratesLoaded 使用 LoadEngine 构造的实例应与 LoadAllRules 一致。
 func TestLoadEngine_IntegratesLoaded(t *testing.T) {
 	withTempDirs(t, "", "")

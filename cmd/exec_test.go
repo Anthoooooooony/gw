@@ -42,7 +42,13 @@ func TestExec_Passthrough(t *testing.T) {
 // TestExec_GitStatus 测试 git status 过滤器去除独立教学提示行
 func TestExec_GitStatus(t *testing.T) {
 	cmd := exec.Command(gwBinary, "exec", "git", "status")
-	cmd.Dir = "/private/tmp/gw"
+	// 用 GW_SOURCE_ROOT 做工作目录（与 TestMain 构建时保持一致），
+	// 避免硬编码 /private/tmp/gw 路径。
+	srcRoot := os.Getenv("GW_SOURCE_ROOT")
+	if srcRoot == "" {
+		srcRoot = "/private/tmp/gw"
+	}
+	cmd.Dir = srcRoot
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("exec git status 失败: %v, output: %s", err, out)
