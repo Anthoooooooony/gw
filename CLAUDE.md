@@ -89,6 +89,7 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 |------|------|------|
 | `gw <subcmd>: <msg>` | 子命令致命错误，紧邻非零 exit | `gw exec: failed to open db: ...` |
 | `gw: warning: <msg>` | 非致命降级 / 回退提示，程序继续执行 | `gw: warning: GW_CMD_TIMEOUT=abc unparseable, fallback to 10m` |
+| `gw: info: <msg>` | 详细统计 / 调试信息，仅在 `--verbose` flag 下输出 | `gw: info: input_tokens=120 output_tokens=40 saved=80 elapsed=200ms` |
 
 **禁止**使用 `[gw] warning: ...` 这种方括号风格 —— 与表格其他消息不一致，且在终端日志中难以 grep。
 

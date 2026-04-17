@@ -88,7 +88,7 @@ func LoadAllRules() []LoadedRule {
 func loadEmbeddedInto(byID map[string]LoadedRule, disabled map[string]bool) {
 	entries, err := builtinRules.ReadDir("rules")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "gw: 读取内置规则目录失败: %v\n", err)
+		fmt.Fprintf(os.Stderr, "gw: warning: 读取内置规则目录失败: %v\n", err)
 		return
 	}
 	for _, entry := range entries {
@@ -98,7 +98,7 @@ func loadEmbeddedInto(byID map[string]LoadedRule, disabled map[string]bool) {
 		path := "rules/" + entry.Name()
 		data, err := builtinRules.ReadFile(path)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "gw: 读取内置规则 %s 失败: %v\n", path, err)
+			fmt.Fprintf(os.Stderr, "gw: warning: 读取内置规则 %s 失败: %v\n", path, err)
 			continue
 		}
 		parseAndMerge(string(data), SourceBuiltin, byID, disabled)
@@ -111,7 +111,7 @@ func loadDirInto(dir, sourcePrefix string, byID map[string]LoadedRule, disabled 
 	info, err := os.Stat(dir)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "gw: 访问规则目录 %s 失败: %v\n", dir, err)
+			fmt.Fprintf(os.Stderr, "gw: warning: 访问规则目录 %s 失败: %v\n", dir, err)
 		}
 		return
 	}
@@ -120,7 +120,7 @@ func loadDirInto(dir, sourcePrefix string, byID map[string]LoadedRule, disabled 
 	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "gw: 读取规则目录 %s 失败: %v\n", dir, err)
+		fmt.Fprintf(os.Stderr, "gw: warning: 读取规则目录 %s 失败: %v\n", dir, err)
 		return
 	}
 	// 按文件名排序以保证可重复性（同目录下同 ID 由后出现者覆盖）
@@ -137,7 +137,7 @@ func loadDirInto(dir, sourcePrefix string, byID map[string]LoadedRule, disabled 
 		full := filepath.Join(dir, e.Name())
 		data, err := os.ReadFile(full)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "gw: 读取规则文件 %s 失败: %v\n", full, err)
+			fmt.Fprintf(os.Stderr, "gw: warning: 读取规则文件 %s 失败: %v\n", full, err)
 			continue
 		}
 		parseAndMerge(string(data), sourcePrefix+full, byID, disabled)
@@ -150,7 +150,7 @@ func loadDirInto(dir, sourcePrefix string, byID map[string]LoadedRule, disabled 
 func parseAndMerge(data, source string, byID map[string]LoadedRule, disabled map[string]bool) {
 	var raw map[string]map[string]rawRule
 	if _, err := toml.Decode(data, &raw); err != nil {
-		fmt.Fprintf(os.Stderr, "gw: TOML 解析失败 (%s): %v\n", source, err)
+		fmt.Fprintf(os.Stderr, "gw: warning: TOML 解析失败 (%s): %v\n", source, err)
 		return
 	}
 	for section, group := range raw {

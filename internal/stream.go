@@ -56,7 +56,7 @@ func RunCommandStreamingFull(name string, args []string, onLine func(string), st
 	}
 	// 进程被杀后 stdout pipe 会 EOF，Scanner 自然停止；若是读出错（非 EOF），打 warning
 	if scanErr := scanner.Err(); scanErr != nil {
-		fmt.Fprintf(os.Stderr, "[gw] scanner error: %v\n", scanErr)
+		fmt.Fprintf(os.Stderr, "gw: warning: scanner error: %v\n", scanErr)
 	}
 
 	waitErr := cmd.Wait()

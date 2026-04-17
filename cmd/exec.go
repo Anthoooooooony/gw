@@ -116,7 +116,7 @@ func runExec(cmd *cobra.Command, args []string) {
 	// 诊断逃生舱：如指定了 --dump-raw，把原始输出写入文件（失败仅告警）
 	if dumpRawPath != "" {
 		if err := os.WriteFile(dumpRawPath, []byte(originalOutput), 0o644); err != nil {
-			fmt.Fprintf(os.Stderr, "[gw] warning: 写入 --dump-raw 文件 %s 失败: %v\n", dumpRawPath, err)
+			fmt.Fprintf(os.Stderr, "gw: warning: 写入 --dump-raw 文件 %s 失败: %v\n", dumpRawPath, err)
 		}
 	}
 
@@ -160,7 +160,7 @@ func runExec(cmd *cobra.Command, args []string) {
 	}
 
 	if Verbose {
-		fmt.Fprintf(os.Stderr, "[gw] input_tokens=%d output_tokens=%d saved=%d elapsed=%dms\n",
+		fmt.Fprintf(os.Stderr, "gw: info: input_tokens=%d output_tokens=%d saved=%d elapsed=%dms\n",
 			inputTokens, outputTokens, savedTokens, elapsedMs)
 	}
 
@@ -235,7 +235,7 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 	// 进程退出后尝试落盘 --dump-raw，失败只 warning
 	if dumpRawPath != "" {
 		if err := os.WriteFile(dumpRawPath, []byte(rawBuf.String()), 0o644); err != nil {
-			fmt.Fprintf(os.Stderr, "[gw] warning: 写入 --dump-raw 文件 %s 失败: %v\n", dumpRawPath, err)
+			fmt.Fprintf(os.Stderr, "gw: warning: 写入 --dump-raw 文件 %s 失败: %v\n", dumpRawPath, err)
 		}
 	}
 
@@ -256,7 +256,7 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 	}
 
 	if Verbose {
-		fmt.Fprintf(os.Stderr, "[gw:stream] %d → %d tokens (saved %d, elapsed %dms)\n",
+		fmt.Fprintf(os.Stderr, "gw: info: %d → %d tokens (saved %d, elapsed %dms)\n",
 			inputTokens, outputTokens, inputTokens-outputTokens, elapsed.Milliseconds())
 	}
 
