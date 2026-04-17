@@ -396,7 +396,7 @@ main() {
   local branch
   branch=$(git rev-parse --abbrev-ref HEAD)
   if [[ "$branch" != "master" ]]; then
-    echo "gw bump: 必须在 master 分支运行（当前 $branch）" >&2
+    echo "gw bump: 必须在 master 分支运行（当前 ${branch}）" >&2
     exit 1
   fi
   if [[ -n "$(git status --porcelain)" ]]; then
