@@ -13,3 +13,31 @@
 ### Removed
 
 [Unreleased]: https://github.com/Anthoooooooony/gw/compare/HEAD
+
+## [v0.1.0] - 2026-04-17
+
+### Added
+- feat: release 管道基础设施（CHANGELOG/bump.sh/GoReleaser/release.yml） (#4)
+- feat(filter): 新增 Node/Python/Rust 生态 TOML 规则 (#2)
+- feat(filter): Gradle StreamFilter 流式过滤器 (#1)
+- feat: 重新启用 SpringBootFilter 并实现 StreamFilter 接口，支持流式过滤长驻进程输出
+- feat: exec 命令集成流式过滤路径，优先匹配 StreamFilter 走逐行流式处理
+- feat: 用状态机重写 MavenFilter，真实 大型 Java 产线 输出压缩率 95%
+- feat: 新增 Maven 状态机内核 — 状态定义、行分类器、状态转移逻辑
+- feat: 添加 TOML 声明式过滤引擎，支持 docker/kubectl 内置规则
+
+### Changed
+- refactor: 抽取 startTimeoutKiller 统一 runner 与 stream 的两阶段终止逻辑
+
+### Fixed
+- fix(bump): awk -v 不支持多行值 —— BSD awk 兼容修复 (#5)
+- fix(test): exec_test 接受 HEAD detached 状态（PR 事件 CI 场景） (#3)
+- fix(ci): exec_test 自动探测 go.mod 定位模块根，取代 /private/tmp/gw fallback
+- fix(P2): exec_test.go 改用 GW_SOURCE_ROOT 替代硬编码 /private/tmp/gw
+- fix(P2): 兼容 v0.x 无 _gw_managed 标记的 gw hook，就地迁移补标
+- fix(P1): writeSettingsAtomic 保留原 settings.json mode，首次写入用 0600
+- fix(P1): DB 路径支持 GW_DB_PATH + HOME 只读降级到 TempDir（warn-once）
+- fix(P1): --dump-raw 支持任意位置（命令名之前），避免吞子命令同名 flag
+- fix(P1): 流式路径信号终止返回 128+signal 保留真实信号值
+- fix(P1): findProjectRulesDir 识别 .git 为文件的 worktree 场景
+- fix(P0): Windows 降级 killProcessGroup 忽略 sig，避免误导性 SIGTERM 日志
