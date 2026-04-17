@@ -8,9 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"sync/atomic"
 	"syscall"
-	"time"
 )
 
 // RunCommandStreaming 流式执行命令，逐行回调 stdout，stderr 输出到 os.Stderr。
@@ -49,44 +47,7 @@ func RunCommandStreamingFull(name string, args []string, onLine func(string), st
 		return 0, fmt.Errorf("failed to start %s: %w", name, err)
 	}
 
-	var timedOut atomic.Bool
-	var sigkillFired atomic.Bool
-	procDone := make(chan struct{})
-	killerDone := make(chan struct{})
-	if enabled {
-		go func() {
-			defer close(killerDone)
-			select {
-			case <-procDone:
-				return
-			case <-ctx.Done():
-				if !errors.Is(ctx.Err(), context.DeadlineExceeded) {
-					return
-				}
-			}
-			timedOut.Store(true)
-			pid := cmd.Process.Pid
-			_ = killProcessGroup(pid, syscall.SIGTERM)
-
-			// 非 unix 平台（如 Windows）无 SIGTERM 宽限期，killProcessGroup 一次 Kill 即已终止。
-			if !procGroupSupportsGraceful {
-				sigkillFired.Store(true)
-				return
-			}
-
-			graceTimer := time.NewTimer(timeoutKillGrace)
-			defer graceTimer.Stop()
-			select {
-			case <-procDone:
-				return
-			case <-graceTimer.C:
-				sigkillFired.Store(true)
-				_ = killProcessGroup(pid, syscall.SIGKILL)
-			}
-		}()
-	} else {
-		close(killerDone)
-	}
+	stop, sigkillFired, timedOut := startTimeoutKiller(ctx, cmd, timeoutKillGrace)
 
 	scanner := bufio.NewScanner(stdout)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
@@ -99,8 +60,7 @@ func RunCommandStreamingFull(name string, args []string, onLine func(string), st
 	}
 
 	waitErr := cmd.Wait()
-	close(procDone)
-	<-killerDone
+	stop()
 
 	// 超时优先：即便 waitErr 表现为信号终止（-1），也映射为 124
 	if timedOut.Load() {
