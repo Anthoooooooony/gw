@@ -2,3 +2,11 @@
 *.db
 .gw/
 .superpowers/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+**/.DS_Store
