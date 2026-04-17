@@ -157,16 +157,24 @@ main() {
     echo "gw bump: CHANGELOG.md 不存在" >&2
     exit 1
   fi
-  # 用 awk 在 "## [Unreleased]" 节结束（下一个 "## [" 之前）插入新节
-  local tmp
+  # 用 awk 在 "## [Unreleased]" 节结束（下一个 "## [" 之前）插入新节。
+  # 通过文件读取 block 避免 BSD awk 对含换行的 -v 值报错（GNU awk 无此限制）。
+  local tmp block_file
   tmp=$(mktemp)
-  awk -v block="$changelog_section" '
+  block_file=$(mktemp)
+  printf '%s\n' "$changelog_section" > "$block_file"
+  awk -v block_file="$block_file" '
+    BEGIN {
+      while ((getline line < block_file) > 0) block = block line "\n"
+      close(block_file)
+    }
     /^## \[Unreleased\]/ { print; in_unreleased=1; next }
-    in_unreleased && /^## \[/ { print block; in_unreleased=0 }
+    in_unreleased && /^## \[/ { printf "%s", block; in_unreleased=0 }
     { print }
-    END { if (in_unreleased) print block }
+    END { if (in_unreleased) printf "\n%s", block }
   ' CHANGELOG.md > "$tmp"
   mv "$tmp" CHANGELOG.md
+  rm -f "$block_file"
 
   # 6. 让维护者审 CHANGELOG
   ${EDITOR:-vi} CHANGELOG.md
@@ -177,7 +185,7 @@ main() {
   git tag -a "$new_tag" -m "release: $new_tag"
   git push origin master "$new_tag"
 
-  echo "gw bump: 已推送 $new_tag，release.yml 将由 tag push 触发"
+  echo "gw bump: 已推送 ${new_tag}，release.yml 将由 tag push 触发"
 }
 
 # 仅当被直接执行、非 source 时调用 main
