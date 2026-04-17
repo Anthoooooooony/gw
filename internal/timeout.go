@@ -45,7 +45,7 @@ func resolveTimeoutWithStderr(stderr io.Writer) (time.Duration, bool) {
 
 	dur, err := time.ParseDuration(strings.TrimSpace(raw))
 	if err != nil {
-		fmt.Fprintf(stderr, "[gw] warning: invalid GW_CMD_TIMEOUT=%q (%v); falling back to %s\n",
+		fmt.Fprintf(stderr, "gw: warning: invalid GW_CMD_TIMEOUT=%q (%v); falling back to %s\n",
 			raw, err, defaultCmdTimeout)
 		return defaultCmdTimeout, true
 	}
