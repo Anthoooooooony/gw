@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -154,7 +155,14 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 }
 
 // applyInitToSettings 返回插入（或保持）gw hook 后的 settings 及状态。
-// 判定依据是 hook 条目上的 _gw_managed 标记，而不是 hook 命令字面量。
+//
+// 判定优先级：
+//  1. 已有带 _gw_managed=true 标记的条目 → already
+//  2. 已有 hook 字段含 "gw rewrite" 关键字但**无**标记（v0.x 遗留） →
+//     就地迁移：补上 _gw_managed=true 标记，返回 already
+//  3. 否则追加新 gw hook，返回 installed
+//
+// 兼容旧版本可避免升级用户 settings.json 里出现两条重复 hook。
 func applyInitToSettings(settings map[string]interface{}) (map[string]interface{}, string) {
 	// 安全拷贝：避免直接修改入参以便测试断言。
 	// 浅拷贝即可，hooks 数组会在必要时重建。
@@ -177,6 +185,35 @@ func applyInitToSettings(settings map[string]interface{}) (map[string]interface{
 				return out, initStatusAlready
 			}
 		}
+	}
+
+	// 兼容 v0.x：hook 字段含 "gw rewrite" 视为旧版 gw 管理的 hook，补标记迁移。
+	// 使用浅拷贝 + 重建 hooks 数组，避免修改入参底层 map。
+	migrated := false
+	newHooks := make([]interface{}, 0, len(hooks))
+	for _, h := range hooks {
+		m, ok := h.(map[string]interface{})
+		if !ok {
+			newHooks = append(newHooks, h)
+			continue
+		}
+		if !migrated {
+			if hookStr, ok := m["hook"].(string); ok && strings.Contains(hookStr, "gw rewrite") {
+				copied := make(map[string]interface{}, len(m)+1)
+				for k, v := range m {
+					copied[k] = v
+				}
+				copied[gwManagedKey] = true
+				newHooks = append(newHooks, copied)
+				migrated = true
+				continue
+			}
+		}
+		newHooks = append(newHooks, h)
+	}
+	if migrated {
+		out["hooks"] = newHooks
+		return out, initStatusAlready
 	}
 
 	gwHook := map[string]interface{}{
