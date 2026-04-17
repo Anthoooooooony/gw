@@ -20,12 +20,14 @@ Claude Code Agent 想执行 mvn test
    └─────────────────────────────────────────────┘
         │
    Claude Code 收到过滤后的输出
-   427 行 → 12 行 (97% 压缩)
+   905 行 → 46 行 (95% 压缩，真实多模块 Maven 项目)
 ```
 
 gw 通过 Claude Code 的 PreToolUse Hook 自动将 `mvn test` 改写为 `gw exec mvn test`。gw 在本地执行原始命令，对输出应用过滤器压缩噪音，然后将精简结果返回给 LLM。整个过程对 AI agent 透明。
 
 ## 快速开始
+
+**前置依赖**：Go 1.22+、SQLite3（系统自带，macOS/Linux 无需额外安装）、Claude Code 已安装。
 
 ```bash
 # 构建
@@ -81,12 +83,12 @@ if sf := filter.FindStream(cmd, args); sf != nil {
 
 每个过滤器开发时根据命令特征选择实现哪个接口：
 
-| 过滤器 | 批量 | 流式 | 理由 |
-|--------|------|------|------|
-| `git status/log` | ✅ | | 输出小且快，批量足够 |
-| `java/maven` | ✅ | ✅ | 多模块构建输出大但会退出，流式可实时反馈 |
-| `java/gradle` | ✅ | | 当前只实现批量（未来可能加流式） |
-| `java/springboot` | | ✅ | `java -jar` 是长驻进程，批量会永远阻塞 |
+| 过滤器 | 实现的接口 | 实际走的路径 | 理由 |
+|--------|------------|-------------|------|
+| `git status/log` | Filter | 批量 | 输出小且快，批量足够 |
+| `java/maven` | Filter + StreamFilter | 流式（优先） | 多模块构建输出大但会退出，流式可实时反馈；批量接口保留用于测试 |
+| `java/gradle` | Filter | 批量 | 当前只实现批量（未来可能加流式） |
+| `java/springboot` | Filter + StreamFilter | 流式（必须） | `java -jar` 是长驻进程；两个接口都实现但 FindStream 优先，批量路径永远不会被触发 |
 
 **批量模式** — `cmd.Run()` 等待退出后一次性过滤：
 
@@ -155,7 +157,7 @@ Init → Discovery → Warning → ModuleBuild → Mojo → PluginOutput → Tes
                                                    Reactor → Result → Stats → ErrorReport
 ```
 
-状态转移由 Maven 源码中的固定标记行驱动，不依赖输出内容的细节。在真实的 NetEDS 多模块项目（905 行输出）上实现 95% 压缩率。
+状态转移由 Maven 源码中的固定标记行驱动，不依赖输出内容的细节。在真实的多模块 Maven 项目（905 行构建日志 fixture）上实现 95% 压缩率（`filter/java/testdata/mvn_compile_real_failure.txt`）。
 
 ### 引号感知 Shell Lexer
 
@@ -167,7 +169,7 @@ git log | grep fix          → 真正的管道 → 拒绝改写，原样透传
 mvn clean && mvn test       → 链式操作符 → 逐段改写
 ```
 
-管道和重定向命令整条不改写（比 RTK 更保守）。RTK 改写管道左侧但有已知的数据损坏 bug。
+管道和重定向命令整条不改写。管道左侧的输出本应传给右侧程序消费（如 `git log | grep fix` 中 `git log` 的输出给 `grep`），若改写压缩会破坏数据完整性，因此整条保守透传。
 
 ### 自注册模式
 
@@ -194,10 +196,10 @@ import (
 
 Maven/Gradle 的 Match 函数排除可能导致永远阻塞的长驻进程 goal：
 
-- Maven: `spring-boot:run`, `jetty:run`, `quarkus:dev`, `exec:java` 等
-- Gradle: `bootRun`, `run`, `appRun` 等
+- Maven: `spring-boot:run`, `jetty:run`, `tomcat7:run`, `liberty:run`, `quarkus:dev`, `exec:java`
+- Gradle: `bootRun`, `run`, `appRun`, `jettyRun`, `tomcatRun`, `quarkusDev`
 
-Spring Boot (`java -jar`) 只走流式路径，不走批量路径。
+Spring Boot (`java -jar`) 虽然同时实现了批量和流式接口，但 ROUTE 阶段 `FindStream` 优先，实际只走流式路径（避免批量模式下 `java -jar` 永不退出导致的死锁）。
 
 ## 项目结构
 
@@ -239,12 +241,9 @@ gw/
 │   ├── runner.go                  # 批量执行器（cmd.Run）
 │   └── stream.go                  # 流式执行器（StdoutPipe + Scanner）
 │
-├── track/
-│   ├── db.go                      # SQLite 存储（WAL + busy_timeout）
-│   └── token.go                   # Token 估算（ceil(runes/4)）
-│
-└── config/
-    └── config.go                  # 配置加载（预留）
+└── track/
+    ├── db.go                      # SQLite 存储（WAL + busy_timeout）
+    └── token.go                   # Token 估算（ceil(runes/4)）
 ```
 
 ## 扩展过滤器
@@ -334,3 +333,11 @@ go test ./filter/java/  # 只跑 Java 过滤器测试
 | `gw uninstall` | 移除 Hook |
 | `gw gain` | 查看 token 节省统计 |
 | `gw -v exec <cmd>` | 执行并显示 token 节省详情 |
+
+## 已知限制
+
+- **只支持 Claude Code**：`gw init` 目前只适配 Claude Code 的 PreToolUse Hook 机制。Cursor、Copilot 等其他 AI 编程工具的 Hook 机制不同，需要单独适配。
+- **有损压缩**：过滤会丢弃部分原始信息。虽然设计上保留错误和诊断信息、仅丢弃噪音，但不可能 100% 无损。关键命令建议用 `gw -v exec` 观察压缩详情，或直接跳过 gw。
+- **SQLite 追踪的并发性**：多个 gw 进程并发时，SQLite 写入使用 3 秒的 busy_timeout，极端情况下最长阻塞 ~3 秒。不影响主输出，只影响追踪数据记录。
+- **Gradle 未实现流式**：当前 Gradle 构建走批量路径，大型项目构建期间 AI 无法看到实时进度。后续迭代会补上 StreamFilter 实现。
+- **Token 估算是近似值**：用 `ceil(runes/4)` 估算，不是真实 tokenizer。在中日韩字符密集的输出上估算偏差较大。
