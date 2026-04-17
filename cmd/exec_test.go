@@ -145,7 +145,7 @@ func TestExec_DumpRaw_Batch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	dumpPath := filepath.Join(tmpDir, "raw.txt")
 	// echo 无专用过滤器，走批量透传路径
@@ -175,7 +175,7 @@ func TestExec_DumpRaw_Equals(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	dumpPath := filepath.Join(tmpDir, "raw.txt")
 	cmd := exec.Command(gwBinary, "exec", "--dump-raw="+dumpPath, "echo", "eq form")
@@ -200,7 +200,7 @@ func TestExec_DumpRaw_WriteFail(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// /nonexistent/.../raw.txt 无法创建
 	badPath := "/nonexistent-gw-dir-abc/raw.txt"
@@ -230,7 +230,7 @@ func TestExec_DumpRaw_Stream(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	dumpPath := filepath.Join(tmpDir, "raw-stream.txt")
 	cmd := exec.Command(gwBinary, "exec", "--dump-raw", dumpPath,
@@ -274,7 +274,7 @@ func TestGain_NoData(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	cmd := exec.Command(gwBinary, "gain")
 	cmd.Env = append(os.Environ(), "HOME="+tmpDir)

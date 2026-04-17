@@ -10,7 +10,7 @@ import (
 
 // TestResolveTimeout_Default 默认值为 10 分钟
 func TestResolveTimeout_Default(t *testing.T) {
-	os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Unsetenv("GW_CMD_TIMEOUT")
 	dur, enabled := resolveTimeoutWithStderr(os.Stderr)
 	if !enabled {
 		t.Fatal("默认应启用超时")
@@ -22,8 +22,8 @@ func TestResolveTimeout_Default(t *testing.T) {
 
 // TestResolveTimeout_Custom 自定义有效值
 func TestResolveTimeout_Custom(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "30s")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "30s")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 	dur, enabled := resolveTimeoutWithStderr(os.Stderr)
 	if !enabled {
 		t.Fatal("30s 应启用超时")
@@ -35,8 +35,8 @@ func TestResolveTimeout_Custom(t *testing.T) {
 
 // TestResolveTimeout_Zero 值为 0 禁用超时
 func TestResolveTimeout_Zero(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "0")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "0")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 	_, enabled := resolveTimeoutWithStderr(os.Stderr)
 	if enabled {
 		t.Error("0 应禁用超时")
@@ -45,8 +45,8 @@ func TestResolveTimeout_Zero(t *testing.T) {
 
 // TestResolveTimeout_Off 值为 off 禁用超时
 func TestResolveTimeout_Off(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "off")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "off")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 	_, enabled := resolveTimeoutWithStderr(os.Stderr)
 	if enabled {
 		t.Error("off 应禁用超时")
@@ -55,8 +55,8 @@ func TestResolveTimeout_Off(t *testing.T) {
 
 // TestResolveTimeout_InvalidFallback 无效值 warning + fallback 到默认
 func TestResolveTimeout_InvalidFallback(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "not-a-duration")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "not-a-duration")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 	var warnBuf bytes.Buffer
 	dur, enabled := resolveTimeoutWithStderr(&warnBuf)
 	if !enabled {

@@ -115,14 +115,14 @@ func NewDB(path string) (*DB, error) {
 	sqlDB.SetMaxOpenConns(1)
 
 	if _, err := sqlDB.Exec(createTableSQL); err != nil {
-		sqlDB.Close()
+		_ = sqlDB.Close() // 已在错误路径，关闭错误不重要
 		return nil, fmt.Errorf("创建表失败: %w", err)
 	}
 
 	// 迁移：旧版本 DB 可能缺少 raw_output 列。探测并按需 ALTER TABLE。
 	// 绝对不能 DROP TABLE：用户 ~/.gw/tracking.db 里是生产数据。
 	if err := ensureRawOutputColumn(sqlDB); err != nil {
-		sqlDB.Close()
+		_ = sqlDB.Close() // 已在错误路径，关闭错误不重要
 		return nil, fmt.Errorf("迁移 raw_output 列失败: %w", err)
 	}
 
@@ -136,7 +136,7 @@ func ensureRawOutputColumn(sqlDB *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("读取表结构失败: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	hasRaw := false
 	for rows.Next() {
@@ -201,7 +201,7 @@ func (d *DB) RecentRecords(limit int) ([]Record, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var result []Record
 	for rows.Next() {
@@ -309,7 +309,7 @@ func (d *DB) TopCommands(limit int) ([]TopCommand, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var result []TopCommand
 	for rows.Next() {

@@ -182,7 +182,7 @@ func runExec(cmd *cobra.Command, args []string) {
 			rec.RawOutput = originalOutput
 		}
 		_ = db.InsertRecord(rec)
-		db.Close()
+		_ = db.Close()
 	} else if Verbose {
 		fmt.Fprintf(os.Stderr, "gw: warning: tracking DB open failed: %v\n", err)
 	}
@@ -277,7 +277,7 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 			rec.RawOutput = rawBuf.String()
 		}
 		_ = db.InsertRecord(rec)
-		db.Close()
+		_ = db.Close()
 	} else if Verbose {
 		fmt.Fprintf(os.Stderr, "gw: warning: tracking DB open failed: %v\n", err)
 	}

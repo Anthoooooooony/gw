@@ -47,16 +47,16 @@ func AnalyzeCommand(command string) (bool, []Segment) {
 		}
 
 		// 正常模式：检测特殊字符
-		switch {
-		case c == '\\':
+		switch c {
+		case '\\':
 			escaped = true
 			i++
 			continue
-		case c == '\'' || c == '"':
+		case '\'', '"':
 			inQuote = c
 			i++
 			continue
-		case c == '|':
+		case '|':
 			if i+1 < n && runes[i+1] == '|' {
 				// || 链式操作符，安全
 				segments = append(segments, Segment{
@@ -69,7 +69,7 @@ func AnalyzeCommand(command string) (bool, []Segment) {
 			}
 			// 单独的 | 是管道，不安全
 			return false, nil
-		case c == '&':
+		case '&':
 			if i+1 < n && runes[i+1] == '&' {
 				// && 链式操作符，安全
 				segments = append(segments, Segment{
@@ -82,7 +82,7 @@ func AnalyzeCommand(command string) (bool, []Segment) {
 			}
 			// 单独的 & 是后台执行，不安全
 			return false, nil
-		case c == ';':
+		case ';':
 			segments = append(segments, Segment{
 				Cmd: strings.TrimSpace(string(runes[segStart:i])),
 				Sep: ";",
@@ -90,17 +90,17 @@ func AnalyzeCommand(command string) (bool, []Segment) {
 			i++
 			segStart = i
 			continue
-		case c == '>' || c == '<':
+		case '>', '<':
 			// 重定向，不安全
 			return false, nil
-		case c == '$':
+		case '$':
 			if i+1 < n && runes[i+1] == '(' {
 				// 子 shell $()，不安全
 				return false, nil
 			}
 			i++
 			continue
-		case c == '`':
+		case '`':
 			// 反引号子 shell，不安全
 			return false, nil
 		default:
