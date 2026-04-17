@@ -16,8 +16,9 @@ jobs:
       matrix:
         include:
           - { runner: ubuntu-latest, goos: linux,  goarch: amd64 }
-          - { runner: macos-13,      goos: darwin, goarch: amd64 }   # Intel
           - { runner: macos-latest,  goos: darwin, goarch: arm64 }   # Apple Silicon
+          # macos-13（Intel amd64）暂不覆盖——GitHub free tier 排队过长，Intel Mac
+          # 装机份额已低于 5%，用户可用 `go install` 自建。后续视需求增补。
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
