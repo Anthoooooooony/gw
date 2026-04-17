@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/bump_test.sh — bump.sh 纯函数单元测试
-set -u
+set -euo pipefail
 PASS=0
 FAIL=0
 
@@ -26,11 +26,21 @@ assert_eq "0 1 2" "$(parse_version v0.1.2)" "parse_version v0.1.2"
 assert_eq "1 0 0" "$(parse_version v1.0.0)" "parse_version v1.0.0"
 assert_eq "0 0 0" "$(parse_version v0.0.0)" "parse_version v0.0.0"
 
+# ========== parse_version pre-release ==========
+assert_eq "0 1 2" "$(parse_version v0.1.2-rc.1)" "parse_version 剥离 -rc.N"
+assert_eq "1 0 0" "$(parse_version v1.0.0-alpha.3)" "parse_version 剥离 -alpha.N"
+assert_eq "0 2 0" "$(parse_version v0.2.0-beta.1)" "parse_version 剥离 -beta.N"
+
 # ========== bump_version ==========
 assert_eq "v0.1.3" "$(bump_version v0.1.2 patch)" "patch bump"
 assert_eq "v0.2.0" "$(bump_version v0.1.2 minor)" "minor bump"
 assert_eq "v1.0.0" "$(bump_version v0.1.2 major)" "major bump"
 assert_eq "v0.1.3-rc.1" "$(bump_version v0.1.2 patch rc.1)" "patch + pre"
+
+# ========== bump_version pre-release prev ==========
+assert_eq "v0.1.3" "$(bump_version v0.1.2-rc.1 patch)" "rc 版本 prev → 正式 patch"
+assert_eq "v0.2.0" "$(bump_version v0.1.2-rc.1 minor)" "rc 版本 prev → 正式 minor"
+assert_eq "v1.0.0-rc.2" "$(bump_version v0.9.9-rc.1 major rc.2)" "rc 升级 major + 新 rc 标签"
 
 # ========== classify_commit ==========
 assert_eq "Added" "$(classify_commit 'feat(filter): 新规则')" "feat → Added"
