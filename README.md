@@ -69,19 +69,36 @@ go build -o gw .
 
 gw 有两条执行路径，根据过滤器类型自动选择：
 
-**批量模式** — 等待命令退出后一次性过滤（适合 git、短构建命令）：
+**判定逻辑** —— gw 不根据命令本身，而是根据**过滤器的接口实现**决定路径：
+
+```go
+if sf := filter.FindStream(cmd, args); sf != nil {
+    runStreamExec(sf, ...)  // 过滤器实现了 StreamFilter → 流式
+} else {
+    runExec(...)            // 只实现 Filter → 批量
+}
+```
+
+每个过滤器开发时根据命令特征选择实现哪个接口：
+
+| 过滤器 | 批量 | 流式 | 理由 |
+|--------|------|------|------|
+| `git status/log` | ✅ | | 输出小且快，批量足够 |
+| `java/maven` | ✅ | ✅ | 多模块构建输出大但会退出，流式可实时反馈 |
+| `java/gradle` | ✅ | | 当前只实现批量（未来可能加流式） |
+| `java/springboot` | | ✅ | `java -jar` 是长驻进程，批量会永远阻塞 |
+
+**批量模式** — `cmd.Run()` 等待退出后一次性过滤：
 
 ```
 cmd.Run() → 拿到全部输出 → 知道 exit code → 选择 Apply 或 ApplyOnError → 输出
 ```
 
-**流式模式** — 逐行读取实时过滤（适合 Maven 长构建、Spring Boot 启动）：
+**流式模式** — `cmd.StdoutPipe() + bufio.Scanner` 逐行读取实时过滤：
 
 ```
-cmd.StdoutPipe() → Scanner 逐行读 → 每行立即决策 → 实时输出 → 退出后 Flush 缓冲
+StdoutPipe → Scanner 逐行读 → ProcessLine 立即决策 → 实时输出 → 退出后 Flush 缓冲
 ```
-
-过滤器实现 `StreamFilter` 接口即走流式路径，否则走批量路径。流式模式不依赖 exit code 做决策，噪音始终丢弃，错误始终保留。
 
 ### 双层过滤器
 
@@ -107,13 +124,26 @@ max_lines = 50
 
 TOML 引擎支持 7 阶段处理管道：`strip_ansi → strip_lines → keep_lines → head_lines → tail_lines → max_lines → on_empty`
 
-### 三级错误处理
+### 错误处理
+
+批量模式和流式模式的错误处理机制**不同**，因为流式模式在过滤时不知道 exit code。
+
+**批量模式 — 三级策略**（依赖 exit code 做决策）：
 
 | 场景 | exit code | 策略 |
 |------|-----------|------|
-| 命令成功 | 0 | 激进压缩（去下载日志、进度条、WARNING 等全部噪音） |
-| 命令失败 + 有专用过滤器 | != 0 | 仍去噪音，但保留完整的错误信息、堆栈、测试失败详情 |
-| 命令失败 + 无专用过滤器 | != 0 | 透传原始输出（宁可不压缩也不丢信息） |
+| 命令成功 | 0 | `Apply()` 激进压缩（去下载日志、进度条、WARNING 等噪音） |
+| 命令失败 + 有专用过滤器 | != 0 | `ApplyOnError()` 去噪音但保留错误信息、堆栈、测试失败详情 |
+| 命令失败 + 无专用过滤器 | != 0 | `ApplyOnError()` 返回 nil → 透传原始输出（宁可不压缩也不丢信息） |
+
+**流式模式 — 两阶段策略**（ProcessLine 不知道 exit code，延迟到 Flush 决策）：
+
+| 阶段 | 逻辑 |
+|------|------|
+| `ProcessLine(line)` 实时决策 | 不知道 exit code。噪音始终丢弃，错误和栈追踪**始终立即输出**（保守策略）。普通插件输出**缓冲**（最多 10 行） |
+| `Flush(exitCode)` 进程退出后 | 失败则追加缓冲内容作为错误上下文；成功则丢弃缓冲 |
+
+流式模式不需要"透传"降级路径 —— 只实现 `StreamFilter` 的过滤器已经在设计时考虑了长驻进程，错误场景通过"实时输出 error 行 + Flush 补 buffer"覆盖。
 
 ### Maven 状态机
 
