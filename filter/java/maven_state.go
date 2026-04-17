@@ -6,17 +6,17 @@ import "strings"
 type MavenState int
 
 const (
-	StateInit        MavenState = iota // 初始状态
-	StateDiscovery                     // 项目扫描阶段
-	StateWarning                       // POM 警告阶段
-	StateModuleBuild                   // 模块构建阶段
-	StateMojo                          // 插件目标执行阶段
-	StatePluginOutput                  // 插件输出阶段
-	StateTestOutput                    // 测试输出阶段
-	StateReactor                       // Reactor Summary 阶段
-	StateResult                        // 构建结果阶段
-	StateStats                         // 统计信息阶段
-	StateErrorReport                   // 错误报告阶段
+	StateInit         MavenState = iota // 初始状态
+	StateDiscovery                      // 项目扫描阶段
+	StateWarning                        // POM 警告阶段
+	StateModuleBuild                    // 模块构建阶段
+	StateMojo                           // 插件目标执行阶段
+	StatePluginOutput                   // 插件输出阶段
+	StateTestOutput                     // 测试输出阶段
+	StateReactor                        // Reactor Summary 阶段
+	StateResult                         // 构建结果阶段
+	StateStats                          // 统计信息阶段
+	StateErrorReport                    // 错误报告阶段
 )
 
 // MavenLineClass 表示 Maven 输出行的分类
@@ -207,13 +207,13 @@ func isProcessNoiseContent(content string) bool {
 		}
 	}
 	// javac 编译器告警（deprecation / unchecked）
-	if (strings.Contains(content, "uses or overrides a deprecated API") ||
+	if strings.Contains(content, "uses or overrides a deprecated API") ||
 		strings.Contains(content, "use or override a deprecated API") ||
 		strings.Contains(content, "Some input files use or override a deprecated API") ||
 		strings.Contains(content, "Recompile with -Xlint:") ||
 		strings.Contains(content, "uses unchecked or unsafe operations") ||
 		strings.Contains(content, "use unchecked or unsafe operations") ||
-		strings.Contains(content, "Some input files use unchecked or unsafe operations")) {
+		strings.Contains(content, "Some input files use unchecked or unsafe operations") {
 		return true
 	}
 	return false

@@ -2,6 +2,7 @@
 *.db
 .gw/
 .superpowers/
+.claude/
 
 # IDE
 .idea/

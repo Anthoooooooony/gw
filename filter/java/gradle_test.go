@@ -19,10 +19,10 @@ func TestGradleFilter_Match(t *testing.T) {
 		{"gradlew", []string{"test"}, true},
 		{"./gradlew", []string{"build"}, true},
 		{"/home/user/project/gradlew", []string{"test"}, true},
-		{"gradle", []string{"bootRun"}, false},            // 长驻进程
-		{"gradlew", []string{"run"}, false},               // 长驻进程
-		{"./gradlew", []string{"appRun"}, false},          // 长驻进程
-		{"gradle", []string{"quarkusDev"}, false},         // 长驻进程
+		{"gradle", []string{"bootRun"}, false},    // 长驻进程
+		{"gradlew", []string{"run"}, false},       // 长驻进程
+		{"./gradlew", []string{"appRun"}, false},  // 长驻进程
+		{"gradle", []string{"quarkusDev"}, false}, // 长驻进程
 		{"mvn", []string{"test"}, false},
 		{"java", []string{"-jar", "app.jar"}, false},
 	}
