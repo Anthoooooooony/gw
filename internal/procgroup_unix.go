@@ -7,6 +7,10 @@ import (
 	"syscall"
 )
 
+// procGroupSupportsGraceful 标记当前平台是否支持 SIGTERM → 宽限期 → SIGKILL
+// 的两阶段终止。unix 家族（linux/darwin/*bsd/solaris）均支持。
+const procGroupSupportsGraceful = true
+
 // setProcessGroup 让子进程成为新进程组的 leader，方便后续整组杀掉
 func setProcessGroup(cmd *exec.Cmd) {
 	if cmd.SysProcAttr == nil {
