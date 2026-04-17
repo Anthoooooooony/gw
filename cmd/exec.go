@@ -13,26 +13,57 @@ import (
 )
 
 // extractDumpRawFlag 在 DisableFlagParsing 的环境下手动解析并剥离
-// 开头的 --dump-raw=PATH 或 --dump-raw PATH 参数。
+// --dump-raw=PATH 或 --dump-raw PATH 参数。
 // 返回：剩余 args、dump 目标路径、是否找到该 flag。
-// 只识别出现在命令名之前的 flag（即真正属于 gw exec 的），
-// 保证后续参数（可能是子命令自己的 flag）原样透传。
+//
+// 扫描策略：
+//   - 只扫描命令名之前的参数（即首个不以 `--` 开头的 token 之前）
+//   - 遇到 --dump-raw=VAL 或 --dump-raw 后跟一个 token 即提取
+//   - 未被识别为 gw exec flag 的 -- 开头参数保留在 rest 中，原样透传
+//
+// 这样既支持 `gw exec --dump-raw=/tmp/a git status`，也支持
+// `gw exec --dump-raw /tmp/a git status`，同时不会误吞子命令的同名 flag
+// （例如 `gw exec my-tool --dump-raw=/inside`，此处命令名之后的 --dump-raw
+// 属于 my-tool 自己的参数）。
 func extractDumpRawFlag(args []string) (rest []string, path string, found bool) {
 	if len(args) == 0 {
 		return args, "", false
 	}
-	a := args[0]
-	switch {
-	case a == "--dump-raw":
-		if len(args) < 2 {
-			// 缺参数，视为未识别，原样返回交由后续报错
-			return args, "", false
+	out := make([]string, 0, len(args))
+	i := 0
+	for i < len(args) {
+		a := args[i]
+		// 首个不以 -- 开头的 token 视为命令名，扫描停止
+		if !strings.HasPrefix(a, "--") {
+			break
 		}
-		return args[2:], args[1], true
-	case strings.HasPrefix(a, "--dump-raw="):
-		return args[1:], strings.TrimPrefix(a, "--dump-raw="), true
+		if !found {
+			switch {
+			case a == "--dump-raw":
+				if i+1 >= len(args) {
+					// 缺失值：视为未识别，归还原样
+					out = append(out, a)
+					i++
+					continue
+				}
+				path = args[i+1]
+				found = true
+				i += 2
+				continue
+			case strings.HasPrefix(a, "--dump-raw="):
+				path = strings.TrimPrefix(a, "--dump-raw=")
+				found = true
+				i++
+				continue
+			}
+		}
+		// 其它 -- 开头的 flag 透传到 rest（可能是未来 gw exec 新增的 flag）
+		out = append(out, a)
+		i++
 	}
-	return args, "", false
+	// 追加剩余（命令名及之后全部原样）
+	out = append(out, args[i:]...)
+	return out, path, found
 }
 
 var execCmd = &cobra.Command{
