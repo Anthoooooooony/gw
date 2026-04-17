@@ -12,6 +12,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// extractDumpRawFlag 在 DisableFlagParsing 的环境下手动解析并剥离
+// 开头的 --dump-raw=PATH 或 --dump-raw PATH 参数。
+// 返回：剩余 args、dump 目标路径、是否找到该 flag。
+// 只识别出现在命令名之前的 flag（即真正属于 gw exec 的），
+// 保证后续参数（可能是子命令自己的 flag）原样透传。
+func extractDumpRawFlag(args []string) (rest []string, path string, found bool) {
+	if len(args) == 0 {
+		return args, "", false
+	}
+	a := args[0]
+	switch {
+	case a == "--dump-raw":
+		if len(args) < 2 {
+			// 缺参数，视为未识别，原样返回交由后续报错
+			return args, "", false
+		}
+		return args[2:], args[1], true
+	case strings.HasPrefix(a, "--dump-raw="):
+		return args[1:], strings.TrimPrefix(a, "--dump-raw="), true
+	}
+	return args, "", false
+}
+
 var execCmd = &cobra.Command{
 	Use:                "exec [command] [args...]",
 	Short:              "执行命令并过滤输出",
@@ -27,6 +50,9 @@ func init() {
 func runExec(cmd *cobra.Command, args []string) {
 	start := time.Now()
 
+	// 0. 解析诊断逃生舱 --dump-raw，必须在 parse 命令名之前
+	args, dumpRawPath, _ := extractDumpRawFlag(args)
+
 	// 1. PARSE: 提取命令名和参数
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "gw exec: 缺少命令参数")
@@ -38,7 +64,7 @@ func runExec(cmd *cobra.Command, args []string) {
 	// 2. ROUTE: 从注册表查找匹配的过滤器
 	// 优先检查流式过滤器
 	if sf := filter.FindStream(cmdName, cmdArgs); sf != nil {
-		runStreamExec(sf, cmdName, cmdArgs)
+		runStreamExec(sf, cmdName, cmdArgs, dumpRawPath)
 		return
 	}
 
@@ -55,6 +81,13 @@ func runExec(cmd *cobra.Command, args []string) {
 	var output string
 	var filterUsed string
 	originalOutput := result.Stdout + result.Stderr
+
+	// 诊断逃生舱：如指定了 --dump-raw，把原始输出写入文件（失败仅告警）
+	if dumpRawPath != "" {
+		if err := os.WriteFile(dumpRawPath, []byte(originalOutput), 0o644); err != nil {
+			fmt.Fprintf(os.Stderr, "[gw] warning: 写入 --dump-raw 文件 %s 失败: %v\n", dumpRawPath, err)
+		}
+	}
 
 	if matched != nil {
 		filterUsed = matched.Name()
@@ -102,7 +135,7 @@ func runExec(cmd *cobra.Command, args []string) {
 
 	// 写入数据库（同步，在 os.Exit 前完成）
 	if db, err := track.NewDB(track.DefaultDBPath()); err == nil {
-		_ = db.InsertRecord(track.Record{
+		rec := track.Record{
 			Timestamp:    time.Now().UTC(),
 			Command:      fullCmd,
 			ExitCode:     result.ExitCode,
@@ -111,7 +144,12 @@ func runExec(cmd *cobra.Command, args []string) {
 			SavedTokens:  savedTokens,
 			ElapsedMs:    elapsedMs,
 			FilterUsed:   filterUsed,
-		})
+		}
+		// 默认不落盘 raw_output（否则 DB 会爆炸）；仅 GW_STORE_RAW=1 时写入。
+		if os.Getenv("GW_STORE_RAW") == "1" {
+			rec.RawOutput = originalOutput
+		}
+		_ = db.InsertRecord(rec)
 		db.Close()
 	}
 
@@ -119,15 +157,27 @@ func runExec(cmd *cobra.Command, args []string) {
 	os.Exit(result.ExitCode)
 }
 
-func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
+func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dumpRawPath string) {
 	start := time.Now()
 	proc := sf.NewStreamInstance()
 	var originalChars int
 	var filteredChars int
 
+	// 诊断逃生舱：流式模式下边流式边累积写入 buffer，结束后一次性落盘。
+	// 选择"先 buffer 后落盘"而非边流边 append 是因为：
+	//   1) 避免每行 syscall，性能更好
+	//   2) 写失败时不会产生半截文件
+	//   3) 文件一旦打开不中断主流程
+	var rawBuf strings.Builder
+	storeRaw := os.Getenv("GW_STORE_RAW") == "1"
+
 	var stderrBuf strings.Builder
 	exitCode, err := internal.RunCommandStreamingFull(cmdName, cmdArgs, func(line string) {
 		originalChars += len([]rune(line))
+		if dumpRawPath != "" || storeRaw {
+			rawBuf.WriteString(line)
+			rawBuf.WriteByte('\n')
+		}
 		action, output := proc.ProcessLine(line)
 		if action == filter.StreamEmit {
 			filteredChars += len([]rune(output))
@@ -140,9 +190,19 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 		os.Exit(127)
 	}
 
-	// stderr 透传
+	// stderr 透传 + 累积入 raw buffer（stderr 也是原始输出的一部分）
 	if stderrBuf.Len() > 0 {
+		if dumpRawPath != "" || storeRaw {
+			rawBuf.WriteString(stderrBuf.String())
+		}
 		fmt.Fprint(os.Stderr, stderrBuf.String())
+	}
+
+	// 进程退出后尝试落盘 --dump-raw，失败只 warning
+	if dumpRawPath != "" {
+		if err := os.WriteFile(dumpRawPath, []byte(rawBuf.String()), 0o644); err != nil {
+			fmt.Fprintf(os.Stderr, "[gw] warning: 写入 --dump-raw 文件 %s 失败: %v\n", dumpRawPath, err)
+		}
 	}
 
 	// Flush
@@ -168,7 +228,7 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 
 	// 写入数据库（同步，在 os.Exit 前完成）
 	if db, err := track.NewDB(track.DefaultDBPath()); err == nil {
-		_ = db.InsertRecord(track.Record{
+		rec := track.Record{
 			Timestamp:    time.Now().UTC(),
 			Command:      fullCmd,
 			ExitCode:     exitCode,
@@ -177,7 +237,11 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string) {
 			SavedTokens:  inputTokens - outputTokens,
 			ElapsedMs:    elapsed.Milliseconds(),
 			FilterUsed:   sf.Name() + ":stream",
-		})
+		}
+		if storeRaw {
+			rec.RawOutput = rawBuf.String()
+		}
+		_ = db.InsertRecord(rec)
 		db.Close()
 	}
 
