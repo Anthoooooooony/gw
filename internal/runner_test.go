@@ -45,8 +45,8 @@ func TestRunCommand_CommandNotFound(t *testing.T) {
 
 // TestRunCommand_Timeout 短超时值触发 SIGTERM，进程被终止，返回 ExitCode 124
 func TestRunCommand_Timeout(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "300ms")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "300ms")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 
 	start := time.Now()
 	result, err := RunCommand("sh", []string{"-c", "sleep 30"})
@@ -72,8 +72,8 @@ func TestRunCommand_Timeout(t *testing.T) {
 
 // TestRunCommand_TimeoutDisabled 超时禁用时长命令不被打断
 func TestRunCommand_TimeoutDisabled(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "0")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "0")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 
 	// 使用一个会在 600ms 内结束的命令；如果超时被误触发会返回 124
 	result, err := RunCommand("sh", []string{"-c", "sleep 0.6; echo done"})
@@ -90,8 +90,8 @@ func TestRunCommand_TimeoutDisabled(t *testing.T) {
 
 // TestRunCommand_TimeoutSIGKILLGrace trap SIGTERM 后 5s 内被 SIGKILL
 func TestRunCommand_TimeoutSIGKILLGrace(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "300ms")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "300ms")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 
 	start := time.Now()
 	// trap "" TERM 忽略 SIGTERM，必须靠 SIGKILL 收掉

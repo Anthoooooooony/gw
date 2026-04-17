@@ -76,8 +76,8 @@ func TestRunCommandStreaming_NotFound(t *testing.T) {
 
 // TestRunCommandStreaming_Timeout 流式路径短超时触发 SIGTERM，ExitCode 映射为 124
 func TestRunCommandStreaming_Timeout(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "300ms")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "300ms")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 
 	var lines []string
 	var stderrBuf bytes.Buffer
@@ -104,8 +104,8 @@ func TestRunCommandStreaming_Timeout(t *testing.T) {
 
 // TestRunCommandStreaming_TimeoutDisabled 禁用后长命令完整执行
 func TestRunCommandStreaming_TimeoutDisabled(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "off")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "off")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 
 	var lines []string
 	var stderrBuf bytes.Buffer
@@ -143,8 +143,8 @@ func (m *mockStreamProcessor) Flush(exitCode int) []string {
 
 // TestRunCommandStreaming_TimeoutInvokesFlush 超时场景下调用方必须能拿到非负 exitCode 以触发 Flush
 func TestRunCommandStreaming_TimeoutInvokesFlush(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "300ms")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "300ms")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 
 	proc := &mockStreamProcessor{}
 	var stderrBuf bytes.Buffer
@@ -171,8 +171,8 @@ func TestRunCommandStreaming_TimeoutInvokesFlush(t *testing.T) {
 // TestRunCommandStreaming_SignalExitCode_SIGTERM 验证信号终止保留真实信号值：
 // 进程被 SIGTERM 杀掉应返回 128+15=143，而非 -1 或笼统的 130。
 func TestRunCommandStreaming_SignalExitCode_SIGTERM(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "off") // 禁用超时，避免干扰信号路径
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "off") // 禁用超时，避免干扰信号路径
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 
 	var stderrBuf bytes.Buffer
 	code, err := RunCommandStreamingFull("bash", []string{"-c", `echo started; kill -TERM $$`},
@@ -187,8 +187,8 @@ func TestRunCommandStreaming_SignalExitCode_SIGTERM(t *testing.T) {
 
 // TestRunCommandStreaming_SignalExitCode_SIGHUP SIGHUP 应映射为 128+1=129
 func TestRunCommandStreaming_SignalExitCode_SIGHUP(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "off")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "off")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 
 	var stderrBuf bytes.Buffer
 	code, err := RunCommandStreamingFull("bash", []string{"-c", `echo started; kill -HUP $$`},
@@ -203,8 +203,8 @@ func TestRunCommandStreaming_SignalExitCode_SIGHUP(t *testing.T) {
 
 // TestRunCommandStreaming_TimeoutSIGKILLGrace 流式路径 SIGTERM 被 trap，SIGKILL 生效
 func TestRunCommandStreaming_TimeoutSIGKILLGrace(t *testing.T) {
-	os.Setenv("GW_CMD_TIMEOUT", "300ms")
-	defer os.Unsetenv("GW_CMD_TIMEOUT")
+	_ = os.Setenv("GW_CMD_TIMEOUT", "300ms")
+	defer func() { _ = os.Unsetenv("GW_CMD_TIMEOUT") }()
 
 	var stderrBuf bytes.Buffer
 	start := time.Now()

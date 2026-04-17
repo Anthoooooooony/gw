@@ -44,7 +44,7 @@ func TestInspect_List(t *testing.T) {
 		ExitCode: 0, InputTokens: 1000, OutputTokens: 50,
 		SavedTokens: 950, ElapsedMs: 3000, FilterUsed: "java/maven",
 	})
-	db.Close()
+	_ = db.Close()
 
 	var buf bytes.Buffer
 	if err := runInspectWithDB(&buf, dbPath, nil, false); err != nil {
@@ -78,7 +78,7 @@ func TestInspect_Detail_NoRaw(t *testing.T) {
 		RawOutput: "full-maven-log-very-long",
 	})
 	recs, _ := db.RecentRecords(1)
-	db.Close()
+	_ = db.Close()
 
 	var buf bytes.Buffer
 	idStr := ""
@@ -117,7 +117,7 @@ func TestInspect_Detail_WithRaw(t *testing.T) {
 		RawOutput: raw,
 	})
 	recs, _ := db.RecentRecords(1)
-	db.Close()
+	_ = db.Close()
 
 	var buf bytes.Buffer
 	idStr := ""

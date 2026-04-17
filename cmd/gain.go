@@ -25,7 +25,7 @@ func runGain(cmd *cobra.Command, args []string) {
 		fmt.Fprintf(os.Stderr, "gw gain: 打开数据库失败: %v\n", err)
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// 清理超过 90 天的旧记录
 	_ = db.Cleanup(90)
