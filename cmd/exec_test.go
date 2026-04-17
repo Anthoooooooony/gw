@@ -10,16 +10,32 @@ import (
 
 const gwBinary = "/tmp/gw-integration-test"
 
-func TestMain(m *testing.M) {
-	// 构建二进制到临时目录。优先使用 GW_SOURCE_ROOT 指向的源树（便于
-	// 在 git worktree 里跑集成测试构建当前 worktree 的代码），
-	// 未设置则回退到 /private/tmp/gw（master）。
-	srcRoot := os.Getenv("GW_SOURCE_ROOT")
-	if srcRoot == "" {
-		srcRoot = "/private/tmp/gw"
+// resolveSrcRoot 返回 gw 模块根目录。优先 GW_SOURCE_ROOT（用于 git worktree
+// 构建当前 worktree 代码的场景），否则从当前 cwd 向上找 go.mod。
+// Go 测试的 cwd 始终是包目录，所以此函数在任何环境（本地/CI）都可用。
+func resolveSrcRoot() string {
+	if env := os.Getenv("GW_SOURCE_ROOT"); env != "" {
+		return env
 	}
+	dir, err := os.Getwd()
+	if err != nil {
+		panic("resolveSrcRoot: os.Getwd failed: " + err.Error())
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			panic("resolveSrcRoot: 找不到 go.mod，起点 " + dir)
+		}
+		dir = parent
+	}
+}
+
+func TestMain(m *testing.M) {
 	build := exec.Command("go", "build", "-o", gwBinary, ".")
-	build.Dir = srcRoot
+	build.Dir = resolveSrcRoot()
 	if err := build.Run(); err != nil {
 		panic("build failed: " + err.Error())
 	}
@@ -42,13 +58,7 @@ func TestExec_Passthrough(t *testing.T) {
 // TestExec_GitStatus 测试 git status 过滤器去除独立教学提示行
 func TestExec_GitStatus(t *testing.T) {
 	cmd := exec.Command(gwBinary, "exec", "git", "status")
-	// 用 GW_SOURCE_ROOT 做工作目录（与 TestMain 构建时保持一致），
-	// 避免硬编码 /private/tmp/gw 路径。
-	srcRoot := os.Getenv("GW_SOURCE_ROOT")
-	if srcRoot == "" {
-		srcRoot = "/private/tmp/gw"
-	}
-	cmd.Dir = srcRoot
+	cmd.Dir = resolveSrcRoot()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("exec git status 失败: %v, output: %s", err, out)
