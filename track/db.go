@@ -3,12 +3,18 @@ package track
 import (
 	"database/sql"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+// dbWarnOnce 保证 HOME 只读降级的 warning 在同一进程内只打一次，
+// 避免并发调用方（如 verbose 模式下多次 NewDB）刷屏。
+var dbWarnOnce sync.Once
 
 // Record 记录一次命令执行的追踪数据
 type Record struct {
@@ -60,13 +66,39 @@ CREATE TABLE IF NOT EXISTS tracking (
 );
 `
 
-// DefaultDBPath 返回默认数据库路径 ~/.gw/tracking.db
+// DefaultDBPath 返回 tracking DB 的路径。
+// 优先级：
+//  1. 环境变量 GW_DB_PATH（显式路径，覆盖一切）
+//  2. ~/.gw/tracking.db（默认）
+//  3. $TMPDIR/gw-tracking.db（HOME 不可写时降级，并 stderr warn 一次）
 func DefaultDBPath() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		home = "."
+	home, _ := os.UserHomeDir()
+	return resolveDBPathWithEnv(os.Getenv("GW_DB_PATH"), home, os.Stderr)
+}
+
+// resolveDBPathWithEnv 是 DefaultDBPath 的可测试内核。
+// envPath 为 GW_DB_PATH 原始值（空串表示未设置）；homeDir 为 os.UserHomeDir 结果。
+func resolveDBPathWithEnv(envPath, homeDir string, stderr io.Writer) string {
+	if envPath != "" {
+		return envPath
 	}
-	return filepath.Join(home, ".gw", "tracking.db")
+
+	// 默认路径
+	if homeDir != "" {
+		primary := filepath.Join(homeDir, ".gw", "tracking.db")
+		// 尝试创建目标目录，失败则视为 HOME 不可写降级
+		dir := filepath.Dir(primary)
+		if err := os.MkdirAll(dir, 0o755); err == nil {
+			return primary
+		}
+	}
+
+	// 降级：只 warn 一次
+	fallback := filepath.Join(os.TempDir(), "gw-tracking.db")
+	dbWarnOnce.Do(func() {
+		fmt.Fprintf(stderr, "gw: warning: HOME not writable, tracking DB fallback to %s\n", fallback)
+	})
+	return fallback
 }
 
 // NewDB 打开或创建数据库
