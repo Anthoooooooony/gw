@@ -27,6 +27,25 @@ bump_version() {
   echo "$out"
 }
 
+# classify_commit "feat(x): msg" → "Added" | "Fixed" | "Changed" | "Removed" | ""
+# 空字符串表示该 commit 不入 CHANGELOG（docs/chore/ci/test）
+classify_commit() {
+  local msg="$1"
+  # BREAKING CHANGE 优先——任何前缀带 ! 都是 Removed（向后不兼容）
+  if [[ "$msg" =~ ^[a-z]+(\([^\)]+\))?!: ]]; then
+    echo "Removed"
+    return
+  fi
+  # 按前缀分类
+  case "$msg" in
+    feat\(*\):*|feat:*)                 echo "Added" ;;
+    fix\(*\):*|fix:*)                   echo "Fixed" ;;
+    refactor\(*\):*|refactor:*|perf\(*\):*|perf:*) echo "Changed" ;;
+    remove\(*\):*|remove:*)             echo "Removed" ;;
+    *) echo "" ;;
+  esac
+}
+
 # ========== main（副作用部分，后续任务填充）==========
 
 main() {
