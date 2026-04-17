@@ -30,21 +30,32 @@ bump_version() {
 
 # classify_commit "feat(x): msg" → "Added" | "Fixed" | "Changed" | "Removed" | ""
 # 空字符串表示该 commit 不入 CHANGELOG（docs/chore/ci/test）
+# 支持大小写宽容匹配（Feat: / FEAT: / Fix(api): 均有效）
 classify_commit() {
   local msg="$1"
+  # 保存并启用大小写不敏感匹配
+  local restore_nocasematch
+  restore_nocasematch=$(shopt -p nocasematch)
+  shopt -s nocasematch
+
+  local result=""
   # BREAKING CHANGE 优先——任何前缀带 ! 都是 Removed（向后不兼容）
   if [[ "$msg" =~ ^[a-z]+(\([^\)]+\))?!: ]]; then
-    echo "Removed"
-    return
+    result="Removed"
+  else
+    # 按前缀分类
+    case "$msg" in
+      feat\(*\):*|feat:*)                 result="Added" ;;
+      fix\(*\):*|fix:*)                   result="Fixed" ;;
+      refactor\(*\):*|refactor:*|perf\(*\):*|perf:*) result="Changed" ;;
+      remove\(*\):*|remove:*)             result="Removed" ;;
+      *) result="" ;;
+    esac
   fi
-  # 按前缀分类
-  case "$msg" in
-    feat\(*\):*|feat:*)                 echo "Added" ;;
-    fix\(*\):*|fix:*)                   echo "Fixed" ;;
-    refactor\(*\):*|refactor:*|perf\(*\):*|perf:*) echo "Changed" ;;
-    remove\(*\):*|remove:*)             echo "Removed" ;;
-    *) echo "" ;;
-  esac
+
+  # 恢复原状态
+  eval "$restore_nocasematch"
+  echo "$result"
 }
 
 # build_changelog_section VERSION DATE < stdin（每行一条 commit message）→ markdown 节
