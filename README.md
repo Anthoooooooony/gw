@@ -102,7 +102,7 @@ if sf := filter.FindStream(cmd, args); sf != nil {
 |--------|------------|-------------|------|
 | `git status/log` | Filter | 批量 | 输出小且快，批量足够 |
 | `java/maven` | Filter + StreamFilter | 流式（优先） | 多模块构建输出大但会退出，流式可实时反馈；批量接口保留用于测试 |
-| `java/gradle` | Filter | 批量 | 当前只实现批量（未来可能加流式） |
+| `java/gradle` | Filter + StreamFilter | 流式（优先） | 构建输出量大，流式可实时反馈任务进度；批量接口保留覆盖短时命令 |
 | `java/springboot` | Filter + StreamFilter | 流式（必须） | `java -jar` 是长驻进程；两个接口都实现但 FindStream 优先，批量路径永远不会被触发 |
 
 **批量模式** — `cmd.Run()` 等待退出后一次性过滤：
@@ -140,6 +140,8 @@ max_lines = 50
 ```
 
 TOML 引擎支持 7 阶段处理管道：`strip_ansi → strip_lines → keep_lines → head_lines → tail_lines → max_lines → on_empty`
+
+内置 TOML 规则覆盖：`docker`（ps/images/logs）、`kubectl`、`node`（npm/yarn/pnpm install/test/build/ci）、`python`（pip/pytest/venv）、`rust`（cargo build/test/check/clippy）。
 
 ### 错误处理
 
@@ -244,14 +246,17 @@ gw/
 │   ├── java/
 │   │   ├── maven.go               # Maven 过滤器（批量 + 流式，错误去重）
 │   │   ├── maven_state.go         # Maven 状态机（11 态 + 21 种行分类 + 转移逻辑）
-│   │   ├── gradle.go              # Gradle 过滤器（白名单模式）
+│   │   ├── gradle.go              # Gradle 过滤器（批量白名单 + 流式状态机）
 │   │   └── springboot.go          # Spring Boot 过滤器（banner + logger name 匹配）
 │   └── toml/
 │       ├── engine.go              # TOML 声明式过滤引擎（7 阶段管道）
 │       ├── loader.go              # TOML 三级加载（builtin / user / project）
 │       └── rules/                 # 内置 TOML 规则（go:embed）
 │           ├── docker.toml
-│           └── kubectl.toml
+│           ├── kubectl.toml
+│           ├── node.toml          # npm / yarn / pnpm
+│           ├── python.toml        # pip / pytest / venv
+│           └── rust.toml          # cargo build/test/check/clippy
 │
 ├── shell/
 │   └── lexer.go                   # 引号感知 shell tokenizer（AnalyzeCommand）
@@ -369,7 +374,6 @@ go test ./filter/java/  # 只跑 Java 过滤器测试
 - **只支持 Claude Code**：`gw init` 目前只适配 Claude Code 的 PreToolUse Hook 机制。Cursor、Copilot 等其他 AI 编程工具的 Hook 机制不同，需要单独适配。
 - **有损压缩**：过滤会丢弃部分原始信息。虽然设计上保留错误和诊断信息、仅丢弃噪音，但不可能 100% 无损。关键命令建议用 `gw -v exec` 观察压缩详情，或直接跳过 gw。
 - **SQLite 追踪的并发性**：多个 gw 进程并发时，SQLite 写入使用 3 秒的 busy_timeout，极端情况下最长阻塞 ~3 秒。不影响主输出，只影响追踪数据记录。
-- **Gradle 未实现流式**：当前 Gradle 构建走批量路径，大型项目构建期间 AI 无法看到实时进度。后续迭代会补上 StreamFilter 实现。
 - **Token 估算是近似值**：用 `ceil(runes/4)` 估算，不是真实 tokenizer。在中日韩字符密集的输出上估算偏差较大。
 - **Windows 超时降级**：`internal/procgroup_other.go` 只能杀主进程，不覆盖进程组；`SIGTERM` 宽限期在 Windows 上无效，直接 kill。`_gw_managed` 标记会写入但 hook 数组位置管理不做验证。
 - **用户配置目录平台差异**：TOML 用户规则目录由 `os.UserConfigDir()` 决定，macOS 是 `~/Library/Application Support/gw/rules/` 而**非** `~/.config`。如果在 macOS 上按 Linux 习惯把规则放到 `~/.config/gw/rules/` 将不会被加载。
