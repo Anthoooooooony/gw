@@ -89,6 +89,10 @@ func marshalSettings(settings map[string]interface{}) ([]byte, error) {
 //  2. 将新内容写入同目录的临时文件；
 //  3. rename 临时文件到目标路径（同文件系统 rename 为原子操作）。
 //
+// 权限策略：
+//   - 原文件已存在：backup 和 tmp 文件保留原文件的 mode（避免把 0600 降级到 0644）
+//   - 首次写入（文件不存在）：新文件使用 0600（保守：hook 命令可能包含敏感内容）
+//
 // 任一步骤失败都不会留下半截的目标文件。
 func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 	data, err := marshalSettings(settings)
@@ -101,9 +105,17 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 		return fmt.Errorf("创建目录 %s 失败: %w", dir, err)
 	}
 
-	// 1. 若目标已存在，生成备份
+	// 探测原文件 mode；不存在则使用保守默认 0600
+	var targetMode os.FileMode = 0o600
+	if info, err := os.Stat(path); err == nil {
+		targetMode = info.Mode().Perm()
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("stat 原文件 %s 失败: %w", path, err)
+	}
+
+	// 1. 若目标已存在，生成备份（权限沿用原文件）
 	if existing, err := os.ReadFile(path); err == nil {
-		if err := os.WriteFile(path+".bak", existing, 0644); err != nil {
+		if err := os.WriteFile(path+".bak", existing, targetMode); err != nil {
 			return fmt.Errorf("写入备份 %s.bak 失败: %w", path, err)
 		}
 	} else if !os.IsNotExist(err) {
@@ -129,7 +141,8 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 	if err := tmp.Close(); err != nil {
 		return fmt.Errorf("关闭临时文件失败: %w", err)
 	}
-	if err := os.Chmod(tmpPath, 0644); err != nil {
+	// 权限与原文件一致（首次写入时为 0600）
+	if err := os.Chmod(tmpPath, targetMode); err != nil {
 		return fmt.Errorf("调整临时文件权限失败: %w", err)
 	}
 
