@@ -136,7 +136,7 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 		}
 	}()
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
+		_ = tmp.Close() // 写入失败时关闭临时文件，错误已不重要
 		return fmt.Errorf("写入临时文件失败: %w", err)
 	}
 	if err := tmp.Close(); err != nil {

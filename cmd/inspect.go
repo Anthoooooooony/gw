@@ -39,7 +39,7 @@ func runInspectWithDB(w io.Writer, dbPath string, args []string, showRaw bool) e
 	if err != nil {
 		return fmt.Errorf("打开数据库失败: %w", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	if len(args) == 0 {
 		return listRecentRecords(w, db)

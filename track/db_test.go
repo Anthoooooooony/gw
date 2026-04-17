@@ -18,7 +18,7 @@ func TestRecordAndQuery(t *testing.T) {
 	if err != nil {
 		t.Fatalf("创建数据库失败: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	r := Record{
 		Timestamp:    time.Now().UTC(),
@@ -59,7 +59,7 @@ func TestCleanup(t *testing.T) {
 	if err != nil {
 		t.Fatalf("创建数据库失败: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// 插入一条 100 天前的记录
 	oldTime := time.Now().UTC().AddDate(0, 0, -100)
@@ -109,7 +109,7 @@ func TestEstimateTokens(t *testing.T) {
 
 func TestDefaultDBPath(t *testing.T) {
 	// 清除可能污染的 env
-	os.Unsetenv("GW_DB_PATH")
+	_ = os.Unsetenv("GW_DB_PATH")
 	path := DefaultDBPath()
 	home, _ := os.UserHomeDir()
 	expected := filepath.Join(home, ".gw", "tracking.db")
@@ -121,8 +121,8 @@ func TestDefaultDBPath(t *testing.T) {
 // TestDefaultDBPath_EnvOverride GW_DB_PATH 优先级最高
 func TestDefaultDBPath_EnvOverride(t *testing.T) {
 	custom := filepath.Join(t.TempDir(), "custom.db")
-	os.Setenv("GW_DB_PATH", custom)
-	defer os.Unsetenv("GW_DB_PATH")
+	_ = os.Setenv("GW_DB_PATH", custom)
+	defer func() { _ = os.Unsetenv("GW_DB_PATH") }()
 
 	got := DefaultDBPath()
 	if got != custom {
@@ -133,7 +133,7 @@ func TestDefaultDBPath_EnvOverride(t *testing.T) {
 // TestDefaultDBPath_HomeUnwritableFallback HOME 不可写时降级到 os.TempDir
 // 并通过 stderr 打一次 warning。
 func TestDefaultDBPath_HomeUnwritableFallback(t *testing.T) {
-	os.Unsetenv("GW_DB_PATH")
+	_ = os.Unsetenv("GW_DB_PATH")
 
 	// 通过把 HOME 指向一个只读的不存在路径（但父目录不可写）来触发降级。
 	// 在 macOS/Linux 上把 HOME 指向 /nonexistent/readonly-home —— MkdirAll 会失败。
@@ -155,7 +155,7 @@ func TestDefaultDBPath_HomeUnwritableFallback(t *testing.T) {
 
 // TestDefaultDBPath_WarnOnce 同一进程内降级 warning 只打一次
 func TestDefaultDBPath_WarnOnce(t *testing.T) {
-	os.Unsetenv("GW_DB_PATH")
+	_ = os.Unsetenv("GW_DB_PATH")
 	dbWarnOnce = sync.Once{}
 
 	var w1, w2 strings.Builder
@@ -205,14 +205,14 @@ CREATE TABLE IF NOT EXISTS tracking (
 	if err != nil {
 		t.Fatalf("插旧记录失败: %v", err)
 	}
-	legacy.Close()
+	_ = legacy.Close()
 
 	// NewDB 应触发迁移
 	db, err := NewDB(dbPath)
 	if err != nil {
 		t.Fatalf("NewDB 迁移失败: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// 旧记录依然能查
 	stats, err := db.AllStats()
@@ -269,7 +269,7 @@ CREATE TABLE IF NOT EXISTS tracking (
 	if err != nil {
 		t.Fatalf("二次 NewDB 失败: %v", err)
 	}
-	db2.Close()
+	_ = db2.Close()
 }
 
 // TestRawOutputRoundTrip 验证 InsertRecord + GetRecord 能正确保留 RawOutput。
@@ -281,7 +281,7 @@ func TestRawOutputRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("创建数据库失败: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	raw := "line1\nline2\nerror: something\n"
 	r := Record{
