@@ -43,7 +43,7 @@
 
 ```bash
 git add CHANGELOG.md
-git commit -m "docs(changelog): 初始化 CHANGELOG 含 v0.1.0 历史节"
+git commit -m "docs(changelog): 初始化 CHANGELOG（仅 [Unreleased] 种子节）"
 ```
 
 ---
