@@ -59,11 +59,11 @@ func TestRenderFilters_TableFormat(t *testing.T) {
 // TestGoFilterMatchHintFromName 名称到 MATCH 提示的映射
 func TestGoFilterMatchHintFromName(t *testing.T) {
 	cases := map[string]string{
-		"git/status":     "git status",
-		"java/maven":     "java maven",
-		"java/gradle":    "java gradle",
+		"git/status":      "git status",
+		"java/maven":      "java maven",
+		"java/gradle":     "java gradle",
 		"java/springboot": "java springboot",
-		"loneword":       "loneword",
+		"loneword":        "loneword",
 	}
 	for in, want := range cases {
 		if got := goFilterMatchHintFromName(in); got != want {

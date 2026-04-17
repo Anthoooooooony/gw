@@ -10,7 +10,9 @@ import (
 )
 
 // Version 由 ldflags 注入，例如：
-//   go build -ldflags "-X github.com/gw-cli/gw/cmd.Version=v0.1.0" .
+//
+//	go build -ldflags "-X github.com/gw-cli/gw/cmd.Version=v0.1.0" .
+//
 // 未注入时保持 "dev"，fallback 到 runtime/debug.ReadBuildInfo()。
 var Version = "dev"
 

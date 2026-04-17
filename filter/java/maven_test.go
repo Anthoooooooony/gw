@@ -30,11 +30,11 @@ func TestMavenFilter_Match(t *testing.T) {
 		{"mvn", []string{"clean", "install"}, true},
 		{"mvn", []string{"package", "-DskipTests"}, true},
 		{"mvn", nil, true},
-		{"mvn", []string{"spring-boot:run"}, false},       // 长驻进程
+		{"mvn", []string{"spring-boot:run"}, false},          // 长驻进程
 		{"mvn", []string{"clean", "spring-boot:run"}, false}, // 长驻进程（混合参数）
-		{"mvn", []string{"jetty:run"}, false},              // 长驻进程
-		{"mvn", []string{"quarkus:dev"}, false},            // 长驻进程
-		{"mvn", []string{"exec:java"}, false},              // 长驻进程
+		{"mvn", []string{"jetty:run"}, false},                // 长驻进程
+		{"mvn", []string{"quarkus:dev"}, false},              // 长驻进程
+		{"mvn", []string{"exec:java"}, false},                // 长驻进程
 		{"gradle", []string{"build"}, false},
 		{"java", []string{"-jar", "app.jar"}, false},
 	}
