@@ -277,6 +277,49 @@ func TestWriteSettingsAtomic_FirstWriteNoBak(t *testing.T) {
 	if _, err := os.Stat(path + ".bak"); !os.IsNotExist(err) {
 		t.Fatal("首次写入不应生成 .bak")
 	}
+	// 首次写入的新文件应为 0600（保守：hook 命令可能敏感）
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := info.Mode().Perm(); perm != 0o600 {
+		t.Errorf("首次写入 mode 期望 0600，得到 %o", perm)
+	}
+}
+
+// TestWriteSettingsAtomic_PreservesMode 备份与新写入的文件应保留原 settings.json 的 mode。
+func TestWriteSettingsAtomic_PreservesMode(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "settings.json")
+
+	// 人为先写一个 0600 模式的 settings.json（不经 writeSettingsAtomic，避开
+	// "首次写入"分支，模拟用户已有的严格权限文件）
+	if err := os.WriteFile(path, []byte(`{"v":"old"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	next := map[string]interface{}{"v": "new"}
+	if err := writeSettingsAtomic(path, next); err != nil {
+		t.Fatalf("写入失败: %v", err)
+	}
+
+	// 新写入的 path 应保留 0600
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := info.Mode().Perm(); perm != 0o600 {
+		t.Errorf("新文件 mode 期望 0600，得到 %o", perm)
+	}
+
+	// 备份文件也应保留 0600
+	bakInfo, err := os.Stat(path + ".bak")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := bakInfo.Mode().Perm(); perm != 0o600 {
+		t.Errorf("备份文件 mode 期望 0600，得到 %o", perm)
+	}
 }
 
 // --- 端到端：runInitWith / runUninstallWith 通过注入 settings path 不碰真实 HOME ---
