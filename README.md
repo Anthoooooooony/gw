@@ -27,7 +27,14 @@ gw 通过 Claude Code 的 PreToolUse Hook 自动将 `mvn test` 改写为 `gw exe
 
 ## 快速开始
 
-**前置依赖**：Go 1.22+、SQLite3（系统自带，macOS/Linux 无需额外安装）、Claude Code 已安装。
+**前置依赖**：
+
+- Go 1.22+
+- Claude Code 已安装
+- **CGO 工具链**：`mattn/go-sqlite3` 需要 `CGO_ENABLED=1` + C 编译器
+  - macOS：Xcode Command Line Tools（`xcode-select --install`）
+  - Linux：`gcc`、`libc` 头文件（如 Debian/Ubuntu 的 `build-essential`）
+  - 精简 CI 镜像（如 `golang:alpine`）需额外安装 `gcc musl-dev sqlite-dev`，或改用 `golang:1.22` 基础镜像
 
 ```bash
 # 构建
@@ -51,6 +58,14 @@ go build -o gw .
 ```bash
 ./gw uninstall
 ```
+
+## 环境变量
+
+| 变量 | 默认 | 用途 |
+|------|------|------|
+| `GW_CMD_TIMEOUT` | `10m` | 命令执行超时；`0` / `off` / `none` / `disable` / `disabled` 禁用；负值（`-1s` 等）等同禁用 |
+| `GW_STORE_RAW` | `0` | 设 `1` 时把原始输出存入 DB，供 `gw inspect --raw` 回溯 |
+| `GW_DB_PATH` | `~/.gw/tracking.db` | 覆盖 tracking DB 路径；HOME 只读时自动降级到 `$TMPDIR/gw-tracking.db` |
 
 ## 设计
 
@@ -214,6 +229,9 @@ gw/
 │   ├── init_cmd.go                 # gw init — 安装 Claude Code Hook
 │   ├── uninstall.go                # gw uninstall — 移除 Hook
 │   ├── gain.go                     # gw gain — Token 节省统计
+│   ├── version.go                  # gw --version / gw version（ldflags + runtime/debug fallback）
+│   ├── inspect.go                  # gw inspect [id] — 查询历史记录，--raw 打印原文
+│   ├── filters.go                  # gw filters list — 列出已注册过滤器及来源
 │   └── registry.go                 # blank import 触发过滤器自注册
 │
 ├── filter/                         # 过滤器核心
@@ -230,6 +248,7 @@ gw/
 │   │   └── springboot.go          # Spring Boot 过滤器（banner + logger name 匹配）
 │   └── toml/
 │       ├── engine.go              # TOML 声明式过滤引擎（7 阶段管道）
+│       ├── loader.go              # TOML 三级加载（builtin / user / project）
 │       └── rules/                 # 内置 TOML 规则（go:embed）
 │           ├── docker.toml
 │           └── kubectl.toml
@@ -239,7 +258,10 @@ gw/
 │
 ├── internal/
 │   ├── runner.go                  # 批量执行器（cmd.Run）
-│   └── stream.go                  # 流式执行器（StdoutPipe + Scanner）
+│   ├── stream.go                  # 流式执行器（StdoutPipe + Scanner）
+│   ├── timeout.go                 # GW_CMD_TIMEOUT 解析 + 超时提示
+│   ├── procgroup_unix.go          # 进程组 SIGTERM/SIGKILL（unix 平台）
+│   └── procgroup_other.go         # 非 unix 平台降级实现（仅杀主进程）
 │
 └── track/
     ├── db.go                      # SQLite 存储（WAL + busy_timeout）
@@ -328,11 +350,18 @@ go test ./filter/java/  # 只跑 Java 过滤器测试
 | 命令 | 用途 |
 |------|------|
 | `gw exec <cmd> [args...]` | 执行命令并过滤输出 |
+| `gw exec --dump-raw <path> <cmd> [args...]` | 执行命令并把原始输出写入指定文件（流式和批量路径都支持） |
 | `gw rewrite "<command>"` | Hook 改写接口（exit 0=改写成功, 1=不改写） |
 | `gw init` | 安装 Claude Code PreToolUse Hook |
+| `gw init --dry-run` | 打印将要写入的变更但不落盘 |
 | `gw uninstall` | 移除 Hook |
+| `gw uninstall --dry-run` | 打印将要移除的变更但不落盘 |
 | `gw gain` | 查看 token 节省统计 |
 | `gw -v exec <cmd>` | 执行并显示 token 节省详情 |
+| `gw --version` / `gw version` | 打印版本（ldflags 注入，runtime/debug 回退） |
+| `gw inspect [id]` | 查询历史执行记录；不带 id 列出最近记录，带 id 查看详情 |
+| `gw inspect [id] --raw` | 打印原始输出（需执行时 `GW_STORE_RAW=1` 写过原文） |
+| `gw filters list` | 列出已注册过滤器及来源（builtin / user / project） |
 
 ## 已知限制
 
@@ -341,3 +370,5 @@ go test ./filter/java/  # 只跑 Java 过滤器测试
 - **SQLite 追踪的并发性**：多个 gw 进程并发时，SQLite 写入使用 3 秒的 busy_timeout，极端情况下最长阻塞 ~3 秒。不影响主输出，只影响追踪数据记录。
 - **Gradle 未实现流式**：当前 Gradle 构建走批量路径，大型项目构建期间 AI 无法看到实时进度。后续迭代会补上 StreamFilter 实现。
 - **Token 估算是近似值**：用 `ceil(runes/4)` 估算，不是真实 tokenizer。在中日韩字符密集的输出上估算偏差较大。
+- **Windows 超时降级**：`internal/procgroup_other.go` 只能杀主进程，不覆盖进程组；`SIGTERM` 宽限期在 Windows 上无效，直接 kill。`_gw_managed` 标记会写入但 hook 数组位置管理不做验证。
+- **用户配置目录平台差异**：TOML 用户规则目录由 `os.UserConfigDir()` 决定，macOS 是 `~/Library/Application Support/gw/rules/` 而**非** `~/.config`。如果在 macOS 上按 Linux 习惯把规则放到 `~/.config/gw/rules/` 将不会被加载。
