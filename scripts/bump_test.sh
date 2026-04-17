@@ -57,6 +57,14 @@ assert_eq ""        "$(classify_commit 'test: 加 fixture')" "test → 忽略"
 assert_eq "Removed" "$(classify_commit 'feat!: BREAKING')" "feat! → Removed"
 assert_eq "Removed" "$(classify_commit 'fix(api)!: BREAKING')" "fix(scope)! → Removed"
 
+# 大小写宽容（F11a）
+assert_eq "Added"  "$(classify_commit 'Feat: xxx')"       "Feat → Added (case insensitive)"
+assert_eq "Added"  "$(classify_commit 'FEAT: xxx')"       "FEAT → Added"
+assert_eq "Fixed"  "$(classify_commit 'Fix(api): xxx')"   "Fix(scope) → Fixed"
+assert_eq "Fixed"  "$(classify_commit 'FIX: 紧急修复')"    "FIX → Fixed"
+assert_eq "Changed" "$(classify_commit 'Refactor: 重构')"  "Refactor → Changed"
+assert_eq "Removed" "$(classify_commit 'FEAT!: BREAKING')" "FEAT! → Removed (case insensitive breaking)"
+
 # ========== build_changelog_section ==========
 input='feat(filter): 新 toml 规则
 fix(test): detached HEAD
