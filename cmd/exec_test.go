@@ -71,9 +71,10 @@ func TestExec_GitStatus(t *testing.T) {
 			t.Errorf("输出不应包含独立教学提示行 %q", line)
 		}
 	}
-	// 确保主要状态信息保留
-	if !strings.Contains(output, "On branch") && !strings.Contains(output, "branch") {
-		t.Errorf("输出应包含分支信息, got:\n%s", output)
+	// 确保主要状态信息保留。GitHub Actions 的 pull_request 事件 checkout 出
+	// 一个 merge commit（HEAD detached at pull/N/merge），所以也要接受 detached 状态。
+	if !strings.Contains(output, "On branch") && !strings.Contains(output, "HEAD detached") {
+		t.Errorf("输出应包含分支信息（On branch 或 HEAD detached）, got:\n%s", output)
 	}
 }
 
