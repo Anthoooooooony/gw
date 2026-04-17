@@ -260,6 +260,7 @@ gw/
 │   ├── runner.go                  # 批量执行器（cmd.Run）
 │   ├── stream.go                  # 流式执行器（StdoutPipe + Scanner）
 │   ├── timeout.go                 # GW_CMD_TIMEOUT 解析 + 超时提示
+│   ├── killer.go                  # 超时 killer goroutine（runner/stream 共用）
 │   ├── procgroup_unix.go          # 进程组 SIGTERM/SIGKILL（unix 平台）
 │   └── procgroup_other.go         # 非 unix 平台降级实现（仅杀主进程）
 │
