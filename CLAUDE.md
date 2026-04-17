@@ -41,6 +41,7 @@ myapp.logs        toml  project:///workspace/.gw/rules/custom.toml             m
 | 未设置 / 空 | 使用默认值 `10m` |
 | `10m` / `30s` / `500ms` / `2h` 等 | 使用 `time.ParseDuration` 可解析的任意 duration |
 | `0` / `off` / `none` / `disable` / `disabled` | 禁用超时（长驻命令场景） |
+| `-1s` / `-500ms` 等负值 | 视为禁用，等同 `off` |
 | 无法解析的值 | 写 warning 到 stderr，fallback 到默认 `10m` |
 
 **两阶段终止**：
@@ -60,6 +61,24 @@ myapp.logs        toml  project:///workspace/.gw/rules/custom.toml             m
 ### `GW_STORE_RAW` — 是否持久化原始输出到 SQLite
 
 默认 **不** 把每次执行的原始输出写入 `~/.gw.db`（避免 DB 爆炸）。设为 `1` 后 `gw exec` 会把原始输出存入 `records.raw_output` 字段，供 `gw inspect [id] --raw` 回溯。
+
+### `GW_DB_PATH` — 覆盖 tracking DB 路径
+
+默认 `~/.gw/tracking.db`。HOME 只读时降级到 `$TMPDIR/gw-tracking.db` 并 stderr warn 一次。
+设置该变量可把 DB 放在任意可写路径（CI 临时目录、共享挂载等），路径不存在时按常规 `MkdirAll` + open 流程处理。
+
+## 日志与错误输出约定
+
+gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude Code hook 日志和 CI 抓取：
+
+| 前缀 | 场景 | 示例 |
+|------|------|------|
+| `gw <subcmd>: <msg>` | 子命令致命错误，紧邻非零 exit | `gw exec: failed to open db: ...` |
+| `gw: warning: <msg>` | 非致命降级 / 回退提示，程序继续执行 | `gw: warning: GW_CMD_TIMEOUT=abc unparseable, fallback to 10m` |
+
+**禁止**使用 `[gw] warning: ...` 这种方括号风格 —— 与表格其他消息不一致，且在终端日志中难以 grep。
+
+同一降级场景只 warn 一次（如 `GW_DB_PATH` 降级），避免多进程并发污染日志。
 
 ## 执行路径关键不变式
 
