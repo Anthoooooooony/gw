@@ -111,10 +111,28 @@ func RunCommandStreamingFull(name string, args []string, onLine func(string), st
 	if waitErr != nil {
 		var exitErr *exec.ExitError
 		if errors.As(waitErr, &exitErr) {
+			// 若为信号终止，按 POSIX 惯例返回 128+signal；否则返回原始 ExitCode。
+			// ExitCode() 在信号终止时返回 -1，此时用 WaitStatus.Signal() 拿真实信号。
+			if sig := signalFromExitError(exitErr); sig != 0 {
+				return 128 + int(sig), nil
+			}
 			return exitErr.ExitCode(), nil
 		}
-		// 信号终止（非超时）：返回 -1 触发调用方 Flush(-1)
+		// 其它未知错误，保留旧语义返回 -1 触发调用方 Flush
 		return -1, nil
 	}
 	return 0, nil
+}
+
+// signalFromExitError 从 ExitError 中提取被信号终止时的信号值（unix）。
+// 非信号终止或非 unix 平台返回 0。
+func signalFromExitError(exitErr *exec.ExitError) syscall.Signal {
+	ws, ok := exitErr.Sys().(syscall.WaitStatus)
+	if !ok {
+		return 0
+	}
+	if !ws.Signaled() {
+		return 0
+	}
+	return ws.Signal()
 }

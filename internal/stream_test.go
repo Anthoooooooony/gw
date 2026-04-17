@@ -168,6 +168,39 @@ func TestRunCommandStreaming_TimeoutInvokesFlush(t *testing.T) {
 	}
 }
 
+// TestRunCommandStreaming_SignalExitCode_SIGTERM 验证信号终止保留真实信号值：
+// 进程被 SIGTERM 杀掉应返回 128+15=143，而非 -1 或笼统的 130。
+func TestRunCommandStreaming_SignalExitCode_SIGTERM(t *testing.T) {
+	os.Setenv("GW_CMD_TIMEOUT", "off") // 禁用超时，避免干扰信号路径
+	defer os.Unsetenv("GW_CMD_TIMEOUT")
+
+	var stderrBuf bytes.Buffer
+	code, err := RunCommandStreamingFull("bash", []string{"-c", `echo started; kill -TERM $$`},
+		func(line string) {}, &stderrBuf)
+	if err != nil {
+		t.Fatalf("不应返回 Go error，得到: %v", err)
+	}
+	if code != 143 {
+		t.Errorf("SIGTERM 期望 exitCode 143 (128+15)，得到 %d", code)
+	}
+}
+
+// TestRunCommandStreaming_SignalExitCode_SIGHUP SIGHUP 应映射为 128+1=129
+func TestRunCommandStreaming_SignalExitCode_SIGHUP(t *testing.T) {
+	os.Setenv("GW_CMD_TIMEOUT", "off")
+	defer os.Unsetenv("GW_CMD_TIMEOUT")
+
+	var stderrBuf bytes.Buffer
+	code, err := RunCommandStreamingFull("bash", []string{"-c", `echo started; kill -HUP $$`},
+		func(line string) {}, &stderrBuf)
+	if err != nil {
+		t.Fatalf("不应返回 Go error，得到: %v", err)
+	}
+	if code != 129 {
+		t.Errorf("SIGHUP 期望 exitCode 129 (128+1)，得到 %d", code)
+	}
+}
+
 // TestRunCommandStreaming_TimeoutSIGKILLGrace 流式路径 SIGTERM 被 trap，SIGKILL 生效
 func TestRunCommandStreaming_TimeoutSIGKILLGrace(t *testing.T) {
 	os.Setenv("GW_CMD_TIMEOUT", "300ms")
