@@ -12,6 +12,7 @@ import (
 
 // Record 记录一次命令执行的追踪数据
 type Record struct {
+	ID           int64
 	Timestamp    time.Time
 	Command      string
 	ExitCode     int
@@ -20,6 +21,9 @@ type Record struct {
 	SavedTokens  int
 	ElapsedMs    int64
 	FilterUsed   string
+	// RawOutput 保存命令的原始未过滤输出。默认不落盘（避免 DB 爆炸），
+	// 仅在 GW_STORE_RAW=1 时由调用方填充。
+	RawOutput string
 }
 
 // Stats 汇总统计
@@ -51,7 +55,8 @@ CREATE TABLE IF NOT EXISTS tracking (
 	output_tokens INTEGER NOT NULL,
 	saved_tokens INTEGER NOT NULL,
 	elapsed_ms INTEGER NOT NULL,
-	filter_used TEXT NOT NULL DEFAULT ''
+	filter_used TEXT NOT NULL DEFAULT '',
+	raw_output TEXT NOT NULL DEFAULT ''
 );
 `
 
@@ -82,7 +87,52 @@ func NewDB(path string) (*DB, error) {
 		return nil, fmt.Errorf("创建表失败: %w", err)
 	}
 
+	// 迁移：旧版本 DB 可能缺少 raw_output 列。探测并按需 ALTER TABLE。
+	// 绝对不能 DROP TABLE：用户 ~/.gw/tracking.db 里是生产数据。
+	if err := ensureRawOutputColumn(sqlDB); err != nil {
+		sqlDB.Close()
+		return nil, fmt.Errorf("迁移 raw_output 列失败: %w", err)
+	}
+
 	return &DB{db: sqlDB}, nil
+}
+
+// ensureRawOutputColumn 通过 PRAGMA table_info 检查 tracking 表列集合，
+// 若不含 raw_output 则 ALTER TABLE 添加。已存在时为 no-op，幂等。
+func ensureRawOutputColumn(sqlDB *sql.DB) error {
+	rows, err := sqlDB.Query(`PRAGMA table_info(tracking)`)
+	if err != nil {
+		return fmt.Errorf("读取表结构失败: %w", err)
+	}
+	defer rows.Close()
+
+	hasRaw := false
+	for rows.Next() {
+		var (
+			cid        int
+			name       string
+			colType    string
+			notNull    int
+			dfltValue  sql.NullString
+			primaryKey int
+		)
+		if err := rows.Scan(&cid, &name, &colType, &notNull, &dfltValue, &primaryKey); err != nil {
+			return fmt.Errorf("扫描列信息失败: %w", err)
+		}
+		if name == "raw_output" {
+			hasRaw = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	if !hasRaw {
+		if _, err := sqlDB.Exec(`ALTER TABLE tracking ADD COLUMN raw_output TEXT NOT NULL DEFAULT ''`); err != nil {
+			return fmt.Errorf("ALTER TABLE 失败: %w", err)
+		}
+	}
+	return nil
 }
 
 // Close 关闭数据库连接
@@ -93,8 +143,8 @@ func (d *DB) Close() error {
 // InsertRecord 插入一条追踪记录
 func (d *DB) InsertRecord(r Record) error {
 	_, err := d.db.Exec(
-		`INSERT INTO tracking (timestamp, command, exit_code, input_tokens, output_tokens, saved_tokens, elapsed_ms, filter_used)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO tracking (timestamp, command, exit_code, input_tokens, output_tokens, saved_tokens, elapsed_ms, filter_used, raw_output)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		r.Timestamp.UTC().Format(time.RFC3339),
 		r.Command,
 		r.ExitCode,
@@ -103,8 +153,79 @@ func (d *DB) InsertRecord(r Record) error {
 		r.SavedTokens,
 		r.ElapsedMs,
 		r.FilterUsed,
+		r.RawOutput,
 	)
 	return err
+}
+
+// RecentRecords 返回最近 limit 条记录，按 id 降序。
+func (d *DB) RecentRecords(limit int) ([]Record, error) {
+	rows, err := d.db.Query(
+		`SELECT id, timestamp, command, exit_code, input_tokens, output_tokens,
+		        saved_tokens, elapsed_ms, filter_used, raw_output
+		 FROM tracking
+		 ORDER BY id DESC
+		 LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []Record
+	for rows.Next() {
+		var (
+			r       Record
+			tsStr   string
+			rawOut  sql.NullString
+			filterU sql.NullString
+		)
+		if err := rows.Scan(&r.ID, &tsStr, &r.Command, &r.ExitCode,
+			&r.InputTokens, &r.OutputTokens, &r.SavedTokens,
+			&r.ElapsedMs, &filterU, &rawOut); err != nil {
+			return nil, err
+		}
+		if t, err := time.Parse(time.RFC3339, tsStr); err == nil {
+			r.Timestamp = t
+		}
+		if filterU.Valid {
+			r.FilterUsed = filterU.String
+		}
+		if rawOut.Valid {
+			r.RawOutput = rawOut.String
+		}
+		result = append(result, r)
+	}
+	return result, rows.Err()
+}
+
+// GetRecord 按 id 查询单条记录，未找到返回 sql.ErrNoRows。
+func (d *DB) GetRecord(id int64) (Record, error) {
+	var (
+		r       Record
+		tsStr   string
+		rawOut  sql.NullString
+		filterU sql.NullString
+	)
+	err := d.db.QueryRow(
+		`SELECT id, timestamp, command, exit_code, input_tokens, output_tokens,
+		        saved_tokens, elapsed_ms, filter_used, raw_output
+		 FROM tracking WHERE id = ?`, id).Scan(
+		&r.ID, &tsStr, &r.Command, &r.ExitCode,
+		&r.InputTokens, &r.OutputTokens, &r.SavedTokens,
+		&r.ElapsedMs, &filterU, &rawOut)
+	if err != nil {
+		return r, err
+	}
+	if t, err := time.Parse(time.RFC3339, tsStr); err == nil {
+		r.Timestamp = t
+	}
+	if filterU.Valid {
+		r.FilterUsed = filterU.String
+	}
+	if rawOut.Valid {
+		r.RawOutput = rawOut.String
+	}
+	return r, nil
 }
 
 // queryStats 按时间范围查询统计
