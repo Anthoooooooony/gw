@@ -3,6 +3,7 @@
 .gw/
 .superpowers/
 .claude/
+dist/
 
 # IDE
 .idea/
