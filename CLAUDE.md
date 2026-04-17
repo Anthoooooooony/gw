@@ -6,6 +6,21 @@
 
 gw 是一个 CLI 代理，拦截 shell 命令并过滤输出，减少 LLM token 消耗。详见 `README.md`。
 
+## 分支约定
+
+两干分支模型：
+
+| 分支 | 角色 | PR base |
+|------|------|---------|
+| `master` | 已发布代码，每次 tag 对应一个 release | —— |
+| `dev` | 集成分支，GitHub default branch | feature PR 默认落这里 |
+| `feature/*` | 功能/修复 | base = `dev` |
+| `hotfix/*` | 紧急修复已发布版本 | base = `master`，merge 后 cherry-pick 到 dev |
+
+版本机制：SemVer + `scripts/bump.sh [patch|minor|major]`，详见 `docs/superpowers/specs/2026-04-17-versioning-git-workflow-design.md`。
+
+**hotfix 顺序铁律**：先 PR 到 master，merge → bump patch → 再 cherry-pick / merge master 到 dev。顺序反了会丢修复。
+
 ## TOML 规则三级加载
 
 TOML 声明式规则走**三级加载**，由 `filter/toml/loader.go::LoadAllRules` 统一合并。
