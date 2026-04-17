@@ -245,9 +245,11 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 		db.Close()
 	}
 
-	// 负数退出码（信号终止）映射为 128+signal 的惯例值
+	// 退出码语义：
+	//   - 正常退出 / 超时（124）/ 信号终止（128+signal）由 RunCommandStreamingFull 直接返回
+	//   - 兜底：-1 表示未知错误（无法识别的 wait 失败），用 SIGINT 惯例的 130 稳妥收场
 	if exitCode < 0 {
-		exitCode = 130 // SIGINT (Ctrl+C) 的标准退出码
+		exitCode = 130
 	}
 	os.Exit(exitCode)
 }
