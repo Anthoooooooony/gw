@@ -6,6 +6,13 @@
 
 ---
 
+## 变更历史
+
+- 2026-04-17 初稿：两干模型（master + dev）
+- 2026-04-17 修订：退回 GitHub Flow（master + feature/* + hotfix/*）。原因：实际执行中 feature 流向从未走 dev，hotfix cherry-pick 铁律一次未执行，dev 分支内容与 master 完全同步——规范与现实脱节。单维护者项目 GitHub Flow 更匹配。
+
+---
+
 ## 1. 背景与目标
 
 gw 目前（master @ `fad7e5b`）已完成 P0 MVP + P1 Track A/B，具备完整 CLI 能力与双层过滤引擎，但**零版本化**：
@@ -18,36 +25,33 @@ gw 目前（master @ `fad7e5b`）已完成 P0 MVP + P1 Track A/B，具备完整 
 
 ## 2. 分支拓扑
 
-采用 **两干模型**：`master` 永远等于最新 release 的代码，`dev` 是集成分支。
+采用 **GitHub Flow 单干模型**：`master` 是唯一长期分支，永远可发布。
 
 ```
-feature/*  ──PR──▶  dev  ──批量合入 PR──▶  master  ──tag vX.Y.Z──▶  GitHub Release
-                                            ▲
-hotfix/*  ──────────────────PR─────────────▶│
-                                             └──cherry-pick──▶  dev
+feature/* ──PR──▶ master ──tag vX.Y.Z──▶ GitHub Release
+                    ▲
+hotfix/* ──PR──────▶ (紧急修复已发布版本，同样 base master)
 ```
 
 ### 2.1 分支角色
 
 | 分支 | 语义 | 生存期 | Base |
 |------|------|--------|------|
-| `master` | 已发布代码，每次 tag 对应一个 release | 永久 | —— |
-| `dev` | 下一个 release 的集成分支 | 永久 | `master`（周期性合入 master 的内容）|
-| `feature/*` | 单个功能/修复 | 短期，合入 dev 后删除 | `dev` |
+| `master` | 唯一长期分支，永远可发布，是 GitHub default branch | 永久 | —— |
+| `feature/*` | 单个功能/修复 | 短期，合入 master 后删除 | `master` |
 | `hotfix/*` | 紧急修复已发布版本 | 短期，合入 master 后删除 | `master` |
 
 ### 2.2 关键规则
 
-- **feature PR 默认 base 改为 `dev`**（GitHub repo settings 中更改 default branch 显示为 dev，但 master 仍是 release 源）
-- **dev → master 的 PR** 是一批功能凑齐准备发版时才开，PR 标题 `release: prepare vX.Y.Z`
-- **hotfix** 先 PR 到 master（绕过 dev），merge 后立即用 `git cherry-pick` 把修复同步到 dev；顺序不能反（先同步 dev 再救火 master 会导致修复被 dev 的未发布代码污染）
-- **dev 定期向 master rebase 或 merge**：每次 release 后 `git merge master` 到 dev，确保 dev 不漂离 master 太远
+- **所有 PR base 均为 `master`**（feature 和 hotfix 一致）
+- **短期分支合入 master 后立即删除**
+- **release** 在 master 上直接运行 `scripts/bump.sh`，生成 CHANGELOG + tag + push，CI 触发 release workflow
+- **hotfix** 语义上与 feature 区分只是为了追踪便利，流程完全相同（base=master，merge 后删分支）
 
 ### 2.3 CI 触发矩阵
 
 | 事件 | 触发 CI | 触发 Release |
 |------|---------|--------------|
-| push to `dev` | ✅ test + build | ❌ |
 | push to `master` | ✅ test + build | ❌ |
 | PR open/sync（任何 base）| ✅ test + build | ❌ |
 | push tag `v*.*.*` | ❌（tag 所在 commit 已在 master push 时测过）| ✅ |
@@ -204,14 +208,10 @@ release:
 以 `v0.1.0` 首版为例：
 
 ```bash
-# 1. 确保 dev 已有所有预期内容，且已合入 master
-git checkout dev && git pull origin dev
+# 1. 确保所有预期 feature/* 已合入 master
 git checkout master && git pull origin master
-gh pr create --base master --head dev --title "release: prepare v0.1.0"
-# review & squash merge
 
-# 2. 本地 master 同步，跑 bump 脚本
-git checkout master && git pull origin master
+# 2. 跑 bump 脚本
 ./scripts/bump.sh minor
 # 脚本开 $EDITOR 让你审 CHANGELOG，保存退出
 # 脚本 commit + tag + push
@@ -219,11 +219,6 @@ git checkout master && git pull origin master
 # 3. CI 的 release workflow 自动触发（push tag v0.1.0）
 gh run watch <run-id>
 # release.yml 跑完后，GitHub Releases 页面出现 v0.1.0 + 3 个二进制 + checksums.txt
-
-# 4. 同步 dev
-git checkout dev
-git merge master      # dev 得到 CHANGELOG + tag 历史
-git push origin dev
 ```
 
 **Hotfix 场景**（假设 v0.1.0 已发布，发现严重 bug）：
@@ -236,23 +231,17 @@ gh pr create --base master --title "fix: ..."
 # merge
 git checkout master && git pull
 ./scripts/bump.sh patch   # → v0.1.1 打 tag
-# hotfix 同步到 dev
-git checkout dev && git pull
-git cherry-pick <hotfix-commit-on-master>
-git push origin dev
 ```
 
 ## 6. 迁移计划（当前 → 此 spec）
 
-1. **建 dev 分支**：`git checkout -b dev master && git push -u origin dev`
-2. **GitHub 设置**：将 **dev 设为 GitHub default branch**（使 `gh pr create` / 网页 "Compare & pull request" 默认 base 为 dev）；master 仍是 release 源，只是不再是默认分支。设置后 README 里的 "git clone" 示例需加 `-b master` 若需明确拉稳定版，但大多场景 clone dev 即可
-3. **首个 CHANGELOG**：创建 `CHANGELOG.md`，写入 `## [Unreleased]` + 历史节（可选回填）
-4. **写 `scripts/bump.sh`**：遵循 §3.1 职责
-5. **写 `.goreleaser.yml` 和 `.github/workflows/release.yml`**：遵循 §4
-6. **首次 dry-run**：`./scripts/bump.sh minor --dry-run` 验证输出
-7. **打 `v0.1.0`**：实际 release
-8. **更新 README**：加一段"Installation"说明 GitHub Release 下载链接
-9. **更新 CLAUDE.md**：记录分支约定（feature → dev / hotfix → master）
+1. **首个 CHANGELOG**：创建 `CHANGELOG.md`，写入 `## [Unreleased]` + 历史节（可选回填）
+2. **写 `scripts/bump.sh`**：遵循 §3.1 职责
+3. **写 `.goreleaser.yml` 和 `.github/workflows/release.yml`**：遵循 §4
+4. **首次 dry-run**：`./scripts/bump.sh minor --dry-run` 验证输出
+5. **打 `v0.1.0`**：实际 release
+6. **更新 README**：加一段"Installation"说明 GitHub Release 下载链接
+7. **更新 CLAUDE.md**：记录分支约定（GitHub Flow，所有 PR base=master）
 
 ## 7. 未覆盖（显式 YAGNI）
 
