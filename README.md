@@ -2,6 +2,38 @@
 
 CLI proxy for AI coding tools. 拦截 shell 命令，本地执行，过滤输出，减少 LLM token 消耗。
 
+## Installation
+
+### 下载预编译二进制（推荐）
+
+从 [GitHub Releases](https://github.com/Anthoooooooony/gw/releases/latest) 下载对应平台 tar.gz，解压后把 `gw` 放入 `PATH`：
+
+```bash
+# macOS Apple Silicon（M 系列）
+curl -L -o gw.tar.gz https://github.com/Anthoooooooony/gw/releases/latest/download/gw_v0.1.0_darwin_arm64.tar.gz
+tar xzf gw.tar.gz
+sudo mv gw /usr/local/bin/
+gw version
+```
+
+```bash
+# Linux amd64
+curl -L -o gw.tar.gz https://github.com/Anthoooooooony/gw/releases/latest/download/gw_v0.1.0_linux_amd64.tar.gz
+tar xzf gw.tar.gz
+sudo mv gw /usr/local/bin/
+gw version
+```
+
+当前平台覆盖：`linux_amd64` / `darwin_arm64`。Intel Mac、Linux arm64、Windows 暂不提供二进制，用下面 `go install` 自建。
+
+### 从源码构建
+
+```bash
+go install github.com/gw-cli/gw@latest
+```
+
+注意：需要 CGO（go-sqlite3 依赖），本地需有 C 编译器（gcc / clang）。
+
 ## 工作原理
 
 ```
