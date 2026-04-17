@@ -5,9 +5,10 @@ set -euo pipefail
 
 # ========== 纯函数（供测试 source）==========
 
-# parse_version v0.1.2 → "0 1 2"
+# parse_version v0.1.2 → "0 1 2"（剥离 -rc.N / -alpha.N / -beta.N 等 pre-release 后缀）
 parse_version() {
   local v="${1#v}"
+  v="${v%%-*}"   # 剥离 -rc.N / -alpha.N / -beta.N 等 pre-release 后缀
   IFS=. read -r major minor patch <<< "$v"
   echo "$major $minor $patch"
 }
@@ -97,7 +98,10 @@ main() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       patch|minor|major) kind="$1"; shift ;;
-      --pre)             pre="$2"; shift 2 ;;
+      --pre)
+        [[ $# -lt 2 ]] && { echo "gw bump: --pre 需要一个 LABEL 参数（如 rc.1）" >&2; usage; exit 2; }
+        pre="$2"; shift 2
+        ;;
       --dry-run)         dry_run=1; shift ;;
       -h|--help)         usage; exit 0 ;;
       *)                 echo "gw bump: unknown arg: $1" >&2; usage; exit 2 ;;
@@ -175,6 +179,23 @@ main() {
   ' CHANGELOG.md > "$tmp"
   mv "$tmp" CHANGELOG.md
   rm -f "$block_file"
+
+  # 5b. 维护 CHANGELOG.md 底部链接定义区
+  # 更新 [Unreleased]: compare/<prev>...HEAD 为 compare/<new>...HEAD
+  local tmp2
+  tmp2=$(mktemp)
+  awk -v new="$new_tag" '
+    /^\[Unreleased\]:/ {
+      sub(/compare\/.*\.\.\.HEAD|compare\/HEAD$/, "compare/" new "...HEAD")
+      print
+      next
+    }
+    { print }
+  ' CHANGELOG.md > "$tmp2"
+  mv "$tmp2" CHANGELOG.md
+
+  # 在文件末尾追加 [new_tag]: releases/tag/new_tag
+  printf '[%s]: https://github.com/Anthoooooooony/gw/releases/tag/%s\n' "$new_tag" "$new_tag" >> CHANGELOG.md
 
   # 6. 让维护者审 CHANGELOG
   ${EDITOR:-vi} CHANGELOG.md

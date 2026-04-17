@@ -12,7 +12,8 @@
 
 ### Removed
 
-[Unreleased]: https://github.com/Anthoooooooony/gw/compare/HEAD
+[Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.1.0...HEAD
+[v0.1.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.0
 
 ## [v0.1.0] - 2026-04-17
 
