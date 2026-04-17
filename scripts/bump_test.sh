@@ -17,8 +17,9 @@ assert_eq() {
 }
 
 # 让 bump.sh 进入 "被 source 模式"——不执行 main
+# shellcheck disable=SC2034  # BUMP_LIB_ONLY 在 bump.sh 里通过 ${BUMP_LIB_ONLY:-} 读
 BUMP_LIB_ONLY=1
-# shellcheck source=./bump.sh
+# shellcheck source=./bump.sh disable=SC1091
 source "$(dirname "$0")/bump.sh"
 
 # ========== parse_version ==========
@@ -56,6 +57,14 @@ assert_eq ""        "$(classify_commit 'test: 加 fixture')" "test → 忽略"
 # BREAKING CHANGE 覆盖——不管是什么前缀都归 Removed
 assert_eq "Removed" "$(classify_commit 'feat!: BREAKING')" "feat! → Removed"
 assert_eq "Removed" "$(classify_commit 'fix(api)!: BREAKING')" "fix(scope)! → Removed"
+
+# 大小写宽容（F11a）
+assert_eq "Added"  "$(classify_commit 'Feat: xxx')"       "Feat → Added (case insensitive)"
+assert_eq "Added"  "$(classify_commit 'FEAT: xxx')"       "FEAT → Added"
+assert_eq "Fixed"  "$(classify_commit 'Fix(api): xxx')"   "Fix(scope) → Fixed"
+assert_eq "Fixed"  "$(classify_commit 'FIX: 紧急修复')"    "FIX → Fixed"
+assert_eq "Changed" "$(classify_commit 'Refactor: 重构')"  "Refactor → Changed"
+assert_eq "Removed" "$(classify_commit 'FEAT!: BREAKING')" "FEAT! → Removed (case insensitive breaking)"
 
 # ========== build_changelog_section ==========
 input='feat(filter): 新 toml 规则
