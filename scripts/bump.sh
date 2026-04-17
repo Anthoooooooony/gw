@@ -46,6 +46,34 @@ classify_commit() {
   esac
 }
 
+# build_changelog_section VERSION DATE < stdin（每行一条 commit message）→ markdown 节
+# 按 Added / Changed / Fixed / Removed 四节输出；无任何归类内容时输出"无 notable 变更"
+build_changelog_section() {
+  local version="$1" date="$2"
+  declare -A buckets=([Added]="" [Changed]="" [Fixed]="" [Removed]="")
+  local line cat
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    cat=$(classify_commit "$line")
+    [[ -z "$cat" ]] && continue
+    buckets[$cat]+="- $line"$'\n'
+  done
+
+  local out="## [$version] - $date"$'\n\n'
+  local has_any=0
+  for section in Added Changed Fixed Removed; do
+    if [[ -n "${buckets[$section]}" ]]; then
+      [[ $has_any -eq 1 ]] && out+=$'\n'
+      out+="### $section"$'\n'"${buckets[$section]}"
+      has_any=1
+    fi
+  done
+  if [[ $has_any -eq 0 ]]; then
+    out+="_无 notable 变更（仅文档/构建/测试）_"$'\n'
+  fi
+  printf '%s' "$out"
+}
+
 # ========== main（副作用部分，后续任务填充）==========
 
 main() {

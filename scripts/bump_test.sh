@@ -47,6 +47,33 @@ assert_eq ""        "$(classify_commit 'test: 加 fixture')" "test → 忽略"
 assert_eq "Removed" "$(classify_commit 'feat!: BREAKING')" "feat! → Removed"
 assert_eq "Removed" "$(classify_commit 'fix(api)!: BREAKING')" "fix(scope)! → Removed"
 
+# ========== build_changelog_section ==========
+input='feat(filter): 新 toml 规则
+fix(test): detached HEAD
+docs(readme): 同步
+refactor(cmd): 抽取'
+
+expected='## [v0.2.0] - 2026-04-17
+
+### Added
+- feat(filter): 新 toml 规则
+
+### Changed
+- refactor(cmd): 抽取
+
+### Fixed
+- fix(test): detached HEAD'
+
+actual=$(build_changelog_section "v0.2.0" "2026-04-17" <<<"$input")
+assert_eq "$expected" "$actual" "build_changelog_section 基础分类"
+
+# 空输入不输出空节
+actual=$(build_changelog_section "v0.3.0" "2026-05-01" <<<"docs: 只有文档改动")
+expected='## [v0.3.0] - 2026-05-01
+
+_无 notable 变更（仅文档/构建/测试）_'
+assert_eq "$expected" "$actual" "build_changelog_section 仅忽略类"
+
 echo "---"
 echo "PASS: $PASS, FAIL: $FAIL"
 [[ $FAIL -eq 0 ]]
