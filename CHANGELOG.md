@@ -5,15 +5,19 @@
 ## [Unreleased]
 
 ### Added
+- feat(pytest): 专属 Go filter，按 summary + FAILURES 锚点做语义压缩，压缩率 99%（成功）/ 82%（失败），**语义无损**（FAILURES 区块原样保留）。
+  parse 锚点缺失（输出被 `--tb=no` / `head` 截断等）时回退原文透传。
 
 ### Changed
-- **Breaking（TOML DSL v2）**：TOML 规则只保留语义无关的无损字段（`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`）。基于正则的 `strip_lines` / `keep_lines` / `on_error` 因误删风险移除。用户规则里仍含这些字段时 loader 打一次 warning 指引迁移到专属 Go filter，无损部分仍生效。
-- 内置 node/python/rust TOML 规则同步精简，只保留 strip_ansi + 长度兜底；需要语义压缩的命令（pytest / vitest / cargo test / npm test）将通过专属 Go filter 逐步补齐。
+- **Breaking（TOML DSL v2）**：TOML 规则只保留语义无关的无损字段（`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`）。基于正则的 `strip_lines` / `keep_lines` / `on_error` 因误删风险移除。
+- 内置 node/python/rust TOML 规则精简为 strip_ansi + 长度兜底；需要语义压缩的命令（pytest 已接管，vitest / cargo test / npm test 待补）走专属 Go filter。
+- `filter/all` 注册顺序：专属 filter → toml（Registry 第一匹配胜出），保证 pytest 等优先命中 Go 实现。
 
 ### Fixed
 
 ### Removed
-- `filter/toml` 的 `strip_lines` / `keep_lines` / `on_error` 字段。
+- `filter/toml` 的 `strip_lines` / `keep_lines` / `on_error` 字段与对应 loader warning 兼容代码（不考虑 v1 配置前向兼容）。
+- `filter/toml/rules/python.toml` 的 `[pytest.*]` 规则（由专属 filter 接管）。
 
 [Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.1.1...HEAD
 [v0.1.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.0
