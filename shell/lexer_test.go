@@ -211,3 +211,38 @@ func TestAnalyzeCommand(t *testing.T) {
 		})
 	}
 }
+
+func TestTokenizeSegment(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want []string
+	}{
+		{"empty", "", nil},
+		{"whitespace only", "   ", nil},
+		{"simple", "git status", []string{"git", "status"}},
+		{"trim extra spaces", "  git   status  ", []string{"git", "status"}},
+		{"double-quoted arg with spaces", `git commit -m "fix: foo bar"`, []string{"git", "commit", "-m", "fix: foo bar"}},
+		{"single-quoted arg", `git log --grep='fix bar'`, []string{"git", "log", "--grep=fix bar"}},
+		// 双引号内 `\<x>` 与 AnalyzeCommand 保持一致：escape 任意字符（gw 只识别子命令，
+		// 不严格还原 bash 的"仅 $ ` \" \\ newline 才是 escape"精细语义）
+		{"escaped space in double quotes", `git commit -m "line\ break"`, []string{"git", "commit", "-m", "line break"}},
+		{"backslash escaped space outside quotes", `echo hello\ world`, []string{"echo", "hello world"}},
+		{"nested quotes different types", `echo "foo 'inner' bar"`, []string{"echo", "foo 'inner' bar"}},
+		{"tabs as separator", "git\tstatus", []string{"git", "status"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := TokenizeSegment(tt.in)
+			if len(got) != len(tt.want) {
+				t.Fatalf("TokenizeSegment(%q) len=%d tokens=%v, want len=%d tokens=%v",
+					tt.in, len(got), got, len(tt.want), tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("TokenizeSegment(%q)[%d] = %q, want %q", tt.in, i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
