@@ -73,6 +73,11 @@ build_changelog_section() {
   declare -A buckets=([Added]="" [Changed]="" [Fixed]="" [Removed]="")
   local msg subject cat
   while IFS= read -r -d '' msg; do
+    # git log --format='%s%n%b%x00' 在两条 NUL 记录之间会插一个换行符，
+    # 第 2..N 条 read 到的 msg 以 $'\n' 开头。不剥掉的话 ${msg%%$'\n'*}
+    # 会截出空字符串，subject 为空被 continue 跳过，整条 commit 静默丢失。
+    # 前导空行也一并清掉以免 body 意外多空行（对分类语义无影响）。
+    while [[ "$msg" == $'\n'* ]]; do msg="${msg#$'\n'}"; done
     [[ -z "$msg" ]] && continue
     subject="${msg%%$'\n'*}"
     [[ -z "$subject" ]] && continue
