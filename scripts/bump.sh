@@ -28,23 +28,31 @@ bump_version() {
   echo "$out"
 }
 
-# classify_commit "feat(x): msg" → "Added" | "Fixed" | "Changed" | "Removed" | ""
+# classify_commit <full-commit-msg> → "Added" | "Fixed" | "Changed" | "Removed" | ""
 # 空字符串表示该 commit 不入 CHANGELOG（docs/chore/ci/test）
-# 支持大小写宽容匹配（Feat: / FEAT: / Fix(api): 均有效）
+# 入参可以是单行 subject，也可以是 subject + body 多行文本。
+# 识别规则优先级：
+#   1) 首行前缀带 ! （`feat!:` / `fix(api)!:`）→ Removed
+#   2) body 任一行匹配 `^BREAKING CHANGE:` 或 `^BREAKING-CHANGE:` footer → Removed
+#   3) 首行前缀：feat→Added / fix→Fixed / refactor|perf→Changed / remove→Removed
+# 大小写宽容（Feat: / FEAT: / Fix(api): 均有效）
 classify_commit() {
   local msg="$1"
-  # 保存并启用大小写不敏感匹配
+  local subject="${msg%%$'\n'*}"
+
   local restore_nocasematch
   restore_nocasematch=$(shopt -p nocasematch)
   shopt -s nocasematch
 
-  local result=""
-  # BREAKING CHANGE 优先——任何前缀带 ! 都是 Removed（向后不兼容）
-  if [[ "$msg" =~ ^[a-z]+(\([^\)]+\))?!: ]]; then
+  # nl 持有换行符，避免 shellcheck 把正则中的 $'\n' 里的 ' 误判为字符串终结 (SC1011)
+  local nl result=""
+  nl=$'\n'
+  if [[ "$subject" =~ ^[a-z]+(\([^\)]+\))?!: ]]; then
+    result="Removed"
+  elif [[ "${nl}${msg}" =~ ${nl}BREAKING[[:space:]-]CHANGE: ]]; then
     result="Removed"
   else
-    # 按前缀分类
-    case "$msg" in
+    case "$subject" in
       feat\(*\):*|feat:*)                 result="Added" ;;
       fix\(*\):*|fix:*)                   result="Fixed" ;;
       refactor\(*\):*|refactor:*|perf\(*\):*|perf:*) result="Changed" ;;
@@ -53,22 +61,24 @@ classify_commit() {
     esac
   fi
 
-  # 恢复原状态
   eval "$restore_nocasematch"
   echo "$result"
 }
 
-# build_changelog_section VERSION DATE < stdin（每行一条 commit message）→ markdown 节
-# 按 Added / Changed / Fixed / Removed 四节输出；无任何归类内容时输出"无 notable 变更"
+# build_changelog_section VERSION DATE < stdin（NUL 分隔的 commit 记录，每条含 subject + 可选 body）
+# → markdown 节：按 Added / Changed / Fixed / Removed 四节输出；无归类内容时输出"无 notable 变更"
+# 使用 NUL 分隔是因为 commit body 可能跨多行，无法用换行分隔。
 build_changelog_section() {
   local version="$1" date="$2"
   declare -A buckets=([Added]="" [Changed]="" [Fixed]="" [Removed]="")
-  local line cat
-  while IFS= read -r line; do
-    [[ -z "$line" ]] && continue
-    cat=$(classify_commit "$line")
+  local msg subject cat
+  while IFS= read -r -d '' msg; do
+    [[ -z "$msg" ]] && continue
+    subject="${msg%%$'\n'*}"
+    [[ -z "$subject" ]] && continue
+    cat=$(classify_commit "$msg")
     [[ -z "$cat" ]] && continue
-    buckets[$cat]+="- $line"$'\n'
+    buckets[$cat]+="- $subject"$'\n'
   done
 
   local out="## [$version] - $date"$'\n\n'
@@ -161,13 +171,15 @@ main() {
   fi
 
   # 4. 生成 CHANGELOG 节
-  local commits changelog_section
+  # 用 %s%n%b%x00：subject + body + NUL 分隔。body 里可能有 BREAKING CHANGE footer
+  local log_range changelog_section
   if [[ "$prev_tag" == "v0.0.0" ]]; then
-    commits=$(git log --format="%s" HEAD)
+    log_range="HEAD"
   else
-    commits=$(git log --format="%s" "${prev_tag}..HEAD")
+    log_range="${prev_tag}..HEAD"
   fi
-  changelog_section=$(build_changelog_section "$new_tag" "$date" <<<"$commits")
+  changelog_section=$(git log --format='%s%n%b%x00' "$log_range" |
+    build_changelog_section "$new_tag" "$date")
 
   if [[ $dry_run -eq 1 ]]; then
     echo "--- 预期 CHANGELOG 新增 ---"
