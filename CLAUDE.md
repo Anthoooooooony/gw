@@ -106,7 +106,7 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 
 - `gw init` 往 `~/.claude/settings.json` 的 `hooks.PreToolUse[]` 注入一条 matcher：
   ```json
-  {"matcher":"Bash","_gw_managed":true,"hooks":[{"type":"command","command":"'/abs/path/to/gw' rewrite"}]}
+  {"matcher":"Bash","_gw_managed":true,"hooks":[{"type":"command","timeout":10,"command":"'/abs/path/to/gw' rewrite"}]}
   ```
   字段含义遵循 Claude Code hooks 文档（https://code.claude.com/docs/en/hooks.md）。
 - `command` 字段写 **绝对路径**（`os.Executable()`），因 Claude Code hook 执行环境 PATH 受限；路径经 `shellQuote` 单引号包裹防空格/特殊字符
