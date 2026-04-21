@@ -5,10 +5,9 @@
 ## [Unreleased]
 
 ### Added
-- feat(claude): DCP 观测——`gw claude` 退出时打印一行摘要（请求数 / tool_use 扫描数 / 替换数 / 节省字节及估算 token）；`-v` verbose 模式下逐请求 `Infof`。内部通过 `atomic.Int64` 的 `dcp.Stats` 并发安全累加。(#77)
-- feat(claude): 代理 hardening——请求 body 上限（默认 32MiB，`GW_APIPROXY_MAX_BODY` 可调）、上游响应头超时（默认 60s，`GW_APIPROXY_HEADER_TIMEOUT` 可调，不影响 SSE 长流）、shutdown grace 默认 5s（`GW_APIPROXY_SHUTDOWN_TIMEOUT` 可调）。超限请求早 413，上游卡死早 502。(#77)
-- feat(claude): `gw claude` 代理接入 DCP 风格 tool_result 去重——同签名 tool_use 的历史 tool_result 内容替换为占位符，只保留最后一次，降低 Anthropic 上下文 token 消耗。失败降级原样透传。(#77)
-- feat(claude): 新增 `gw claude [args...]` 子命令，启动本地 HTTP 代理注入 `ANTHROPIC_BASE_URL`，claude 退出时自动关闭。v0 纯透传（含 SSE），验证链路可用；后续 PR 加 DCP 风格 tool_result 去重。(#77)
+- **feat(claude)**: 新增 `gw claude [args...]` 子命令——透明包装 Claude Code CLI，起本地 HTTP 代理并注入 `ANTHROPIC_BASE_URL`，对 `/v1/messages` 做 DCP 风格 tool_result 去重（参考 [Opencode-DCP](https://github.com/Opencode-DCP/opencode-dynamic-context-pruning)）：同签名 tool_use 的历史 tool_result 内容替换为占位符，只保留最后一次，降低 Anthropic 上下文 token 消耗；claude 退出时自动关闭代理并打印摘要。失败全路径降级透传（Bedrock/Vertex 检测直接 exec 原生 claude）。(#77, #78, #79, #80, #81)
+  - 可调 env：`GW_APIPROXY_MAX_BODY`（默认 32MiB 请求体上限）/ `GW_APIPROXY_HEADER_TIMEOUT`（默认 60s 上游响应头超时，不影响 SSE 长流）/ `GW_APIPROXY_SHUTDOWN_TIMEOUT`（默认 5s shutdown grace）/ `GW_APIPROXY_UPSTREAM`（测试用逃生舱）
+  - 退出示例：`gw: dcp: 42 请求 / 扫 87 tool_use / 替换 31 tool_result / 节省 418203 字节 (~104551 tokens)`
 - feat(pytest): 专属 Go filter，按 summary + FAILURES 锚点做语义压缩，压缩率 99%（成功）/ 82%（失败），**语义无损**（FAILURES 区块原样保留）。
   parse 锚点缺失（输出被 `--tb=no` / `head` 截断等）时回退原文透传。
 
