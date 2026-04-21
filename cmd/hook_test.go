@@ -89,6 +89,10 @@ func TestApplyInit_EmptySettings(t *testing.T) {
 	if h["command"] != wantCmd {
 		t.Errorf("嵌套 hook command 不对\n got: %q\nwant: %q", h["command"], wantCmd)
 	}
+	// timeout 字段防 gw rewrite 挂死（见 #64），整数秒
+	if got, ok := h["timeout"].(int); !ok || got != gwHookTimeoutSec {
+		t.Errorf("嵌套 hook timeout 应为 int %d, 得到 %T %v", gwHookTimeoutSec, h["timeout"], h["timeout"])
+	}
 }
 
 // 已有其他事件（PostToolUse）→ 保留其他事件，仅在 PreToolUse 下加 matcher
