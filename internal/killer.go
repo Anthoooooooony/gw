@@ -74,6 +74,15 @@ func startTimeoutKiller(ctx context.Context, cmd *exec.Cmd, graceDur time.Durati
 		case <-procDone:
 			return
 		case <-graceTimer.C:
+			// Race 缓解（见 #58）：graceTimer 到期后二次 peek procDone。
+			// 这里是 cmd.Wait() 已 reap pid 到主 goroutine 调 stop() 的窗口期——
+			// 若此时 procDone 已被 close，说明进程已自然退出，不应再对可能被复用的 pid 发 SIGKILL。
+			// 彻底修复需要 pidfd_send_signal（Linux 5.3+）或等价跨平台 API；此处为纳秒级 best-effort。
+			select {
+			case <-procDone:
+				return
+			default:
+			}
 			sigkillFired.Store(true)
 			_ = killProcessGroup(pid, syscall.SIGKILL)
 		}
