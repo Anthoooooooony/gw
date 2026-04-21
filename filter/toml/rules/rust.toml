@@ -24,22 +24,6 @@ strip_lines = [
 tail_lines = 120
 on_empty = "cargo build: ok (无变更)"
 
-    # 失败场景：沿用同一套 strip（剔除编译进度/下载），保留 error[...] / error: / --> 诊断
-    [cargo.build.on_error]
-    strip_ansi = true
-    strip_lines = [
-        "^\\s+Updating crates.io index",
-        "^\\s+Updating git repository",
-        "^\\s+Downloading ",
-        "^\\s+Downloaded ",
-        "^\\s+Fetching ",
-        "^\\s+Compiling [a-zA-Z0-9_-]+ v",
-        "^\\s+Checking [a-zA-Z0-9_-]+ v",
-        "^\\s+Blocking waiting for file lock",
-        "^\\s+Documenting ",
-    ]
-    tail_lines = 120
-
 [cargo.check]
 match = "cargo check"
 strip_ansi = true
@@ -90,21 +74,3 @@ strip_lines = [
 ]
 tail_lines = 200
 on_empty = "cargo test: ok (全部通过)"
-
-    # 失败场景：复用同一套 strip；保留 failures 区块、panic stack、"test result: FAILED" 摘要
-    [cargo.test.on_error]
-    strip_ansi = true
-    strip_lines = [
-        "^\\s+Updating crates.io index",
-        "^\\s+Downloading ",
-        "^\\s+Downloaded ",
-        "^\\s+Fetching ",
-        "^\\s+Compiling [a-zA-Z0-9_-]+ v",
-        "^\\s+Finished ",
-        "^test [a-zA-Z0-9_:]+ \\.\\.\\. ok$",
-        "^test [a-zA-Z0-9_:]+ \\.\\.\\. ignored",
-        "^\\s+Doc-tests ",
-        "^\\s+Running ",
-        "^\\s*\\.+\\s*$",
-    ]
-    tail_lines = 200

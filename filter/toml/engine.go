@@ -27,9 +27,6 @@ type Rule struct {
 	StripLines []string `toml:"strip_lines"` // 按正则移除行
 	KeepLines  []string `toml:"keep_lines"`  // 仅保留包含指定字符串的行
 	OnEmpty    string   `toml:"on_empty"`    // 输出为空时的替代消息
-	// OnError 失败场景（exit!=0）独立子规则；nil 时 ApplyOnError 透传原输出。
-	// 子规则里的 Match/OnError 字段无意义；其余字段走同一 applyRule 管道。
-	OnError *Rule `toml:"on_error"`
 }
 
 // TomlFilter 基于 TOML 规则的声明式过滤器（无状态：所有字段一次加载后只读）
@@ -78,20 +75,8 @@ func (f *TomlFilter) Apply(input filter.FilterInput) filter.FilterOutput {
 	return filter.FilterOutput{Content: content, Original: input.Stdout}
 }
 
-// ApplyOnError 查找命中的规则；若该规则配置了 on_error 子规则，则把 Stdout+Stderr
-// 合并后按子规则应用同一条 applyRule 管道。未命中或未配置 on_error 时返回 nil，
-// 由上层保留原始输出（与历史 pass-through 行为一致）。
 func (f *TomlFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput {
-	fullCmd := buildFullCmd(input.Cmd, input.Args)
-	rule := f.findRule(fullCmd)
-	if rule == nil || rule.OnError == nil {
-		return nil
-	}
-	// 失败场景的 error 细节经常落在 stderr（pytest / cargo）或与 stdout 交织（npm），
-	// 合并后再过滤，避免按流分别压缩时丢掉关键上下文。
-	content := input.Stdout + input.Stderr
-	compressed := applyRule(rule.OnError, content)
-	return &filter.FilterOutput{Content: compressed, Original: content}
+	return nil
 }
 
 // findRule 查找最长前缀匹配的规则
