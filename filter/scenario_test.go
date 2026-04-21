@@ -220,8 +220,8 @@ func runScenario(t *testing.T, sc scenario, raw string) string {
 		return buf.String()
 	}
 
-	f := filter.GlobalRegistry().Find(sc.cmd, sc.args)
-	if f == nil {
+	m := filter.GlobalRegistry().Find(sc.cmd, sc.args)
+	if m == nil {
 		t.Fatalf("未找到匹配的 Filter: %s %v", sc.cmd, sc.args)
 	}
 	in := filter.FilterInput{
@@ -231,9 +231,9 @@ func runScenario(t *testing.T, sc scenario, raw string) string {
 		ExitCode: sc.exitCode,
 	}
 	if sc.exitCode == 0 {
-		return f.Apply(in).Content
+		return m.Filter.Apply(in).Content
 	}
-	out := f.ApplyOnError(in)
+	out := m.Filter.ApplyOnError(in)
 	if out == nil {
 		return raw
 	}

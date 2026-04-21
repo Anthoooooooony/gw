@@ -35,11 +35,16 @@ func (r *Registry) List() []Filter {
 	return out
 }
 
-// Find 查找匹配指定命令的第一个过滤器，未找到返回 nil
-func (r *Registry) Find(cmd string, args []string) Filter {
+// Find 查找匹配指定命令的第一个过滤器，未找到返回 nil。
+// 匹配的 filter 若实现 SubnameResolver，用 Subname(cmd, args) 解析本次匹配的子名。
+func (r *Registry) Find(cmd string, args []string) *Match {
 	for _, f := range r.filters {
 		if f.Match(cmd, args) {
-			return f
+			m := &Match{Filter: f}
+			if sr, ok := f.(SubnameResolver); ok {
+				m.Subname = sr.Subname(cmd, args)
+			}
+			return m
 		}
 	}
 	return nil
@@ -47,11 +52,11 @@ func (r *Registry) Find(cmd string, args []string) Filter {
 
 // FindStream 查找匹配的 StreamFilter
 func (r *Registry) FindStream(cmd string, args []string) StreamFilter {
-	f := r.Find(cmd, args)
-	if f == nil {
+	m := r.Find(cmd, args)
+	if m == nil {
 		return nil
 	}
-	if sf, ok := f.(StreamFilter); ok {
+	if sf, ok := m.Filter.(StreamFilter); ok {
 		return sf
 	}
 	return nil

@@ -121,7 +121,10 @@ func runExec(cmd *cobra.Command, args []string) {
 	}
 
 	if matched != nil {
-		filterUsed = matched.Name()
+		filterUsed = matched.Filter.Name()
+		if matched.Subname != "" {
+			filterUsed += "/" + matched.Subname
+		}
 		input := filter.FilterInput{
 			Cmd:      cmdName,
 			Args:     cmdArgs,
@@ -131,10 +134,10 @@ func runExec(cmd *cobra.Command, args []string) {
 		}
 
 		if result.ExitCode == 0 {
-			fo := matched.Apply(input)
+			fo := matched.Filter.Apply(input)
 			output = fo.Content
 		} else {
-			fo := matched.ApplyOnError(input)
+			fo := matched.Filter.ApplyOnError(input)
 			if fo != nil {
 				output = fo.Content
 			} else {
