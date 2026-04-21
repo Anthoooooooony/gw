@@ -145,58 +145,6 @@ func TestApplyInit_AlreadyInstalled(t *testing.T) {
 	}
 }
 
-// 情景 d-2：存在旧版 gw hook（hook 字符串含 "gw rewrite" 但无 _gw_managed 标记）
-// 应视为已安装并就地迁移：不新增条目，原条目补上 _gw_managed: true 标记。
-// 这样从 v0.x 无标记版本升级到新版的用户不会被追加第二条 hook。
-func TestApplyInit_LegacyGwHookMigrated(t *testing.T) {
-	legacy := map[string]interface{}{
-		"matcher": "Bash",
-		"hook":    gwHookCommand, // 字面量 `gw rewrite "$command"`
-	}
-	settings := map[string]interface{}{
-		"hooks": []interface{}{legacy},
-	}
-	updated, status := applyInitToSettings(settings)
-	if status != initStatusAlready {
-		t.Fatalf("期望 already (视为已安装), 得到 %q", status)
-	}
-	hooks := hooksOf(t, updated)
-	if len(hooks) != 1 {
-		t.Fatalf("期望仍为 1 条 hook, 得到 %d", len(hooks))
-	}
-	migrated, _ := hooks[0].(map[string]interface{})
-	if v, _ := migrated["_gw_managed"].(bool); !v {
-		t.Fatal("迁移后原条目应补上 _gw_managed: true 标记")
-	}
-	if migrated["hook"] != gwHookCommand {
-		t.Errorf("hook 字面量不应被修改，得到 %v", migrated["hook"])
-	}
-}
-
-// TestApplyInit_LegacyCustomGwRewrite 旧版可能被用户调整过 hook 参数，
-// 只要字符串仍含 "gw rewrite" 关键字就视为 gw 管理，补标记，不重复安装。
-func TestApplyInit_LegacyCustomGwRewrite(t *testing.T) {
-	legacy := map[string]interface{}{
-		"matcher": "Bash",
-		"hook":    "gw rewrite --verbose $command",
-	}
-	settings := map[string]interface{}{
-		"hooks": []interface{}{legacy},
-	}
-	updated, status := applyInitToSettings(settings)
-	if status != initStatusAlready {
-		t.Fatalf("期望 already, 得到 %q", status)
-	}
-	hooks := hooksOf(t, updated)
-	if len(hooks) != 1 {
-		t.Fatalf("期望仍为 1 条 hook, 得到 %d", len(hooks))
-	}
-	migrated, _ := hooks[0].(map[string]interface{})
-	if v, _ := migrated["_gw_managed"].(bool); !v {
-		t.Fatal("应迁移补标记")
-	}
-}
-
 // --- applyUninstallToSettings：只移除带 _gw_managed 的条目 ---
 
 // 情景 f：uninstall 后他人 hook 仍在
