@@ -1,77 +1,30 @@
-# Node 生态过滤规则：覆盖 npm / yarn / pnpm 的 install/test/build/ci/publish。
-# 设计目标：仅 strip 噪音行（下载进度、弃用提示、解析阶段），保留错误、关键摘要和 bundle 大小。
-# 注意：DSL 中 strip_lines 是正则，keep_lines 是子串；两者同时出现会先 strip 再 keep，
-# 因此本文件只用 strip_lines，避免误伤错误信息。
+# Node 生态过滤规则（v2 DSL：仅无损变换）。
+# 这里只做 strip_ansi + 长度截断。语义压缩（比如"只留失败用例"）需要写专属
+# Go filter（见 ROADMAP / ARCHITECTURE）。
 
 # ---------------- npm ----------------
 
 [npm.install]
 match = "npm install"
 strip_ansi = true
-strip_lines = [
-    # 下载/提取进度（npm 7+ 进度条多由 ANSI 控制，stripped 后剩裸字符）
-    "^npm http fetch",
-    "^npm verb",
-    "^npm sill",
-    # 包添加/移除/审计的中间过程
-    "^added [0-9]+ package",
-    "^removed [0-9]+ package",
-    "^changed [0-9]+ package",
-    # peer dependency / deprecation 噪音
-    "^npm WARN deprecated",
-    "^npm WARN ERESOLVE",
-    "^npm WARN config",
-    # funding / audit 引导
-    "^[0-9]+ package(s)? are looking for funding",
-    "^  run `npm fund` for details",
-    # 进度点
-    "^[⠁⠂⠄⡀⢀⠠⠐⠈]+",
-]
 max_lines = 80
-on_empty = "npm install: ok (无需更新)"
+on_empty = "npm install: ok"
 
 [npm.ci]
 match = "npm ci"
 strip_ansi = true
-strip_lines = [
-    "^npm http fetch",
-    "^npm verb",
-    "^npm sill",
-    "^npm WARN deprecated",
-    "^added [0-9]+ package",
-]
 max_lines = 80
 on_empty = "npm ci: ok"
 
 [npm.test]
 match = "npm test"
 strip_ansi = true
-strip_lines = [
-    # npm 自身的脚本前缀
-    "^> .* test$",
-    "^> .*@.* test",
-    # jest/mocha 的进度装饰行
-    "^PASS ",
-    "^\\s*✓ ",
-    "^\\s*√ ",
-    # 覆盖率表格分隔
-    "^-{5,}\\|",
-    "^File\\s+\\|\\s+% Stmts",
-]
 tail_lines = 120
-on_empty = "npm test: ok (全部通过)"
+on_empty = "npm test: ok"
 
 [npm.run-build]
 match = "npm run build"
 strip_ansi = true
-strip_lines = [
-    "^> .* build$",
-    "^> .*@.* build",
-    # webpack/vite/next 的逐文件编译输出（vite 用 Unicode │，webpack 用 ASCII |）
-    "^\\s+[a-zA-Z0-9_./-]+\\.(js|css|map|html)\\s+[0-9.]+\\s*(B|kB|KB|MB|GB)\\s*[│|]",
-    # tsc 编译进度行
-    "^TS [0-9]+:",
-]
 tail_lines = 80
 on_empty = "npm run build: ok"
 
@@ -80,46 +33,18 @@ on_empty = "npm run build: ok"
 [yarn.install]
 match = "yarn install"
 strip_ansi = true
-strip_lines = [
-    # yarn 阶段提示
-    "^\\[1/4\\] ",
-    "^\\[2/4\\] ",
-    "^\\[3/4\\] ",
-    "^\\[4/4\\] ",
-    # 下载进度
-    "^info ",
-    "^verbose ",
-    # 进度条字符
-    "^[⠁⠂⠄⡀⢀⠠⠐⠈]+",
-    # warning peer / deprecated
-    "^warning .*has unmet peer",
-    "^warning .* is deprecated",
-]
 max_lines = 60
 on_empty = "yarn install: ok"
 
 [yarn.test]
 match = "yarn test"
 strip_ansi = true
-strip_lines = [
-    "^yarn run v",
-    "^\\$ ",
-    "^PASS ",
-    "^\\s*✓ ",
-    "^Done in [0-9.]+s",
-]
 tail_lines = 120
 on_empty = "yarn test: ok"
 
 [yarn.build]
 match = "yarn build"
 strip_ansi = true
-strip_lines = [
-    "^yarn run v",
-    "^\\$ ",
-    "^Done in [0-9.]+s",
-    "^\\s+[a-zA-Z0-9_./-]+\\.(js|css|map|html)\\s+[0-9.]+\\s*(B|kB|KB|MB|GB)\\s*[│|]",
-]
 tail_lines = 80
 on_empty = "yarn build: ok"
 
@@ -128,67 +53,29 @@ on_empty = "yarn build: ok"
 [pnpm.install]
 match = "pnpm install"
 strip_ansi = true
-strip_lines = [
-    # pnpm 进度行：Progress: resolved X, reused Y, downloaded Z
-    "^Progress: resolved",
-    "^Packages: \\+",
-    "^Packages: -",
-    # 包符号行：+ pkg / - pkg / +- pkg
-    "^[+\\-]{1,2} [a-zA-Z0-9_@./-]+ [0-9]",
-    # peer warning
-    "^ WARN  ",
-    # lockfile 信息
-    "^Lockfile is up to date",
-    "^Already up to date",
-]
 max_lines = 60
 on_empty = "pnpm install: ok"
 
 [pnpm.i]
 match = "pnpm i"
 strip_ansi = true
-strip_lines = [
-    "^Progress: resolved",
-    "^Packages: \\+",
-    "^Packages: -",
-    "^[+\\-]{1,2} [a-zA-Z0-9_@./-]+ [0-9]",
-    "^ WARN  ",
-    "^Lockfile is up to date",
-    "^Already up to date",
-]
 max_lines = 60
 on_empty = "pnpm i: ok"
 
 [pnpm.test]
 match = "pnpm test"
 strip_ansi = true
-strip_lines = [
-    "^> .* test$",
-    "^> .*@.* test",
-    "^PASS ",
-    "^\\s*✓ ",
-]
 tail_lines = 120
 on_empty = "pnpm test: ok"
 
 [pnpm.build]
 match = "pnpm build"
 strip_ansi = true
-strip_lines = [
-    "^> .* build$",
-    "^> .*@.* build",
-    "^\\s+[a-zA-Z0-9_./-]+\\.(js|css|map|html)\\s+[0-9.]+\\s*(B|kB|KB|MB|GB)\\s*[│|]",
-]
 tail_lines = 80
 on_empty = "pnpm build: ok"
 
 [pnpm.publish]
 match = "pnpm publish"
 strip_ansi = true
-strip_lines = [
-    "^npm notice ",
-    "^Tarball Contents",
-    "^Tarball Details",
-]
 max_lines = 30
 on_empty = "pnpm publish: ok"

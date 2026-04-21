@@ -20,6 +20,14 @@ GitHub Flow 单干模型：
 
 版本机制：SemVer + `scripts/bump.sh [patch|minor|major]`（`scripts/bump_test.sh` 覆盖纯函数单测 + 幂等 tag 集成测试）。
 
+## TOML 规则 DSL（v2：仅无损变换）
+
+TOML 规则**只做语义无关的安全变换**：`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`。
+
+**故意不支持** `strip_lines` / `keep_lines` / `on_error`——基于正则的行级裁剪无法区分"真噪音"和"用户恰好需要的那一行"，长期会产生误删信任危机。想要按 exit_code 分场景压缩、"pytest 只留 failures"、"vitest 生成 PASS/FAIL 摘要" 这种语义压缩，写专属 Go filter（第一层），按命令语义 parse 后生成摘要、parse 失败 fallback 原文。
+
+用户规则若含弃用字段，loader 打一次 warning 并丢弃值；规则的无损部分仍然生效。
+
 ## TOML 规则三级加载
 
 TOML 声明式规则走**三级加载**，由 `filter/toml/loader.go::LoadAllRules` 统一合并。
@@ -120,7 +128,7 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 | 路径 | 职责 |
 |------|------|
 | `filter/toml/loader.go` | TOML 三级加载器、来源追踪、disabled 支持 |
-| `filter/toml/engine.go` | TOML 过滤引擎（7 阶段管道），`LoadEngine` 调用 loader |
+| `filter/toml/engine.go` | TOML 过滤引擎（v2 DSL，仅 strip_ansi + head/tail/max_lines + on_empty 无损字段） |
 | `filter/registry.go` | 全局注册表 + `List()`（给 `gw filters list` 用） |
 | `cmd/filters.go` | `gw filters list` 命令 |
 | `cmd/version.go` | `gw --version` / `gw version`（ldflags + runtime/debug fallback） |
