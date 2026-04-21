@@ -18,7 +18,7 @@ GitHub Flow 单干模型：
 
 短期分支合入 master 后立即删除。所有改动走 PR（`scripts/bump.sh` 的 release commit 例外——只有这一种场景允许直推 master）。
 
-版本机制：SemVer + `scripts/bump.sh [patch|minor|major]`，详见 `docs/superpowers/specs/2026-04-17-versioning-git-workflow-design.md`。
+版本机制：SemVer + `scripts/bump.sh [patch|minor|major]`（`scripts/bump_test.sh` 覆盖纯函数单测 + 幂等 tag 集成测试）。
 
 ## TOML 规则三级加载
 
