@@ -123,4 +123,3 @@ func TestMavenStreamFilter_ErrorsEmitted(t *testing.T) {
 		t.Error("不同的 Unresolved reference 应该被输出")
 	}
 }
-

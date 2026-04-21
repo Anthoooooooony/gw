@@ -141,4 +141,3 @@ func TestMavenFilter_ApplyOnError(t *testing.T) {
 		t.Error("不应包含下载完成日志")
 	}
 }
-
