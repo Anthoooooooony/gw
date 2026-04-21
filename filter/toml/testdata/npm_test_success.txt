@@ -1,0 +1,77 @@
+
+> chalk@5.6.2 test
+> xo && c8 ava && tsd
+
+
+  source/index.d.ts:1:1
+  ⚠    1:1  Unexpected todo comment: TODO: Make it this when TS suports that..      no-warning-comments
+  ⚠  262:1  Unexpected todo comment: TODO: Remove these aliases in the next....     no-warning-comments
+
+  source/index.js:213:2
+  ⚠  213:2  Unexpected todo comment: TODO: Remove these aliases in the next....     no-warning-comments
+
+  source/utilities.js:1:1
+  ⚠    1:1  Unexpected todo comment: TODO: When targeting Node.js 16, use....       no-warning-comments
+
+  test/no-color-support.js:4:1
+  ⚠    4:1  Unexpected todo comment: TODO: Do this when ESM supports loader....     no-warning-comments
+
+  source/vendor/supports-color/index.js:60:1
+  ⚠   60:1  Function _supportsColor has a complexity of 38. Maximum allowed is 20.  complexity
+
+  6 warnings
+(node:50376) [DEP0180] DeprecationWarning: fs.Stats constructor is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+  ✔ visible › visible: normal output when level > 0
+  ✔ visible › visible: no output when level is too low
+  ✔ visible › test switching back and forth between level == 0 and level > 0
+TERM: xterm-256color
+platform: darwin
+  ✔ instance › create an isolated context where colors can be disabled (by level)
+  ✔ instance › the `level` option should be a number from 0 to 3
+  ✔ chalk › don't add any styling when called as the base function
+  ✔ chalk › support multiple arguments in base function
+  ✔ chalk › support automatic casting to string
+  ✔ chalk › style string
+  ✔ chalk › support applying multiple styles at once
+  ✔ chalk › support nesting styles
+  ✔ chalk › support nesting styles of the same type (color, underline, bg)
+  ✔ chalk › reset all styles with `.reset()`
+  ✔ chalk › support caching multiple styles
+  ✔ chalk › alias gray to grey
+  ✔ chalk › support variable number of arguments
+  ✔ chalk › support falsy values
+  ✔ chalk › don't output escape codes if the input is empty
+  ✔ chalk › keep Function.prototype methods
+  ✔ chalk › line breaks should open and close colors
+  ✔ chalk › line breaks should open and close colors with CRLF
+  ✔ chalk › properly convert RGB to 16 colors on basic color terminals
+  ✔ chalk › properly convert RGB to 256 colors on basic color terminals
+  ✔ chalk › don't emit RGB codes if level is 0
+  ✔ chalk › supports blackBright color
+  ✔ chalk › sets correct level for chalkStderr and respects it
+  ✔ chalk › keeps function prototype methods
+  ✔ no-color-support › colors can be forced by using chalk.level
+  ✔ level › don't output colors when manually disabled
+  ✔ level › enable/disable colors based on overall chalk .level property, not individual instances
+  ✔ level › propagate enable/disable changes from child colors
+  ✔ level › disable colors if they are not supported
+  ─
+
+  32 tests passed
+----------------------|---------|----------|---------|---------|-------------------
+File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+----------------------|---------|----------|---------|---------|-------------------
+All files             |   99.61 |    95.23 |   95.23 |   99.61 |                   
+ source               |   99.22 |    95.23 |   94.73 |   99.22 |                   
+  index.js            |   99.11 |    94.23 |   94.11 |   99.11 | 90-91             
+  utilities.js        |     100 |      100 |     100 |     100 |                   
+ test                 |     100 |    95.23 |     100 |     100 |                   
+  _fixture.js         |     100 |      100 |     100 |     100 |                   
+  chalk.js            |     100 |       92 |     100 |     100 | 8-9               
+  instance.js         |     100 |      100 |     100 |     100 |                   
+  level.js            |     100 |      100 |     100 |     100 |                   
+  no-color-support.js |     100 |      100 |     100 |     100 |                   
+  visible.js          |     100 |      100 |     100 |     100 |                   
+----------------------|---------|----------|---------|---------|-------------------

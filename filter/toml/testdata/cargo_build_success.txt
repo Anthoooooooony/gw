@@ -1,0 +1,50 @@
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded memmap2 v0.9.9
+  Downloaded termcolor v1.4.1
+  Downloaded textwrap v0.16.2
+  Downloaded lexopt v0.3.1
+  Downloaded encoding_rs_io v0.1.7
+  Downloaded ryu v1.0.20
+  Downloaded itoa v1.0.15
+  Downloaded serde_json v1.0.145
+  Downloaded log v0.4.28
+  Downloaded bstr v1.12.0
+  Downloaded aho-corasick v1.1.3
+  Downloaded libc v0.2.177
+  Downloaded encoding_rs v0.8.35
+   Compiling memchr v2.7.6
+   Compiling regex-syntax v0.8.8
+   Compiling log v0.4.28
+   Compiling libc v0.2.177
+   Compiling serde_core v1.0.228
+   Compiling cfg-if v1.0.4
+   Compiling crossbeam-utils v0.8.21
+   Compiling serde v1.0.228
+   Compiling serde_json v1.0.145
+   Compiling itoa v1.0.15
+   Compiling ryu v1.0.20
+   Compiling encoding_rs v0.8.35
+   Compiling termcolor v1.4.1
+   Compiling anyhow v1.0.100
+   Compiling same-file v1.0.6
+   Compiling walkdir v2.5.0
+   Compiling aho-corasick v1.1.3
+   Compiling grep-matcher v0.1.8 (/private/tmp/gw-fixture-work2/ripgrep/crates/matcher)
+   Compiling ripgrep v15.1.0 (/private/tmp/gw-fixture-work2/ripgrep)
+   Compiling textwrap v0.16.2
+   Compiling encoding_rs_io v0.1.7
+   Compiling lexopt v0.3.1
+   Compiling regex-automata v0.4.13
+   Compiling crossbeam-epoch v0.9.18
+   Compiling crossbeam-deque v0.8.6
+   Compiling bstr v1.12.0
+   Compiling globset v0.4.18 (/private/tmp/gw-fixture-work2/ripgrep/crates/globset)
+   Compiling grep-regex v0.1.14 (/private/tmp/gw-fixture-work2/ripgrep/crates/regex)
+   Compiling ignore v0.4.25 (/private/tmp/gw-fixture-work2/ripgrep/crates/ignore)
+   Compiling memmap2 v0.9.9
+   Compiling grep-cli v0.1.12 (/private/tmp/gw-fixture-work2/ripgrep/crates/cli)
+   Compiling grep-searcher v0.1.16 (/private/tmp/gw-fixture-work2/ripgrep/crates/searcher)
+   Compiling grep-printer v0.3.1 (/private/tmp/gw-fixture-work2/ripgrep/crates/printer)
+   Compiling grep v0.4.1 (/private/tmp/gw-fixture-work2/ripgrep/crates/grep)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.83s

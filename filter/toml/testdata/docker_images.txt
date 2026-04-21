@@ -1,0 +1,15 @@
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+IMAGE                          ID             DISK USAGE   CONTENT SIZE   EXTRA
+alpine/git:latest              d453f54c8332        145MB         38.2MB        
+eclipse-temurin:17-jre         723decd39195        401MB         96.1MB        
+gradle:8-jdk17                 0625208fab23       1.24GB          406MB        
+maven:3.8-openjdk-17           3a9c30b3af62        1.3GB          432MB        
+maven:3.8-openjdk-8            ff18d86faefa        814MB          243MB        
+maven:3.9-eclipse-temurin-17   cc868f5c959b        796MB          235MB        
+milvusdb/milvus:v2.5.6         fe39aa0fa006       2.19GB          614MB        
+mysql:9.6                      c5df04bee1a4       1.28GB          278MB        
+pgvector/pgvector:pg16         7d400e340efb        639MB          154MB        
+pgvector/pgvector:pg17         494dff7e67e7        646MB          156MB        
+postgres:18.3                  52e6ffd11fdd        671MB          167MB   U    
+python:3.11-slim               233de06753d3        214MB           48MB        
+testcontainers/ryuk:0.13.0     31b31269d066       13.8MB         6.91MB        
