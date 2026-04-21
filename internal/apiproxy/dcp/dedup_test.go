@@ -15,7 +15,7 @@ func (quietLogger) Warnf(string, ...any) {}
 // TestTransform_NoToolUse 无 tool_use 时 body 字节原样返回。
 func TestTransform_NoToolUse(t *testing.T) {
 	in := []byte(`{"model":"x","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}`)
-	out := Transform(in, quietLogger{})
+	out := NewTransformer(quietLogger{}).Transform(in)
 	if !bytes.Equal(in, out) {
 		t.Errorf("no tool_use 应透传:\n in  = %s\n out = %s", in, out)
 	}
@@ -27,7 +27,7 @@ func TestTransform_SingleToolNoDedup(t *testing.T) {
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_1","name":"Read","input":{"path":"/a"}}]},
 		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_1","content":"file content"}]}
 	]}`)
-	out := Transform(in, quietLogger{})
+	out := NewTransformer(quietLogger{}).Transform(in)
 	if strings.Contains(string(out), PlaceholderContent) {
 		t.Errorf("单次调用不应替换:\n out = %s", out)
 	}
@@ -41,7 +41,7 @@ func TestTransform_DuplicateTwoOccurrences(t *testing.T) {
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_2","name":"Read","input":{"path":"/a"}}]},
 		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_2","content":"second content"}]}
 	]}`)
-	out := string(Transform(in, quietLogger{}))
+	out := string(NewTransformer(quietLogger{}).Transform(in))
 	if !strings.Contains(out, PlaceholderContent) {
 		t.Errorf("第一次 tool_result 应被替换为占位符:\n %s", out)
 	}
@@ -63,7 +63,7 @@ func TestTransform_ThreeOccurrences(t *testing.T) {
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_3","name":"Read","input":{"path":"/a"}}]},
 		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_3","content":"v3"}]}
 	]}`)
-	out := string(Transform(in, quietLogger{}))
+	out := string(NewTransformer(quietLogger{}).Transform(in))
 	if strings.Contains(out, "v1") || strings.Contains(out, "v2") {
 		t.Errorf("v1/v2 应被替换:\n %s", out)
 	}
@@ -85,7 +85,7 @@ func TestTransform_IsErrorSkipped(t *testing.T) {
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_2","name":"Bash","input":{"cmd":"x"}}]},
 		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_2","content":"fresh output"}]}
 	]}`)
-	out := string(Transform(in, quietLogger{}))
+	out := string(NewTransformer(quietLogger{}).Transform(in))
 	if strings.Contains(out, PlaceholderContent) {
 		t.Errorf("is_error 的 tool_result 不应被替换:\n %s", out)
 	}
@@ -102,7 +102,7 @@ func TestTransform_DifferentParamsNoDedup(t *testing.T) {
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_2","name":"Read","input":{"path":"/b"}}]},
 		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_2","content":"B"}]}
 	]}`)
-	out := string(Transform(in, quietLogger{}))
+	out := string(NewTransformer(quietLogger{}).Transform(in))
 	if strings.Contains(out, PlaceholderContent) {
 		t.Errorf("不同参数不应 dedup:\n %s", out)
 	}
@@ -120,7 +120,7 @@ func TestTransform_MultipleToolsIndependently(t *testing.T) {
 		{"role":"assistant","content":[{"type":"tool_use","id":"b2","name":"Bash","input":{"cmd":"ls"}}]},
 		{"role":"user","content":[{"type":"tool_result","tool_use_id":"b2","content":"BASH2"}]}
 	]}`)
-	out := string(Transform(in, quietLogger{}))
+	out := string(NewTransformer(quietLogger{}).Transform(in))
 	if strings.Contains(out, "READ1") || strings.Contains(out, "BASH1") {
 		t.Errorf("READ1/BASH1 应被替换:\n %s", out)
 	}
@@ -141,7 +141,7 @@ func TestTransform_UnknownBlockPreserved(t *testing.T) {
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_2","name":"Read","input":{"path":"/a"}}]},
 		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_2","content":"two"}]}
 	]}`)
-	out := string(Transform(in, quietLogger{}))
+	out := string(NewTransformer(quietLogger{}).Transform(in))
 	// thinking block 的 signature 字段必须保留
 	if !strings.Contains(out, `"signature":"abc=="`) {
 		t.Errorf("thinking signature 字段丢失:\n %s", out)
@@ -151,7 +151,7 @@ func TestTransform_UnknownBlockPreserved(t *testing.T) {
 // TestTransform_MalformedJSONPassthrough 解析失败降级为原样透传。
 func TestTransform_MalformedJSONPassthrough(t *testing.T) {
 	in := []byte(`{not json`)
-	out := Transform(in, quietLogger{})
+	out := NewTransformer(quietLogger{}).Transform(in)
 	if !bytes.Equal(in, out) {
 		t.Errorf("无法解析时应原样透传:\n in  = %s\n out = %s", in, out)
 	}
@@ -166,7 +166,7 @@ func TestTransform_StringContentMessagePreserved(t *testing.T) {
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_2","name":"Read","input":{"path":"/a"}}]},
 		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_2","content":"second"}]}
 	]}`)
-	out := string(Transform(in, quietLogger{}))
+	out := string(NewTransformer(quietLogger{}).Transform(in))
 	if strings.Contains(out, "first") {
 		t.Errorf("first 应被替换:\n %s", out)
 	}
@@ -180,7 +180,7 @@ func TestTransform_StringContentMessagePreserved(t *testing.T) {
 // 原始字节不同，间接影响 Anthropic 的 prompt cache 命中。
 func TestTransform_NoDedupReturnsOriginalBytes(t *testing.T) {
 	in := []byte(`{"model":"x","max_tokens":1,"messages":[{"role":"user","content":"hello"}]}`)
-	out := Transform(in, quietLogger{})
+	out := NewTransformer(quietLogger{}).Transform(in)
 	if !bytes.Equal(in, out) {
 		t.Errorf("无命中应原字节返回:\n in  = %s\n out = %s", in, out)
 	}

@@ -14,40 +14,56 @@ type Logger interface {
 	Warnf(format string, args ...any)
 }
 
-// NewTransformer 返回一个闭包 transform：把 POST /v1/messages body 做 DCP
-// 风格去重后返回新 body。任何失败都降级为原样返回（policy B）。
-func NewTransformer(logger Logger) func([]byte) []byte {
-	return func(body []byte) []byte {
-		return Transform(body, logger)
-	}
+// Transformer 持有 Logger 与累积 Stats。Transformer 实例在 Server 生命周期内共享，
+// 多个并发请求同时调用 Transform 时通过 Stats 的 atomic 字段保证计数安全。
+type Transformer struct {
+	logger Logger
+	stats  *Stats
 }
 
-// Transform 对外入口：解析 -> 改写 -> 序列化。
-// 失败全部降级为原 body，保证 claude 感知不到 dcp 异常。
-func Transform(body []byte, logger Logger) []byte {
+// NewTransformer 构造 Transformer 并返回；调用方通过 .Transform 做转换，
+// 通过 .Stats() 读取累积观测。
+func NewTransformer(logger Logger) *Transformer {
+	return &Transformer{logger: logger, stats: &Stats{}}
+}
+
+// Stats 暴露累积观测（非快照，持续被 Transform 更新）。
+func (t *Transformer) Stats() *Stats { return t.stats }
+
+// Transform 解析 -> 改写 -> 序列化。任何失败都降级为原 body（policy B）。
+// 并发安全：内部仅访问 Stats 的 atomic 字段与调用栈局部 state。
+func (t *Transformer) Transform(body []byte) []byte {
+	t.stats.RequestsProcessed.Add(1)
+
 	var req messagesRequest
 	if err := json.Unmarshal(body, &req); err != nil {
-		logger.Warnf("dcp: parse failed, passthrough: %v", err)
+		t.logger.Warnf("dcp: parse failed, passthrough: %v", err)
 		return body
 	}
 
-	changed := rewrite(&req, logger)
-	if !changed {
+	toolUses, replaced := rewrite(&req, t.logger)
+	t.stats.ToolUseScanned.Add(int64(toolUses))
+	if replaced == 0 {
 		return body
 	}
 
 	out, err := json.Marshal(&req)
 	if err != nil {
-		logger.Warnf("dcp: marshal failed, passthrough: %v", err)
+		t.logger.Warnf("dcp: marshal failed, passthrough: %v", err)
 		return body
 	}
+
+	t.stats.ResultsReplaced.Add(int64(replaced))
+	t.stats.BytesInput.Add(int64(len(body)))
+	t.stats.BytesOutput.Add(int64(len(out)))
+	t.logger.Infof("dcp: replaced %d tool_result(s), %d -> %d bytes", replaced, len(body), len(out))
 	return out
 }
 
 // rewrite 扫描 messages，按 DCP 规则标记要裁剪的 tool_use_id，
 // 然后重写对应 tool_result 的 content 为占位符。
-// 返回是否有任何 block 被改动。
-func rewrite(req *messagesRequest, logger Logger) bool {
+// 返回 (tool_use 扫描总数, 替换次数)。
+func rewrite(req *messagesRequest, logger Logger) (toolUses, replaced int) {
 	type toolUseRef struct {
 		id  string
 		sig string
@@ -78,8 +94,9 @@ func rewrite(req *messagesRequest, logger Logger) bool {
 		}
 	}
 
-	if len(uses) == 0 {
-		return false
+	toolUses = len(uses)
+	if toolUses == 0 {
+		return toolUses, 0
 	}
 
 	// 按 sig 分组，保留每组最后一个，其余标记 pruned。
@@ -95,7 +112,7 @@ func rewrite(req *messagesRequest, logger Logger) bool {
 	}
 
 	if len(pruned) == 0 {
-		return false
+		return toolUses, 0
 	}
 
 	// 第二遍：在 user 消息里找 tool_result，对 pruned 命中的 tool_use_id 做内容替换。
@@ -103,10 +120,9 @@ func rewrite(req *messagesRequest, logger Logger) bool {
 	if err != nil {
 		// string marshal 不可能失败
 		logger.Warnf("dcp: placeholder marshal: %v", err)
-		return false
+		return toolUses, 0
 	}
 
-	changed := false
 	for mi := range req.Messages {
 		msg := &req.Messages[mi]
 		if msg.Role != "user" {
@@ -139,9 +155,9 @@ func rewrite(req *messagesRequest, logger Logger) bool {
 			}
 			msg.Content[bi] = newBlock
 			msg.mutated = true
-			changed = true
+			replaced++
 		}
 	}
 
-	return changed
+	return toolUses, replaced
 }
