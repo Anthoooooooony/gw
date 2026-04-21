@@ -106,6 +106,9 @@ func runChild(args, env []string, logger apiproxy.Logger) int {
 			select {
 			case sig := <-sigCh:
 				if c.Process != nil {
+					// Wait() 返回到 close(done) 之间存在微秒级窗口，
+					// 若此时收到信号会投递到已退出的进程，返回 os.ErrProcessDone。
+					// 这是良性的——signal.Stop 随后就会停止投递，错误直接吞掉。
 					_ = c.Process.Signal(sig)
 				}
 			case <-done:

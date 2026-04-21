@@ -2,6 +2,7 @@ package apiproxy
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,8 +14,12 @@ import (
 // testLogger 实现 Logger 接口，捕获输出供断言。
 type testLogger struct{ buf bytes.Buffer }
 
-func (l *testLogger) Infof(f string, a ...any) { l.buf.WriteString("I:"); l.buf.WriteString(f) }
-func (l *testLogger) Warnf(f string, a ...any) { l.buf.WriteString("W:"); l.buf.WriteString(f) }
+func (l *testLogger) Infof(f string, a ...any) {
+	l.buf.WriteString("I:" + fmt.Sprintf(f, a...))
+}
+func (l *testLogger) Warnf(f string, a ...any) {
+	l.buf.WriteString("W:" + fmt.Sprintf(f, a...))
+}
 
 // TestPassthrough_Body 验证请求 body 和响应 body 原样透传，header 也保留。
 func TestPassthrough_Body(t *testing.T) {

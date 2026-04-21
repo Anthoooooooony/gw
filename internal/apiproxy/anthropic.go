@@ -5,11 +5,12 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strings"
 )
 
 // upstreamURL 返回 Anthropic 上游 API 的基础 URL。
 // 可通过 GW_APIPROXY_UPSTREAM 覆盖（测试时把它指向 record/replay server）。
+// 注意：本函数由 anthropicHandler 在 Start 时调用一次，结果在 handler 生命周期内固定。
+// 测试里要生效必须在 Start() 之前设置 env；动态切换 upstream 不是设计目标。
 func upstreamURL() *url.URL {
 	raw := "https://api.anthropic.com"
 	if v := envUpstream(); v != "" {
@@ -50,11 +51,11 @@ func anthropicHandler(logger Logger) http.HandlerFunc {
 		// 去掉 Hop-by-hop 头，httputil.ReverseProxy 默认已处理 Connection，
 		// 但某些客户端可能额外加 Proxy-Connection，保险起见清理一下。
 		r.Header.Del("Proxy-Connection")
-		if strings.EqualFold(r.Header.Get("Upgrade"), "") {
-			rp.ServeHTTP(w, r)
+		// Claude Code 暂不走 WS/upgrade，遇到就 501 明确提示。
+		if r.Header.Get("Upgrade") != "" {
+			http.Error(w, "gw apiproxy: HTTP upgrade not supported", http.StatusNotImplemented)
 			return
 		}
-		// Claude Code 暂不走 WS/upgrade，遇到就 501 明确提示。
-		http.Error(w, "gw apiproxy: HTTP upgrade not supported", http.StatusNotImplemented)
+		rp.ServeHTTP(w, r)
 	}
 }
