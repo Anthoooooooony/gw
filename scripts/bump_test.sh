@@ -187,6 +187,49 @@ integration_idempotent_tag() {
 }
 integration_idempotent_tag
 
+# ========== integration: CHANGELOG 缺 [Unreleased] 节应拒绝 (#60) ==========
+# CHANGELOG.md 存在但无 `## [Unreleased]` 节时，bump 必须 exit != 0，
+# 避免 awk 找不到插入锚点而静默丢失 changelog 节。
+integration_missing_unreleased_rejected() {
+  local bump_script tmp_repo ec
+  bump_script="$(cd "$(dirname "$0")" && pwd)/bump.sh"
+
+  tmp_repo=$(mktemp -d)
+  trap 'rm -rf "$tmp_repo"' RETURN
+
+  (
+    cd "$tmp_repo"
+    git init -q -b master
+    git config user.email "t@gw.local"
+    git config user.name  "t"
+    echo "# t" > README.md
+    # 故意只留标题，不含 ## [Unreleased] 节
+    printf '# CHANGELOG\n\n## [v0.1.0] - 2026-01-01\n\n### Added\n- initial\n' > CHANGELOG.md
+    git add README.md CHANGELOG.md
+    git commit -q -m "init"
+    git tag v0.1.0
+    git init -q --bare "$tmp_repo/origin.git"
+    git remote add origin "$tmp_repo/origin.git"
+    git push -q origin master --tags
+  ) >/dev/null 2>&1
+
+  set +e
+  (
+    cd "$tmp_repo"
+    EDITOR=true bash "$bump_script" patch --dry-run
+  ) >/dev/null 2>&1
+  ec=$?
+  set -e
+
+  if [[ $ec -eq 0 ]]; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: Unreleased 缺失检查——预期 exit != 0，实际 0"
+  else
+    PASS=$((PASS+1))
+  fi
+}
+integration_missing_unreleased_rejected
+
 echo "---"
 echo "PASS: $PASS, FAIL: $FAIL"
 [[ $FAIL -eq 0 ]]
