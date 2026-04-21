@@ -59,44 +59,6 @@ func TestTailLines(t *testing.T) {
 	}
 }
 
-func TestStripLines(t *testing.T) {
-	f := makeFilter(Rule{Match: "test", StripLines: []string{"^DEBUG"}})
-	input := filter.FilterInput{
-		Cmd:    "test",
-		Args:   []string{},
-		Stdout: "DEBUG: something\nINFO: hello\nDEBUG: another\nERROR: bad",
-	}
-	out := f.Apply(input)
-	lines := strings.Split(out.Content, "\n")
-	if len(lines) != 2 {
-		t.Errorf("期望 2 行，得到 %d 行: %v", len(lines), lines)
-	}
-	for _, line := range lines {
-		if strings.HasPrefix(line, "DEBUG") {
-			t.Errorf("DEBUG 行未被移除: %s", line)
-		}
-	}
-}
-
-func TestKeepLines(t *testing.T) {
-	f := makeFilter(Rule{Match: "test", KeepLines: []string{"ERROR"}})
-	input := filter.FilterInput{
-		Cmd:    "test",
-		Args:   []string{},
-		Stdout: "INFO: ok\nERROR: bad\nDEBUG: trace\nERROR: worse",
-	}
-	out := f.Apply(input)
-	lines := strings.Split(out.Content, "\n")
-	if len(lines) != 2 {
-		t.Errorf("期望 2 行，得到 %d 行: %v", len(lines), lines)
-	}
-	for _, line := range lines {
-		if !strings.Contains(line, "ERROR") {
-			t.Errorf("非 ERROR 行未被过滤: %s", line)
-		}
-	}
-}
-
 func TestStripAnsi(t *testing.T) {
 	f := makeFilter(Rule{Match: "test", StripAnsi: true})
 	input := filter.FilterInput{
@@ -114,11 +76,12 @@ func TestStripAnsi(t *testing.T) {
 }
 
 func TestOnEmpty(t *testing.T) {
-	f := makeFilter(Rule{Match: "test", KeepLines: []string{"NOTFOUND"}, OnEmpty: "无匹配输出"})
+	// 空输入 + on_empty 配置 → 返回 on_empty 文案
+	f := makeFilter(Rule{Match: "test", OnEmpty: "无匹配输出"})
 	input := filter.FilterInput{
 		Cmd:    "test",
 		Args:   []string{},
-		Stdout: "INFO: ok\nDEBUG: trace",
+		Stdout: "   \n  \n",
 	}
 	out := f.Apply(input)
 	if out.Content != "无匹配输出" {

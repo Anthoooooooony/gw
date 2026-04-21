@@ -17,16 +17,24 @@ func init() {
 //go:embed rules/*.toml
 var builtinRules embed.FS
 
-// Rule 定义一条 TOML 声明式过滤规则
+// Rule 定义一条 TOML 声明式过滤规则。
+//
+// 设计哲学（v2）：**只做无损变换**。DSL 故意不提供 strip_lines / keep_lines /
+// on_error 这类基于正则的行级裁剪——词法匹配无法区分"真噪音"和"用户恰好需要的
+// 那一行"，长期会产生误删信任危机。想要激进压缩（pytest 只留 failures、
+// vitest 生成 "PASS/FAIL" 摘要等）请写专属 Go filter，按命令语义 parse 后生成摘要。
+//
+// 保留的字段都是**语义无关**的安全变换：
+//   - StripAnsi：ANSI 转义序列纯视觉噪音
+//   - HeadLines/TailLines/MaxLines：纯长度兜底（截首/截尾/硬上限）
+//   - OnEmpty：输出被截断到空时的友好提示
 type Rule struct {
-	Match      string   `toml:"match"`       // 命令前缀匹配
-	StripAnsi  bool     `toml:"strip_ansi"`  // 移除 ANSI 转义码
-	MaxLines   int      `toml:"max_lines"`   // 截断到 N 行
-	HeadLines  int      `toml:"head_lines"`  // 保留前 N 行
-	TailLines  int      `toml:"tail_lines"`  // 保留后 N 行
-	StripLines []string `toml:"strip_lines"` // 按正则移除行
-	KeepLines  []string `toml:"keep_lines"`  // 仅保留包含指定字符串的行
-	OnEmpty    string   `toml:"on_empty"`    // 输出为空时的替代消息
+	Match     string `toml:"match"`      // 命令前缀匹配
+	StripAnsi bool   `toml:"strip_ansi"` // 移除 ANSI 转义码（无损）
+	MaxLines  int    `toml:"max_lines"`  // 截断到 N 行
+	HeadLines int    `toml:"head_lines"` // 保留前 N 行
+	TailLines int    `toml:"tail_lines"` // 保留后 N 行
+	OnEmpty   string `toml:"on_empty"`   // 输出为空时的替代消息
 }
 
 // TomlFilter 基于 TOML 规则的声明式过滤器（无状态：所有字段一次加载后只读）
@@ -93,75 +101,28 @@ func (f *TomlFilter) findRule(fullCmd string) *Rule {
 	return best
 }
 
-// applyRule 按管道顺序应用规则: strip_ansi → strip_lines → keep_lines → head_lines → tail_lines → max_lines → on_empty
+// applyRule 按管道顺序应用无损变换：strip_ansi → head_lines → tail_lines → max_lines → on_empty
 func applyRule(rule *Rule, content string) string {
-	// strip_ansi
 	if rule.StripAnsi {
 		content = ansiRegex.ReplaceAllString(content, "")
 	}
 
 	lines := strings.Split(content, "\n")
 
-	// strip_lines: 按正则移除匹配的行
-	if len(rule.StripLines) > 0 {
-		var patterns []*regexp.Regexp
-		for _, p := range rule.StripLines {
-			if re, err := regexp.Compile(p); err == nil {
-				patterns = append(patterns, re)
-			}
-		}
-		var filtered []string
-		for _, line := range lines {
-			matched := false
-			for _, re := range patterns {
-				if re.MatchString(line) {
-					matched = true
-					break
-				}
-			}
-			if !matched {
-				filtered = append(filtered, line)
-			}
-		}
-		lines = filtered
-	}
-
-	// keep_lines: 仅保留包含指定字符串的行
-	if len(rule.KeepLines) > 0 {
-		var filtered []string
-		for _, line := range lines {
-			for _, kw := range rule.KeepLines {
-				if strings.Contains(line, kw) {
-					filtered = append(filtered, line)
-					break
-				}
-			}
-		}
-		lines = filtered
-	}
-
-	// head_lines: 保留前 N 行
 	if rule.HeadLines > 0 && len(lines) > rule.HeadLines {
 		lines = lines[:rule.HeadLines]
 	}
-
-	// tail_lines: 保留后 N 行
 	if rule.TailLines > 0 && len(lines) > rule.TailLines {
 		lines = lines[len(lines)-rule.TailLines:]
 	}
-
-	// max_lines: 截断到 N 行
 	if rule.MaxLines > 0 && len(lines) > rule.MaxLines {
 		lines = lines[:rule.MaxLines]
 	}
 
 	result := strings.Join(lines, "\n")
-
-	// on_empty
 	if rule.OnEmpty != "" && strings.TrimSpace(result) == "" {
 		return rule.OnEmpty
 	}
-
 	return result
 }
 

@@ -7,10 +7,13 @@
 ### Added
 
 ### Changed
+- **Breaking（TOML DSL v2）**：TOML 规则只保留语义无关的无损字段（`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`）。基于正则的 `strip_lines` / `keep_lines` / `on_error` 因误删风险移除。用户规则里仍含这些字段时 loader 打一次 warning 指引迁移到专属 Go filter，无损部分仍生效。
+- 内置 node/python/rust TOML 规则同步精简，只保留 strip_ansi + 长度兜底；需要语义压缩的命令（pytest / vitest / cargo test / npm test）将通过专属 Go filter 逐步补齐。
 
 ### Fixed
 
 ### Removed
+- `filter/toml` 的 `strip_lines` / `keep_lines` / `on_error` 字段。
 
 [Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.1.1...HEAD
 [v0.1.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.0

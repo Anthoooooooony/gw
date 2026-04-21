@@ -33,18 +33,24 @@ type LoadedRule struct {
 	Source string // builtin | user://<path> | project://<path>
 }
 
-// rawRuleFile 是从 TOML 文件解码的中间表示。
+// rawRule 是从 TOML 文件解码的中间表示。
 // 顶层是 section（如 docker），值是子名（如 ps）到 rawRule 的映射。
+//
+// 对"v2 已移除的字段"（strip_lines / keep_lines / on_error）仍保留接收位以便
+// 识别——加载时打 warning 指引用户迁移到专属 Go filter，字段值本身不生效。
 type rawRule struct {
-	Match      string   `toml:"match"`
-	StripAnsi  bool     `toml:"strip_ansi"`
-	MaxLines   int      `toml:"max_lines"`
-	HeadLines  int      `toml:"head_lines"`
-	TailLines  int      `toml:"tail_lines"`
-	StripLines []string `toml:"strip_lines"`
-	KeepLines  []string `toml:"keep_lines"`
-	OnEmpty    string   `toml:"on_empty"`
-	Disabled   bool     `toml:"disabled"`
+	Match     string `toml:"match"`
+	StripAnsi bool   `toml:"strip_ansi"`
+	MaxLines  int    `toml:"max_lines"`
+	HeadLines int    `toml:"head_lines"`
+	TailLines int    `toml:"tail_lines"`
+	OnEmpty   string `toml:"on_empty"`
+	Disabled  bool   `toml:"disabled"`
+
+	// 已弃用字段：出现即打 warning，字段值丢弃不生效。
+	DeprecatedStripLines []string  `toml:"strip_lines"`
+	DeprecatedKeepLines  []string  `toml:"keep_lines"`
+	DeprecatedOnError    *rawRule  `toml:"on_error"`
 }
 
 // LoadAllRules 按三级加载顺序（builtin → user → project）收集全部 TOML 规则，
@@ -164,22 +170,46 @@ func parseAndMerge(data, source string, byID map[string]LoadedRule, disabled map
 			}
 			// 明确取消 disabled 标记（若低层禁用、高层启用）
 			delete(disabled, id)
+
+			// v2 DSL 移除的字段：仅在用户 / 项目规则中打 warning
+			// （builtin 的 TOML 理论上 PR 已清理干净，不应再触发；保险起见一并检查）。
+			warnDeprecatedFields(id, source, &rr)
+
 			byID[id] = LoadedRule{
 				ID: id,
 				Rule: Rule{
-					Match:      rr.Match,
-					StripAnsi:  rr.StripAnsi,
-					MaxLines:   rr.MaxLines,
-					HeadLines:  rr.HeadLines,
-					TailLines:  rr.TailLines,
-					StripLines: rr.StripLines,
-					KeepLines:  rr.KeepLines,
-					OnEmpty:    rr.OnEmpty,
+					Match:     rr.Match,
+					StripAnsi: rr.StripAnsi,
+					MaxLines:  rr.MaxLines,
+					HeadLines: rr.HeadLines,
+					TailLines: rr.TailLines,
+					OnEmpty:   rr.OnEmpty,
 				},
 				Source: source,
 			}
 		}
 	}
+}
+
+// warnDeprecatedFields 对 v2 DSL 已移除的字段打一次 warning，值不生效。
+// 出现任一弃用字段都提示用户："需要语义压缩请写专属 Go filter"。
+func warnDeprecatedFields(id, source string, rr *rawRule) {
+	var fields []string
+	if len(rr.DeprecatedStripLines) > 0 {
+		fields = append(fields, "strip_lines")
+	}
+	if len(rr.DeprecatedKeepLines) > 0 {
+		fields = append(fields, "keep_lines")
+	}
+	if rr.DeprecatedOnError != nil {
+		fields = append(fields, "on_error")
+	}
+	if len(fields) == 0 {
+		return
+	}
+	fmt.Fprintf(os.Stderr,
+		"gw: warning: 规则 %s (%s) 使用了已弃用字段 %s；v2 TOML DSL 只保留无损变换，请改用专属 Go filter 做语义压缩\n",
+		id, source, strings.Join(fields, "/"))
 }
 
 // defaultUserRulesDir 返回 $XDG_CONFIG_HOME/gw/rules 或平台默认配置目录。
