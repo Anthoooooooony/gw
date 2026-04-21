@@ -78,64 +78,72 @@ func TestExec_GitStatus(t *testing.T) {
 	}
 }
 
-// TestRewrite_Simple 测试单命令改写
-func TestRewrite_Simple(t *testing.T) {
-	cmd := exec.Command(gwBinary, "rewrite", "git status")
+// runRewriteBinary 通过 stdin 把 Claude Code hook JSON 喂给 gw rewrite 子进程，
+// 返回 (stdout, exitCode)。gw rewrite 的协议：exit 0 永远，stdout 要么空（静默放行）
+// 要么是 hookSpecificOutput JSON。
+func runRewriteBinary(t *testing.T, hookJSON string) (string, int) {
+	t.Helper()
+	cmd := exec.Command(gwBinary, "rewrite")
+	cmd.Stdin = strings.NewReader(hookJSON)
 	out, err := cmd.CombinedOutput()
+	code := 0
 	if err != nil {
-		t.Fatalf("rewrite 失败: %v, output: %s", err, out)
+		if ee, ok := err.(*exec.ExitError); ok {
+			code = ee.ExitCode()
+		} else {
+			t.Fatalf("rewrite 调用异常: %v, output: %s", err, out)
+		}
 	}
-	got := strings.TrimSpace(string(out))
-	if got != "gw exec git status" {
-		t.Errorf("期望 'gw exec git status', 得到 %q", got)
+	return string(out), code
+}
+
+// 可改写命令 → stdout 出 hookSpecificOutput JSON，updatedInput.command 含 gw exec
+func TestRewrite_BinarySimple(t *testing.T) {
+	out, code := runRewriteBinary(t, `{"tool_name":"Bash","tool_input":{"command":"git status"}}`)
+	if code != 0 {
+		t.Fatalf("rewrite 应 exit 0, 得到 %d, output: %s", code, out)
+	}
+	if !strings.Contains(out, `"hookEventName": "PreToolUse"`) {
+		t.Errorf("stdout 应含 PreToolUse: %q", out)
+	}
+	if !strings.Contains(out, "exec git status") {
+		t.Errorf("stdout 应含 exec git status: %q", out)
 	}
 }
 
-// TestRewrite_Chain 测试链式命令改写
-func TestRewrite_Chain(t *testing.T) {
-	cmd := exec.Command(gwBinary, "rewrite", "mvn clean && mvn test")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("rewrite chain 失败: %v, output: %s", err, out)
+// 链式命令 → 每个可代理段都被改写
+func TestRewrite_BinaryChain(t *testing.T) {
+	out, code := runRewriteBinary(t, `{"tool_name":"Bash","tool_input":{"command":"mvn clean \u0026\u0026 mvn test"}}`)
+	if code != 0 {
+		t.Fatalf("rewrite 应 exit 0, 得到 %d, output: %s", code, out)
 	}
-	got := strings.TrimSpace(string(out))
-	if !strings.Contains(got, "gw exec mvn clean") {
-		t.Errorf("输出应包含 'gw exec mvn clean', 得到 %q", got)
+	if !strings.Contains(out, "exec mvn clean") {
+		t.Errorf("未改写 mvn clean: %q", out)
 	}
-	if !strings.Contains(got, "gw exec mvn test") {
-		t.Errorf("输出应包含 'gw exec mvn test', 得到 %q", got)
+	if !strings.Contains(out, "exec mvn test") {
+		t.Errorf("未改写 mvn test: %q", out)
 	}
 }
 
-// TestRewrite_Pipe 测试管道命令不可改写
-func TestRewrite_Pipe(t *testing.T) {
-	cmd := exec.Command(gwBinary, "rewrite", "git log | grep fix")
-	err := cmd.Run()
-	if err == nil {
-		t.Fatal("管道命令应返回非零退出码")
+// 管道命令（含 |）shell 判定不可代理 → stdout 空、exit 0（静默放行，让 Claude Code 走默认）
+func TestRewrite_BinaryPipeSilent(t *testing.T) {
+	out, code := runRewriteBinary(t, `{"tool_name":"Bash","tool_input":{"command":"git log | grep fix"}}`)
+	if code != 0 {
+		t.Fatalf("rewrite 应 exit 0, 得到 %d", code)
 	}
-	exitErr, ok := err.(*exec.ExitError)
-	if !ok {
-		t.Fatalf("期望 ExitError, 得到 %T", err)
-	}
-	if exitErr.ExitCode() == 0 {
-		t.Error("管道命令退出码不应为 0")
+	if strings.TrimSpace(out) != "" {
+		t.Errorf("管道命令应静默放行（stdout 空），得到: %q", out)
 	}
 }
 
-// TestRewrite_NoMatch 测试无匹配命令不改写
-func TestRewrite_NoMatch(t *testing.T) {
-	cmd := exec.Command(gwBinary, "rewrite", "python script.py")
-	err := cmd.Run()
-	if err == nil {
-		t.Fatal("无匹配命令应返回非零退出码")
+// 不在注册表的命令 → stdout 空、exit 0
+func TestRewrite_BinaryNoMatchSilent(t *testing.T) {
+	out, code := runRewriteBinary(t, `{"tool_name":"Bash","tool_input":{"command":"python script.py"}}`)
+	if code != 0 {
+		t.Fatalf("rewrite 应 exit 0, 得到 %d", code)
 	}
-	exitErr, ok := err.(*exec.ExitError)
-	if !ok {
-		t.Fatalf("期望 ExitError, 得到 %T", err)
-	}
-	if exitErr.ExitCode() == 0 {
-		t.Error("无匹配命令退出码不应为 0")
+	if strings.TrimSpace(out) != "" {
+		t.Errorf("不匹配应静默放行，得到: %q", out)
 	}
 }
 

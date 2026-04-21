@@ -104,7 +104,14 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 
 ## Hook 安装约定
 
-- 写入 `~/.claude/settings.json` 的 hook 条目必须带 `_gw_managed: true` 标记，`gw uninstall` 按此标记清理
+- `gw init` 往 `~/.claude/settings.json` 的 `hooks.PreToolUse[]` 注入一条 matcher：
+  ```json
+  {"matcher":"Bash","_gw_managed":true,"hooks":[{"type":"command","command":"'/abs/path/to/gw' rewrite"}]}
+  ```
+  字段含义遵循 Claude Code hooks 文档（https://code.claude.com/docs/en/hooks.md）。
+- `command` 字段写 **绝对路径**（`os.Executable()`），因 Claude Code hook 执行环境 PATH 受限；路径经 `shellQuote` 单引号包裹防空格/特殊字符
+- `_gw_managed: true` 是 gw 的私有标记，`gw uninstall` 按此精确清理，不碰他人 matcher / 其他事件（PostToolUse 等）
+- `gw rewrite` 是 hook 脚本：从 stdin 读 `{tool_input:{command:"..."}}`，匹配到可代理命令则 stdout 输出 `{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"allow",updatedInput:{command:"'/abs/gw' exec <原命令>"}}}` 让 Claude Code 走改写后的命令；未匹配则静默放行
 - `gw init --dry-run` / `gw uninstall --dry-run` 只打印变更，不落盘
 - 写入走同目录临时文件 + rename 原子替换，失败不留半截文件
 

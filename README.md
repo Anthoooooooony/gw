@@ -39,12 +39,12 @@ go install github.com/gw-cli/gw@latest
 ```
 Claude Code Agent 想执行 mvn test
         │
-   PreToolUse Hook
+   PreToolUse Hook (stdin JSON: tool_input.command)
         │
-   gw rewrite "mvn test"
-        │  输出: gw exec mvn test
+   gw rewrite   （从 stdin 读入，stdout 输出 hookSpecificOutput JSON，
+                  updatedInput.command = "<gw-abs> exec mvn test"）
         │
-   gw exec mvn test
+   Claude Code 改走新命令 → gw exec mvn test
         │
    ┌────┴────────────────────────────────────────┐
    │  PARSE → ROUTE → EXECUTE → FILTER → PRINT  │
@@ -55,7 +55,7 @@ Claude Code Agent 想执行 mvn test
    905 行 → 46 行 (95% 压缩，真实多模块 Maven 项目)
 ```
 
-gw 通过 Claude Code 的 PreToolUse Hook 自动将 `mvn test` 改写为 `gw exec mvn test`。gw 在本地执行原始命令，对输出应用过滤器压缩噪音，然后将精简结果返回给 LLM。整个过程对 AI agent 透明。
+gw 通过 Claude Code 的 PreToolUse Hook 把 Bash 工具调用的 `command` 改写为 `gw exec <原命令>`。gw 在本地执行原始命令、过滤压缩输出、返回给 LLM，全程对 agent 透明。
 
 ## 快速开始
 
@@ -389,7 +389,7 @@ go test ./filter/java/  # 只跑 Java 过滤器测试
 |------|------|
 | `gw exec <cmd> [args...]` | 执行命令并过滤输出 |
 | `gw exec --dump-raw <path> <cmd> [args...]` | 执行命令并把原始输出写入指定文件（流式和批量路径都支持） |
-| `gw rewrite "<command>"` | Hook 改写接口（exit 0=改写成功, 1=不改写） |
+| `gw rewrite` | PreToolUse hook 入口（内部使用，从 stdin 读 Claude Code hook JSON） |
 | `gw init` | 安装 Claude Code PreToolUse Hook |
 | `gw init --dry-run` | 打印将要写入的变更但不落盘 |
 | `gw uninstall` | 移除 Hook |
