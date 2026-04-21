@@ -16,18 +16,8 @@ strip_ansi = true
 max_lines = 60
 
 # ---------------- pytest ----------------
-
-[pytest.run]
-match = "pytest"
-strip_ansi = true
-tail_lines = 150
-on_empty = "pytest: ok"
-
-[pytest.module]
-match = "python -m pytest"
-strip_ansi = true
-tail_lines = 150
-on_empty = "python -m pytest: ok"
+# pytest 已由 filter/pytest 专属 Go filter 接管（按 summary + FAILURES 锚点
+# 做语义压缩），此处无规则。
 
 # ---------------- venv ----------------
 
