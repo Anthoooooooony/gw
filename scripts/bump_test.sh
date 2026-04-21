@@ -54,9 +54,26 @@ assert_eq ""        "$(classify_commit 'docs(readme): 同步')" "docs → 忽略
 assert_eq ""        "$(classify_commit 'chore: 版本 bump')" "chore → 忽略"
 assert_eq ""        "$(classify_commit 'ci: runner 升级')" "ci → 忽略"
 assert_eq ""        "$(classify_commit 'test: 加 fixture')" "test → 忽略"
-# BREAKING CHANGE 覆盖——不管是什么前缀都归 Removed
+# BREAKING CHANGE 覆盖 (subject `!`)——不管是什么前缀都归 Removed
 assert_eq "Removed" "$(classify_commit 'feat!: BREAKING')" "feat! → Removed"
 assert_eq "Removed" "$(classify_commit 'fix(api)!: BREAKING')" "fix(scope)! → Removed"
+
+# BREAKING CHANGE footer 支持（#20）——前缀无 `!` 但 body 含 BREAKING CHANGE:
+breaking_body='feat: add new endpoint
+
+BREAKING CHANGE: drops /v1/legacy support'
+assert_eq "Removed" "$(classify_commit "$breaking_body")" "BREAKING CHANGE footer → Removed"
+
+breaking_hyphen='fix(api): some fix
+
+BREAKING-CHANGE: renamed response field'
+assert_eq "Removed" "$(classify_commit "$breaking_hyphen")" "BREAKING-CHANGE footer (连字符) → Removed"
+
+# footer 必须在行首，中途提到不算
+not_footer='feat: x
+
+看 log 会发现 BREAKING CHANGE: foo 出现在段中某处'
+assert_eq "Added" "$(classify_commit "$not_footer")" "body 行中段提到 BREAKING CHANGE 不算 footer"
 
 # 大小写宽容（F11a）
 assert_eq "Added"  "$(classify_commit 'Feat: xxx')"       "Feat → Added (case insensitive)"
@@ -67,11 +84,7 @@ assert_eq "Changed" "$(classify_commit 'Refactor: 重构')"  "Refactor → Chang
 assert_eq "Removed" "$(classify_commit 'FEAT!: BREAKING')" "FEAT! → Removed (case insensitive breaking)"
 
 # ========== build_changelog_section ==========
-input='feat(filter): 新 toml 规则
-fix(test): detached HEAD
-docs(readme): 同步
-refactor(cmd): 抽取'
-
+# 入参现在是 NUL 分隔的 commit 记录，每条可含 body（支持 BREAKING CHANGE footer）
 expected='## [v0.2.0] - 2026-04-17
 
 ### Added
@@ -83,15 +96,37 @@ expected='## [v0.2.0] - 2026-04-17
 ### Fixed
 - fix(test): detached HEAD'
 
-actual=$(build_changelog_section "v0.2.0" "2026-04-17" <<<"$input")
+actual=$(printf '%s\0' \
+  'feat(filter): 新 toml 规则' \
+  'fix(test): detached HEAD' \
+  'docs(readme): 同步' \
+  'refactor(cmd): 抽取' \
+  | build_changelog_section "v0.2.0" "2026-04-17")
 assert_eq "$expected" "$actual" "build_changelog_section 基础分类"
 
 # 空输入不输出空节
-actual=$(build_changelog_section "v0.3.0" "2026-05-01" <<<"docs: 只有文档改动")
+actual=$(printf '%s\0' 'docs: 只有文档改动' | build_changelog_section "v0.3.0" "2026-05-01")
 expected='## [v0.3.0] - 2026-05-01
 
 _无 notable 变更（仅文档/构建/测试）_'
 assert_eq "$expected" "$actual" "build_changelog_section 仅忽略类"
+
+# BREAKING CHANGE footer 集成到 changelog 节（#20）
+expected='## [v1.0.0] - 2026-05-01
+
+### Fixed
+- fix: minor patch
+
+### Removed
+- feat: add endpoint'
+
+actual=$(printf '%s\0' \
+  'feat: add endpoint
+
+BREAKING CHANGE: drops v1 support' \
+  'fix: minor patch' \
+  | build_changelog_section "v1.0.0" "2026-05-01")
+assert_eq "$expected" "$actual" "build_changelog_section BREAKING CHANGE footer 归入 Removed"
 
 # ========== integration: 幂等 tag 检查 (#15) ==========
 # 预先打一个 bump 算出的 tag，dry-run 也必须拒绝（exit != 0）
