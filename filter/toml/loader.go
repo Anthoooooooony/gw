@@ -48,9 +48,9 @@ type rawRule struct {
 	Disabled  bool   `toml:"disabled"`
 
 	// 已弃用字段：出现即打 warning，字段值丢弃不生效。
-	DeprecatedStripLines []string  `toml:"strip_lines"`
-	DeprecatedKeepLines  []string  `toml:"keep_lines"`
-	DeprecatedOnError    *rawRule  `toml:"on_error"`
+	DeprecatedStripLines []string `toml:"strip_lines"`
+	DeprecatedKeepLines  []string `toml:"keep_lines"`
+	DeprecatedOnError    *rawRule `toml:"on_error"`
 }
 
 // LoadAllRules 按三级加载顺序（builtin → user → project）收集全部 TOML 规则，
