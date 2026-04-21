@@ -29,11 +29,10 @@ type Rule struct {
 	OnEmpty    string   `toml:"on_empty"`    // 输出为空时的替代消息
 }
 
-// TomlFilter 基于 TOML 规则的声明式过滤器
+// TomlFilter 基于 TOML 规则的声明式过滤器（无状态：所有字段一次加载后只读）
 type TomlFilter struct {
-	Rules       []Rule
-	Loaded      []LoadedRule // 带来源的完整规则信息（可能为空，用于 filters list）
-	matchedRule string       // 最近一次匹配的规则名
+	Rules  []Rule
+	Loaded []LoadedRule // 带来源的完整规则信息（可能为空，用于 filters list）
 }
 
 // LoadEngine 使用三级加载器（builtin + user + project）构造过滤器实例。
@@ -50,16 +49,19 @@ func LoadEngine() *TomlFilter {
 // ansiRegex 匹配 ANSI 转义序列
 var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
 
-func (f *TomlFilter) Name() string { return "toml/" + f.matchedRule }
+func (f *TomlFilter) Name() string { return "toml" }
+
+// Subname 实现 filter.SubnameResolver：返回本次 (cmd, args) 匹配到的 rule.Match，未匹配返回空。
+// 纯函数：不依赖 / 不修改 filter 实例状态。
+func (f *TomlFilter) Subname(cmd string, args []string) string {
+	if rule := f.findRule(buildFullCmd(cmd, args)); rule != nil {
+		return rule.Match
+	}
+	return ""
+}
 
 func (f *TomlFilter) Match(cmd string, args []string) bool {
-	fullCmd := buildFullCmd(cmd, args)
-	rule := f.findRule(fullCmd)
-	if rule != nil {
-		f.matchedRule = rule.Match
-		return true
-	}
-	return false
+	return f.findRule(buildFullCmd(cmd, args)) != nil
 }
 
 func (f *TomlFilter) Apply(input filter.FilterInput) filter.FilterOutput {

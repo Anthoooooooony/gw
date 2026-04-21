@@ -156,6 +156,66 @@ func TestApplyOnError(t *testing.T) {
 	}
 }
 
+// TestSubname_PureFunction 验证 Subname 是纯函数，不依赖/不修改实例状态。
+// 交错调用不同命令时 Subname 各自返回正确子名，不被"上次调用"污染。
+func TestSubname_PureFunction(t *testing.T) {
+	f := makeFilter(
+		Rule{Match: "docker ps"},
+		Rule{Match: "docker images"},
+	)
+
+	// TomlFilter 必须实现 SubnameResolver（编译期 assert）
+	var _ filter.SubnameResolver = f
+
+	if got := f.Subname("docker", []string{"ps"}); got != "docker ps" {
+		t.Errorf("Subname(docker ps) = %q, 期望 docker ps", got)
+	}
+	if got := f.Subname("docker", []string{"images"}); got != "docker images" {
+		t.Errorf("Subname(docker images) = %q, 期望 docker images", got)
+	}
+	// 再次调 docker ps 仍应返回 docker ps（不被 images 污染）
+	if got := f.Subname("docker", []string{"ps"}); got != "docker ps" {
+		t.Errorf("重复调用后 Subname(docker ps) = %q, 期望 docker ps", got)
+	}
+	if got := f.Subname("docker", []string{"nope"}); got != "" {
+		t.Errorf("Subname(未匹配) = %q, 期望空", got)
+	}
+}
+
+// TestSubname_NoRaceUnderConcurrency 多 goroutine 并发 Match + Subname，
+// go test -race 必须通过。回归测试 #56 的 matchedRule race。
+func TestSubname_NoRaceUnderConcurrency(t *testing.T) {
+	f := makeFilter(
+		Rule{Match: "docker ps"},
+		Rule{Match: "docker images"},
+	)
+
+	const workers = 16
+	const itersPerWorker = 200
+	done := make(chan struct{}, workers)
+	for w := 0; w < workers; w++ {
+		go func(w int) {
+			defer func() { done <- struct{}{} }()
+			subcmds := []string{"ps", "images"}
+			for i := 0; i < itersPerWorker; i++ {
+				sub := subcmds[i%2]
+				if !f.Match("docker", []string{sub}) {
+					t.Errorf("w=%d i=%d: Match 应成功", w, i)
+					return
+				}
+				want := "docker " + sub
+				if got := f.Subname("docker", []string{sub}); got != want {
+					t.Errorf("w=%d i=%d: Subname = %q, want %q", w, i, got, want)
+					return
+				}
+			}
+		}(w)
+	}
+	for i := 0; i < workers; i++ {
+		<-done
+	}
+}
+
 func TestLoadBuiltinRules(t *testing.T) {
 	f, err := LoadBuiltinRules()
 	if err != nil {
