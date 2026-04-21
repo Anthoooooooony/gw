@@ -106,7 +106,7 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 
 - 写入 `~/.claude/settings.json` 的 hook 条目必须带 `_gw_managed: true` 标记，`gw uninstall` 按此标记清理
 - `gw init --dry-run` / `gw uninstall --dry-run` 只打印变更，不落盘
-- 写入前自动 backup 为 `settings.json.bak`，写入走临时文件 + rename 原子替换
+- 写入走同目录临时文件 + rename 原子替换，失败不留半截文件
 
 ## 关键文件
 

@@ -221,53 +221,36 @@ func TestApplyUninstall_NoGwManagedEntry(t *testing.T) {
 	}
 }
 
-// --- 文件层：读/写/备份/atomic rename ---
+// --- 文件层：atomic rename ---
 
-// writeSettingsAtomic：先写临时文件再 rename，目标文件存在时先备份为 .bak
-func TestWriteSettingsAtomic_CreatesBackup(t *testing.T) {
+// 首次 / 再次写入都不应在目标路径旁生成 .bak（移除了 backup 机制）
+func TestWriteSettingsAtomic_NoBackupFile(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "settings.json")
-	// 先写入初始文件
-	initial := map[string]interface{}{"v": "old"}
-	if err := writeSettingsAtomic(path, initial); err != nil {
-		t.Fatalf("写入初始失败: %v", err)
-	}
-	// 再写入新内容 → 应生成 .bak（内容为 old）
-	next := map[string]interface{}{"v": "new"}
-	if err := writeSettingsAtomic(path, next); err != nil {
-		t.Fatalf("写入新内容失败: %v", err)
-	}
-	got := readJSON(t, path)
-	if got["v"] != "new" {
-		t.Fatalf("新内容未生效: %v", got["v"])
-	}
-	bak := readJSON(t, path+".bak")
-	if bak["v"] != "old" {
-		t.Fatalf("备份内容不正确: %v", bak["v"])
-	}
-}
 
-// 首次写入（文件不存在）时不应因没有备份源而失败
-func TestWriteSettingsAtomic_FirstWriteNoBak(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "settings.json")
-	if err := writeSettingsAtomic(path, map[string]interface{}{"v": "1"}); err != nil {
+	if err := writeSettingsAtomic(path, map[string]interface{}{"v": "old"}); err != nil {
 		t.Fatalf("首次写入失败: %v", err)
 	}
-	if _, err := os.Stat(path + ".bak"); !os.IsNotExist(err) {
-		t.Fatal("首次写入不应生成 .bak")
+	if err := writeSettingsAtomic(path, map[string]interface{}{"v": "new"}); err != nil {
+		t.Fatalf("二次写入失败: %v", err)
 	}
-	// 首次写入的新文件应为 0600（保守：hook 命令可能敏感）
+	if got := readJSON(t, path); got["v"] != "new" {
+		t.Fatalf("新内容未生效: %v", got["v"])
+	}
+	if _, err := os.Stat(path + ".bak"); !os.IsNotExist(err) {
+		t.Fatal("不应生成 .bak 备份")
+	}
+	// 首次写入新文件应为 0600（保守：hook 命令可能敏感）
 	info, err := os.Stat(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if perm := info.Mode().Perm(); perm != 0o600 {
-		t.Errorf("首次写入 mode 期望 0600，得到 %o", perm)
+		t.Errorf("写入 mode 期望 0600，得到 %o", perm)
 	}
 }
 
-// TestWriteSettingsAtomic_PreservesMode 备份与新写入的文件应保留原 settings.json 的 mode。
+// 覆盖已有文件时沿用原 mode（避免 0600 被降级到 0644）
 func TestWriteSettingsAtomic_PreservesMode(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "settings.json")
@@ -278,27 +261,16 @@ func TestWriteSettingsAtomic_PreservesMode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	next := map[string]interface{}{"v": "new"}
-	if err := writeSettingsAtomic(path, next); err != nil {
+	if err := writeSettingsAtomic(path, map[string]interface{}{"v": "new"}); err != nil {
 		t.Fatalf("写入失败: %v", err)
 	}
 
-	// 新写入的 path 应保留 0600
 	info, err := os.Stat(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if perm := info.Mode().Perm(); perm != 0o600 {
 		t.Errorf("新文件 mode 期望 0600，得到 %o", perm)
-	}
-
-	// 备份文件也应保留 0600
-	bakInfo, err := os.Stat(path + ".bak")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if perm := bakInfo.Mode().Perm(); perm != 0o600 {
-		t.Errorf("备份文件 mode 期望 0600，得到 %o", perm)
 	}
 }
 
