@@ -128,8 +128,16 @@ type baselineEntry struct {
 
 const baselineFile = "testdata/scenario_baseline.json"
 
+// scenarioRun 是单次运行的完整结果（含原文 + 压缩文本），供 writeReport 渲染
+// 折叠式 before/after 对比；不入 baseline json（体积过大）。
+type scenarioRun struct {
+	entry      baselineEntry
+	raw        string
+	compressed string
+}
+
 func TestScenarioCompression(t *testing.T) {
-	current := make([]baselineEntry, 0, len(scenarios))
+	runs := make([]scenarioRun, 0, len(scenarios))
 	for _, sc := range scenarios {
 		sc := sc
 		t.Run(sc.name, func(t *testing.T) {
@@ -145,7 +153,7 @@ func TestScenarioCompression(t *testing.T) {
 				OutBytes:  len(out),
 				Ratio:     compressionRatio(len(raw), len(out)),
 			}
-			current = append(current, entry)
+			runs = append(runs, scenarioRun{entry: entry, raw: string(raw), compressed: out})
 
 			if *updateBaseline {
 				return // update 模式只收集，不断言
@@ -171,14 +179,18 @@ func TestScenarioCompression(t *testing.T) {
 	}
 
 	if *updateBaseline {
-		if err := writeBaseline(current); err != nil {
+		entries := make([]baselineEntry, len(runs))
+		for i, r := range runs {
+			entries[i] = r.entry
+		}
+		if err := writeBaseline(entries); err != nil {
 			t.Errorf("写 baseline 失败: %v", err)
 		} else {
 			t.Logf("baseline 已更新：%s", baselineFile)
 		}
 	}
 
-	if err := writeReport(current); err != nil {
+	if err := writeReport(runs); err != nil {
 		t.Errorf("写 scenario-compression-report.md 失败: %v", err)
 	}
 }
@@ -275,8 +287,12 @@ func writeBaseline(entries []baselineEntry) error {
 
 // ---- 压缩率 markdown 报告（给 CI $GITHUB_STEP_SUMMARY 贴）----
 
-func writeReport(current []baselineEntry) error {
-	sort.SliceStable(current, func(i, j int) bool { return current[i].Name < current[j].Name })
+// 单个 <details> 里原文/压缩块的截断上限。GitHub step summary 限 1 MiB，
+// 29 个 scenario 各 ~8 KB × 2 块预留到 ~450 KB，留足余量给表头等。
+const reportSnippetMaxBytes = 8 * 1024
+
+func writeReport(runs []scenarioRun) error {
+	sort.SliceStable(runs, func(i, j int) bool { return runs[i].entry.Name < runs[j].entry.Name })
 
 	baseMap := map[string]baselineEntry{}
 	if data, err := os.ReadFile(baselineFile); err == nil {
@@ -295,19 +311,60 @@ func writeReport(current []baselineEntry) error {
 	fmt.Fprintf(&buf, "%.1fpp 视为回归。\n\n", tolerancePP)
 	buf.WriteString("| 场景 | 模式 | 原始 | 压缩后 | 压缩率 | baseline | Δ (pp) |\n")
 	buf.WriteString("|------|------|------|--------|--------|----------|--------|\n")
-	for _, r := range current {
+	for _, r := range runs {
+		e := r.entry
 		baseCell := "—"
 		deltaCell := "—"
-		if b, ok := baseMap[r.Name]; ok {
+		if b, ok := baseMap[e.Name]; ok {
 			baseCell = fmt.Sprintf("%.1f%%", b.Ratio*100)
-			deltaCell = fmt.Sprintf("%+.2f", (r.Ratio-b.Ratio)*100)
+			deltaCell = fmt.Sprintf("%+.2f", (r.entry.Ratio-b.Ratio)*100)
 		}
 		fmt.Fprintf(&buf, "| %s | %s | %s | %s | %.1f%% | %s | %s |\n",
-			r.Name, r.Mode, humanBytes(r.OrigBytes), humanBytes(r.OutBytes),
-			r.Ratio*100, baseCell, deltaCell)
+			e.Name, e.Mode, humanBytes(e.OrigBytes), humanBytes(e.OutBytes),
+			e.Ratio*100, baseCell, deltaCell)
+	}
+
+	// 每 scenario 的原文/压缩后对比，折叠显示。
+	buf.WriteString("\n## 场景原文对比（点击展开）\n\n")
+	buf.WriteString(fmt.Sprintf("每块内容超过 %d B 时截断首尾保留；完整内容见 artifact 或 fixture 源文件。\n\n", reportSnippetMaxBytes))
+	for _, r := range runs {
+		renderScenarioDetail(&buf, r)
 	}
 
 	return os.WriteFile("scenario-compression-report.md", []byte(buf.String()), 0o644)
+}
+
+// renderScenarioDetail 输出一个场景的折叠块，含原文 + 压缩后两段嵌套 <details>。
+// 使用 HTML <details>/<summary>，这是 GFM + GitHub step summary 都支持的折叠语法。
+func renderScenarioDetail(buf *strings.Builder, r scenarioRun) {
+	e := r.entry
+	fmt.Fprintf(buf, "<details>\n<summary><b>%s</b> — %s, %.1f%% (%s → %s)</summary>\n\n",
+		htmlEscape(e.Name), e.Mode, e.Ratio*100, humanBytes(e.OrigBytes), humanBytes(e.OutBytes))
+
+	fmt.Fprintf(buf, "<details>\n<summary>原始 (%s)</summary>\n\n~~~text\n%s\n~~~\n\n</details>\n\n",
+		humanBytes(e.OrigBytes), truncateSnippet(r.raw))
+
+	fmt.Fprintf(buf, "<details>\n<summary>压缩后 (%s)</summary>\n\n~~~text\n%s\n~~~\n\n</details>\n\n",
+		humanBytes(e.OutBytes), truncateSnippet(r.compressed))
+
+	buf.WriteString("</details>\n\n")
+}
+
+// truncateSnippet 对超长内容截取头尾，避免一个 fixture 吃掉整个 summary 配额。
+// 用 "~~~" fence 是为了避免与构建输出里常见的 ``` 冲突（大部分 mvn/gradle/pytest
+// 不会打印 "~~~"）。
+func truncateSnippet(s string) string {
+	if len(s) <= reportSnippetMaxBytes {
+		return s
+	}
+	half := reportSnippetMaxBytes / 2
+	return s[:half] + fmt.Sprintf("\n\n... (中间 %s 被截断) ...\n\n", humanBytes(len(s)-reportSnippetMaxBytes)) + s[len(s)-half:]
+}
+
+// htmlEscape 仅处理 <summary> 里可能出现的字符，内容在 ~~~ 块内不需要转义。
+func htmlEscape(s string) string {
+	r := strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;")
+	return r.Replace(s)
 }
 
 func humanBytes(n int) string {
