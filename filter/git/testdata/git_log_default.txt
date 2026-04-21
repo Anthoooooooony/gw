@@ -1,36 +1,77 @@
-commit dcd2ec767b338e397425187b545f50670990bfe3
-Author: Alice Wang <alice@example.com>
-Date:   Thu Apr 16 08:55:09 2026 +0000
+commit 9273922ef6b548b8015b64d6407def209587d2f2
+Author: Anthooooony <20972206+Anthoooooooony@users.noreply.github.com>
+Date:   Tue Apr 21 11:05:08 2026 +0800
 
-    feat: add git status filter for gw proxy
+    test: 场景化压缩率回归 + CI summary (#36) (#37)
     
-    Implement StatusFilter that strips teaching hints from git status
-    output while preserving branch name and file listings.
+    - filter/scenario_test.go 表驱动跑 12 个 (cmd, args, fixture, mode) 场景
+    - baseline + tolerance 断言：|Δ ratio| ≤ 2pp，超出视为回归
+    - -args -update 重新生成 filter/testdata/scenario_baseline.json，
+      规则有意改进时 PR diff 显示 "77% → 85%" 的跃迁
+    - 每次跑 test 自动写 scenario-compression-report.md
+    - CI 把报告 cat 进 \$GITHUB_STEP_SUMMARY，Actions 页直接可见
+    - CONTRIBUTING 补 baseline 更新流程
     
-    This makes the output more compact and suitable for LLM context.
-    
-    Signed-off-by: Alice Wang <alice@example.com>
-    Co-authored-by: Bob Li <bob@example.com>
-    Signed-off-by: Charlie Zhang <charlie@example.com>
+    Closes #36
 
-commit cc98397aae84b66ec45ad4ab010cb464232e31d6
-Author: Bob Li <bob@example.com>
-Date:   Thu Apr 16 08:55:09 2026 +0000
+commit 990556c5f9d69384564564e113fa44f2c91d1ec0
+Author: Anthooooony <20972206+Anthoooooooony@users.noreply.github.com>
+Date:   Tue Apr 21 10:44:50 2026 +0800
 
-    refactor: extract filter interface and registry
+    fix(bump): 支持 BREAKING CHANGE footer 完整识别 (#20) (#34)
     
-    Move filter-related types into their own package for better
-    separation of concerns.
+    * fix(bump): 支持 BREAKING CHANGE footer 完整识别 (#20)
     
-    Signed-off-by: Bob Li <bob@example.com>
+    Conventional Commits 规范允许 `!` 前缀或 body footer 两种方式声明破坏性改动。
+    此前 classify_commit 仅识别前缀 `!`，body 里的 `BREAKING CHANGE:` / `BREAKING-CHANGE:`
+    footer 会被漏掉，导致破坏性改动在 CHANGELOG 里被错误归类为 feat/fix。
+    
+    - classify_commit 改为接收完整 commit message (subject + body)，用 regex 扫描
+      任一行头的 `BREAKING[ -]CHANGE:` footer；subject 前缀 `!` 逻辑保持不变
+    - build_changelog_section stdin 从换行分隔改为 NUL (\0) 分隔，因为 commit body 可跨多行
+    - main 用 git log --format='%s%n%b%x00' 生成 NUL 分隔记录，管道喂给 build_changelog_section
+    - bump_test.sh 加 3 条 classify_commit footer case + 1 条 build_changelog_section 集成 case，38 PASS 0 FAIL
+    
+    * fix(bump): 替换 $'\n' 避免 shellcheck SC1011 误判
 
-commit c1d1511819474b8a35c071097472c2ce897559d6
-Author: Alice Wang <alice@example.com>
-Date:   Thu Apr 16 08:55:09 2026 +0000
+commit 24c338b406282918ef2d6897fc5511fbb86b3506
+Author: Anthooooony <20972206+Anthoooooooony@users.noreply.github.com>
+Date:   Tue Apr 21 10:42:59 2026 +0800
 
-    init: scaffold gw CLI project
+    docs: 加 PR 模板 + CONTRIBUTING 维护规范 (#21) (#35)
     
-    Set up project structure with cobra, basic exec command,
-    and internal runner for local command execution.
+    - .github/pull_request_template.md: Summary / Why / Test plan 三节，注释
+      引导填写与 Closes #NN 关联
+    - CONTRIBUTING.md: 分支约定、Conventional Commits 表、CHANGELOG 手工
+      编辑时机、bump.sh release pre-checklist、测试矩阵
+
+commit 19dc0c6ec06b081b7f655ed8de267d58ff13f45e
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Tue Apr 21 10:42:55 2026 +0800
+
+    ci(deps): bump actions/checkout from 4 to 6 (#32)
     
-    Co-authored-by: Bob Li <bob@example.com>
+    Bumps [actions/checkout](https://github.com/actions/checkout) from 4 to 6.
+    - [Release notes](https://github.com/actions/checkout/releases)
+    - [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)
+    - [Commits](https://github.com/actions/checkout/compare/v4...v6)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: actions/checkout
+      dependency-version: '6'
+      dependency-type: direct:production
+      update-type: version-update:semver-major
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+    Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+commit 813e9de628daf7962a2601ffe55b67d6c4a33f36
+Author: Anthooooony <20972206+Anthoooooooony@users.noreply.github.com>
+Date:   Tue Apr 21 10:34:10 2026 +0800
+
+    chore: 移除 docs/ 文件夹（设计/计划文档） (#33)
+    
+    specs 与 plans 已完成使命（v0.1.0/v0.1.1 release 收尾）
+    CLAUDE.md 第 21 行剥离已不存在的 spec 链接引用

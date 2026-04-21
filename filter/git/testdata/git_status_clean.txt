@@ -1,2 +1,2 @@
-On branch master
+On branch feature/real-project-fixtures
 nothing to commit, working tree clean

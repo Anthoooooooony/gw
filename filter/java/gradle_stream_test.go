@@ -278,13 +278,13 @@ func TestGradleStreamFilter_RealFailureFixture(t *testing.T) {
 
 	mustContain := []string{
 		"BUILD FAILED",
-		"> Task :lib:test FAILED",
+		"> Task :test FAILED",
 		"FAILURE:",
 		"* What went wrong:",
-		"Execution failed for task ':lib:test'.",
+		"Execution failed for task ':test'.",
 		"actionable task",
 		"tests completed",
-		"401",
+		"AssertionFailedError",
 	}
 	for _, s := range mustContain {
 		if !strings.Contains(content, s) {

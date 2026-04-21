@@ -56,11 +56,6 @@ func TestGradleFilter_ApplySuccess(t *testing.T) {
 		t.Error("应该保留 actionable tasks 摘要")
 	}
 
-	// 应保留测试结果
-	if !strings.Contains(output.Content, "PASSED") {
-		t.Error("应该保留测试通过结果")
-	}
-
 	// 不应包含 Task 进度行
 	if strings.Contains(output.Content, "> Task :") {
 		t.Error("不应包含 Task 进度行")
@@ -115,14 +110,14 @@ func TestGradleFilter_ApplyOnError(t *testing.T) {
 		t.Error("应该保留 BUILD FAILED")
 	}
 
-	// 应保留 FAILED 任务行
-	if !strings.Contains(content, "> Task :lib:test FAILED") {
+	// 应保留 FAILED 任务行（petclinic 是单模块 gradle，没有 :lib: 前缀）
+	if !strings.Contains(content, "> Task :test FAILED") {
 		t.Error("应该保留 FAILED 任务行")
 	}
 
-	// 应保留测试失败详情（断言错误值）
-	if !strings.Contains(content, "401") {
-		t.Error("应该保留断言详情(401)")
+	// 应保留测试失败详情（断言错误的类名）
+	if !strings.Contains(content, "AssertionFailedError") {
+		t.Error("应该保留断言详情 AssertionFailedError")
 	}
 
 	// 应保留 FAILURE 行
@@ -161,11 +156,11 @@ func TestGradleFilter_ApplyOnError(t *testing.T) {
 		t.Error("不应包含报告文件链接")
 	}
 
-	// 不应包含普通 Task 进度行
-	if strings.Contains(content, "> Task :lib:compileJava\n") {
+	// 不应包含普通（未 FAILED）Task 进度行
+	if strings.Contains(content, "> Task :compileJava\n") {
 		t.Error("不应包含普通 Task 进度行")
 	}
-	if strings.Contains(content, "> Task :app:compileJava\n") {
+	if strings.Contains(content, "> Task :compileTestJava\n") {
 		t.Error("不应包含普通 Task 进度行")
 	}
 

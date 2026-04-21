@@ -66,13 +66,13 @@ func TestStatusFilter_Dirty(t *testing.T) {
 		Stdout: fixture,
 	})
 
-	// 应保留分支名
-	if !strings.Contains(output.Content, "feature/user-auth") {
+	// 应保留分支名（fixture 是 gw 仓库当时的 feature 分支）
+	if !strings.Contains(output.Content, "feature/real-project-fixtures") {
 		t.Error("应该保留分支名")
 	}
 
 	// 应保留文件名
-	for _, file := range []string{"src/api/routes.go", "src/auth/handler.go", "README.md", "src/auth/middleware.go"} {
+	for _, file := range []string{"demo-dirty.txt", "CHANGELOG.md", "README.md", "CHANGELOG.md.bak"} {
 		if !strings.Contains(output.Content, file) {
 			t.Errorf("应该保留文件名 %s", file)
 		}
