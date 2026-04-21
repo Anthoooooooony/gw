@@ -1,0 +1,20 @@
+Obtaining file:///private/tmp/gw-fixture-work2/attrs
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+WARNING: attrs 0.1.dev1 does not provide the extra 'tests'
+Building wheels for collected packages: attrs
+  Building editable for attrs (pyproject.toml): started
+  Building editable for attrs (pyproject.toml): finished with status 'done'
+  Created wheel for attrs: filename=attrs-0.1.dev1-py3-none-any.whl size=5271 sha256=c4f56085b0192c7b235f9ad4b70f6efaa246d1645272cb4413e0c5310d31353e
+  Stored in directory: /private/var/folders/rb/r8td5l8j4_gbwgxbr2ksz0v00000gn/T/pip-ephem-wheel-cache-punm66m7/wheels/a7/b1/89/551383b016951ccea64a8744d827b5999309d268b3ce17aa67
+Successfully built attrs
+Installing collected packages: attrs
+Successfully installed attrs-0.1.dev1

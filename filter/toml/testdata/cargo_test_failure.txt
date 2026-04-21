@@ -1,0 +1,52 @@
+   Compiling grep-matcher v0.1.8 (/private/tmp/gw-fixture-work2/ripgrep/crates/matcher)
+   Compiling regex-automata v0.4.13
+   Compiling regex v1.12.2
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.31s
+     Running unittests src/lib.rs (target/debug/deps/grep_matcher-31398c511f1b62e9)
+
+running 27 tests
+test interpolate::tests::find_cap_ref11 ... ok
+test interpolate::tests::find_cap_ref10 ... ok
+test interpolate::tests::find_cap_ref1 ... ok
+test interpolate::tests::find_cap_ref12 ... ok
+test interpolate::tests::find_cap_ref13 ... ok
+test interpolate::tests::find_cap_ref2 ... ok
+test interpolate::tests::find_cap_ref4 ... ok
+test interpolate::tests::find_cap_ref5 ... ok
+test interpolate::tests::find_cap_ref6 ... ok
+test interpolate::tests::find_cap_ref7 ... ok
+test interpolate::tests::find_cap_ref3 ... FAILED
+test interpolate::tests::find_cap_ref8 ... ok
+test interpolate::tests::find_cap_ref9 ... ok
+test interpolate::tests::interp1 ... ok
+test interpolate::tests::interp10 ... ok
+test interpolate::tests::interp11 ... ok
+test interpolate::tests::interp12 ... ok
+test interpolate::tests::interp13 ... ok
+test interpolate::tests::interp14 ... ok
+test interpolate::tests::interp2 ... ok
+test interpolate::tests::interp3 ... ok
+test interpolate::tests::interp4 ... ok
+test interpolate::tests::interp5 ... ok
+test interpolate::tests::interp6 ... ok
+test interpolate::tests::interp7 ... ok
+test interpolate::tests::interp8 ... ok
+test interpolate::tests::interp9 ... ok
+
+failures:
+
+---- interpolate::tests::find_cap_ref3 stdout ----
+
+thread 'interpolate::tests::find_cap_ref3' (5358571) panicked at crates/matcher/src/interpolate.rs:172:5:
+assertion `left == right` failed
+  left: Some(CaptureRef { cap: Number(999), end: 2 })
+ right: Some(CaptureRef { cap: Number(0), end: 2 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    interpolate::tests::find_cap_ref3
+
+test result: FAILED. 26 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p grep-matcher --lib`

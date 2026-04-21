@@ -1,0 +1,10 @@
+   Compiling grep-matcher v0.1.8 (/private/tmp/gw-fixture-work2/ripgrep/crates/matcher)
+error: this file contains an unclosed delimiter
+    --> crates/matcher/src/lib.rs:1380:19
+     |
+1380 | fn broken_syntax(
+     |                 -^
+     |                 |
+     |                 unclosed delimiter
+
+error: could not compile `grep-matcher` (lib) due to 1 previous error
