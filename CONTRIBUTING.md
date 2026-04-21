@@ -70,3 +70,18 @@ Pre-bump 清单（在 `master` 干净、已 `git pull` 的前提下）：
 | vulncheck | `govulncheck ./...` | 依赖升级后 |
 
 本地覆盖率：`go test -coverprofile=coverage.out -covermode=atomic ./... && go tool cover -html=coverage.out`。
+
+## 场景化压缩率 baseline
+
+`filter/scenario_test.go` 按命令场景（mvn compile/test/package × 成功/失败 × batch/stream、gradle、git）断言当前压缩率与入库的 `filter/testdata/scenario_baseline.json` 相比**不偏离超过 2 个百分点**。
+
+改了过滤规则后流程：
+
+1. 本地跑 `go test ./filter/ -run TestScenarioCompression -v`
+2. 失败时查看 `filter/scenario-compression-report.md` 的 `Δ (pp)` 列确认变化是否符合预期
+3. **有意改进**：`go test ./filter/ -run TestScenarioCompression -args -update` 重新生成 baseline，把 `scenario_baseline.json` 的 diff 一并提交，PR 里 reviewer 会看到 "77% → 85%" 的压缩率跃迁
+4. **无意退化**：回头查规则，不要随手 `-update`
+
+新增场景：fixture 放 `filter/*/testdata/`，在 `scenario_test.go::scenarios` 加一行，走 3 跑 `-update` 生成 baseline。
+
+CI 会把每次运行的压缩率表贴到 Actions 页面的 Summary，也作为 `scenario-compression-report` artifact 上传。

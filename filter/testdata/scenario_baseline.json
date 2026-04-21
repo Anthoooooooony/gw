@@ -1,0 +1,86 @@
+[
+  {
+    "name": "git log (default, batch)",
+    "mode": "batch",
+    "orig_bytes": 1186,
+    "out_bytes": 599,
+    "ratio": 0.49494097807757165
+  },
+  {
+    "name": "git status (clean, batch)",
+    "mode": "batch",
+    "orig_bytes": 55,
+    "out_bytes": 55,
+    "ratio": 0
+  },
+  {
+    "name": "git status (dirty, batch)",
+    "mode": "batch",
+    "orig_bytes": 465,
+    "out_bytes": 214,
+    "ratio": 0.5397849462365591
+  },
+  {
+    "name": "gradle build (success, batch)",
+    "mode": "batch",
+    "orig_bytes": 1513,
+    "out_bytes": 191,
+    "ratio": 0.8737607402511567
+  },
+  {
+    "name": "gradle build (success, stream)",
+    "mode": "stream",
+    "orig_bytes": 1513,
+    "out_bytes": 192,
+    "ratio": 0.8730998017184401
+  },
+  {
+    "name": "gradle test (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 2368,
+    "out_bytes": 1045,
+    "ratio": 0.5586993243243243
+  },
+  {
+    "name": "gradle test (failure, stream)",
+    "mode": "stream",
+    "orig_bytes": 2368,
+    "out_bytes": 1046,
+    "ratio": 0.558277027027027
+  },
+  {
+    "name": "mvn compile (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 911320,
+    "out_bytes": 3140,
+    "ratio": 0.9965544484922969
+  },
+  {
+    "name": "mvn test (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 93459,
+    "out_bytes": 2381,
+    "ratio": 0.9745235878834569
+  },
+  {
+    "name": "mvn test (failure, stream)",
+    "mode": "stream",
+    "orig_bytes": 93459,
+    "out_bytes": 2300,
+    "ratio": 0.9753902780898576
+  },
+  {
+    "name": "mvn test (success, batch)",
+    "mode": "batch",
+    "orig_bytes": 103766,
+    "out_bytes": 798,
+    "ratio": 0.9923096197212959
+  },
+  {
+    "name": "mvn test (success, stream)",
+    "mode": "stream",
+    "orig_bytes": 103766,
+    "out_bytes": 799,
+    "ratio": 0.9922999826532776
+  }
+]
