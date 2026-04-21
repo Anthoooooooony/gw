@@ -10,8 +10,8 @@
     "name": "cargo build (success, batch)",
     "mode": "batch",
     "orig_bytes": 2007,
-    "out_bytes": 72,
-    "ratio": 0.9641255605381166
+    "out_bytes": 2007,
+    "ratio": 0
   },
   {
     "name": "cargo test (failure, batch)",
@@ -24,8 +24,8 @@
     "name": "cargo test (success, batch)",
     "mode": "batch",
     "orig_bytes": 1468,
-    "out_bytes": 115,
-    "ratio": 0.9216621253405994
+    "out_bytes": 1468,
+    "ratio": 0
   },
   {
     "name": "docker images (batch)",
@@ -164,8 +164,8 @@
     "name": "npm install (batch)",
     "mode": "batch",
     "orig_bytes": 961,
-    "out_bytes": 870,
-    "ratio": 0.09469302809573366
+    "out_bytes": 961,
+    "ratio": 0
   },
   {
     "name": "npm test (failure, batch)",
@@ -178,15 +178,15 @@
     "name": "npm test (success, batch)",
     "mode": "batch",
     "orig_bytes": 4229,
-    "out_bytes": 3874,
-    "ratio": 0.08394419484511706
+    "out_bytes": 4229,
+    "ratio": 0
   },
   {
     "name": "pip install (batch)",
     "mode": "batch",
     "orig_bytes": 1320,
-    "out_bytes": 992,
-    "ratio": 0.24848484848484853
+    "out_bytes": 1320,
+    "ratio": 0
   },
   {
     "name": "pytest (failure, batch)",
@@ -199,7 +199,7 @@
     "name": "pytest (success, batch)",
     "mode": "batch",
     "orig_bytes": 8934,
-    "out_bytes": 8659,
-    "ratio": 0.030781284978732892
+    "out_bytes": 8934,
+    "ratio": 0
   }
 ]

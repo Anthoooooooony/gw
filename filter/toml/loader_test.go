@@ -1,6 +1,7 @@
 package toml
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -274,5 +275,66 @@ func TestLoadAllRules_SortedByID(t *testing.T) {
 		if rules[i-1].ID > rules[i].ID {
 			t.Errorf("未按 ID 排序: %s > %s", rules[i-1].ID, rules[i].ID)
 		}
+	}
+}
+
+// captureStderr 临时劫持 os.Stderr，执行 fn 后返回其间的写入。
+func captureStderr(t *testing.T, fn func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("pipe: %v", err)
+	}
+	orig := os.Stderr
+	os.Stderr = w
+	done := make(chan string, 1)
+	go func() {
+		b, _ := io.ReadAll(r)
+		done <- string(b)
+	}()
+	fn()
+	_ = w.Close()
+	os.Stderr = orig
+	return <-done
+}
+
+// TestLoadAllRules_DeprecatedFieldsWarn v2 DSL 不再支持 strip_lines/keep_lines/on_error；
+// 用户配置里出现时应打 warning 指引迁移，规则本身（无损字段部分）仍然加载。
+func TestLoadAllRules_DeprecatedFieldsWarn(t *testing.T) {
+	userDir := t.TempDir()
+	content := `[legacy.cmd]
+match = "legacy cmd"
+max_lines = 20
+strip_lines = ["^DEBUG"]
+keep_lines = ["ERROR"]
+
+  [legacy.cmd.on_error]
+  tail_lines = 50
+`
+	if err := os.WriteFile(filepath.Join(userDir, "legacy.toml"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	withTempDirs(t, userDir, "")
+
+	var rules []LoadedRule
+	stderr := captureStderr(t, func() { rules = LoadAllRules() })
+
+	// 无损字段仍然生效
+	got := findLoadedRule(rules, "legacy.cmd")
+	if got == nil {
+		t.Fatal("含弃用字段的规则仍应加载无损部分")
+	}
+	if got.Rule.MaxLines != 20 {
+		t.Errorf("MaxLines=%d, 期望 20", got.Rule.MaxLines)
+	}
+
+	// 三个字段都应出现在 warning 里
+	for _, field := range []string{"strip_lines", "keep_lines", "on_error"} {
+		if !strings.Contains(stderr, field) {
+			t.Errorf("warning 未提及已弃用字段 %q；stderr=%q", field, stderr)
+		}
+	}
+	if !strings.Contains(stderr, "legacy.cmd") {
+		t.Errorf("warning 未标注规则 ID；stderr=%q", stderr)
 	}
 }

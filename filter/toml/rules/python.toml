@@ -1,29 +1,14 @@
-# Python 生态过滤规则：覆盖 pip / pytest / venv 等。
-# 设计目标：strip 下载进度、缓存命中行，保留错误、最终摘要、traceback 与 FAIL/ERROR 行。
+# Python 生态过滤规则（v2 DSL：仅无损变换）。
+# 这里只做 strip_ansi + 长度截断。pytest 只保留 failures / pip 去下载进度
+# 等语义压缩需要写专属 Go filter（见 ROADMAP / ARCHITECTURE）。
 
 # ---------------- pip ----------------
 
 [pip.install]
 match = "pip install"
 strip_ansi = true
-strip_lines = [
-    # 已满足/缓存命中的中间状态
-    "^Requirement already satisfied",
-    "^\\s+Downloading ",
-    "^\\s+Using cached ",
-    "^\\s+Preparing metadata",
-    # wheel 构建噪音
-    "^\\s+Building wheel for ",
-    "^\\s+Created wheel for ",
-    "^\\s+Stored in directory",
-    # 下载进度条与 collected 提示
-    "^Collecting ",
-    # pip 自身升级提示
-    "^\\[notice\\] A new release of pip",
-    "^\\[notice\\] To update,",
-]
 max_lines = 60
-on_empty = "pip install: ok (无需变更)"
+on_empty = "pip install: ok"
 
 [pip.list]
 match = "pip list"
@@ -35,35 +20,12 @@ max_lines = 60
 [pytest.run]
 match = "pytest"
 strip_ansi = true
-strip_lines = [
-    # platform / rootdir / plugins 头部噪音
-    "^platform ",
-    "^cachedir: ",
-    "^rootdir: ",
-    "^configfile: ",
-    "^plugins: ",
-    "^collecting \\.\\.\\.",
-    # 进度行：test_foo.py ....F.s.    [ 80%]
-    "^[a-zA-Z0-9_/.-]+\\.py [.FsExX]+\\s+\\[\\s*[0-9]+%\\]$",
-    # warnings 摘要节标题（FAILED / ERROR / PASSED 仍保留，因不以下列开头）
-    "^=+ warnings summary =+",
-]
 tail_lines = 150
-on_empty = "pytest: ok (全部通过)"
+on_empty = "pytest: ok"
 
 [pytest.module]
 match = "python -m pytest"
 strip_ansi = true
-strip_lines = [
-    "^platform ",
-    "^cachedir: ",
-    "^rootdir: ",
-    "^configfile: ",
-    "^plugins: ",
-    "^collecting \\.\\.\\.",
-    "^[a-zA-Z0-9_/.-]+\\.py [.FsExX]+\\s+\\[\\s*[0-9]+%\\]$",
-    "^=+ warnings summary =+",
-]
 tail_lines = 150
 on_empty = "python -m pytest: ok"
 
