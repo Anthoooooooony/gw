@@ -93,6 +93,49 @@ expected='## [v0.3.0] - 2026-05-01
 _无 notable 变更（仅文档/构建/测试）_'
 assert_eq "$expected" "$actual" "build_changelog_section 仅忽略类"
 
+# ========== integration: 幂等 tag 检查 (#15) ==========
+# 预先打一个 bump 算出的 tag，dry-run 也必须拒绝（exit != 0）
+integration_idempotent_tag() {
+  local bump_script tmp_repo ec
+  bump_script="$(cd "$(dirname "$0")" && pwd)/bump.sh"
+
+  tmp_repo=$(mktemp -d)
+  trap 'rm -rf "$tmp_repo"' RETURN
+
+  (
+    cd "$tmp_repo"
+    git init -q -b master
+    git config user.email "t@gw.local"
+    git config user.name  "t"
+    echo "# t" > README.md
+    echo "# CHANGELOG" > CHANGELOG.md
+    git add README.md CHANGELOG.md
+    git commit -q -m "init"
+    git tag v0.1.0
+    git tag v0.1.1  # bump patch 会算出 v0.1.1，预先占位
+    # 空远端：用 local bare 模拟 origin
+    git init -q --bare "$tmp_repo/origin.git"
+    git remote add origin "$tmp_repo/origin.git"
+    git push -q origin master --tags
+  ) >/dev/null 2>&1
+
+  set +e
+  (
+    cd "$tmp_repo"
+    EDITOR=true bash "$bump_script" patch --dry-run
+  ) >/dev/null 2>&1
+  ec=$?
+  set -e
+
+  if [[ $ec -eq 0 ]]; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: 幂等 tag 检查——预期 exit != 0，实际 0"
+  else
+    PASS=$((PASS+1))
+  fi
+}
+integration_idempotent_tag
+
 echo "---"
 echo "PASS: $PASS, FAIL: $FAIL"
 [[ $FAIL -eq 0 ]]
