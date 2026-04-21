@@ -5,10 +5,8 @@
 ## [Unreleased]
 
 ### Added
-- feat(toml): `[section.name.on_error]` 子表独立配置失败场景规则，新 baseline npm/pytest/cargo test failure 压缩率 90% / 80% / 68% (#43)
 
 ### Changed
-- TomlFilter.ApplyOnError 不再硬编码 `return nil`；命中且配置了 on_error 则应用子规则，否则保持 pass-through (#43)
 
 ### Fixed
 
