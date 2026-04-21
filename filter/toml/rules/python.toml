@@ -51,6 +51,26 @@ strip_lines = [
 tail_lines = 150
 on_empty = "pytest: ok (全部通过)"
 
+    # 失败场景：剔除头部 & PASSED 进度行，保留 FAILURES 区块、assert 细节、短摘要
+    [pytest.run.on_error]
+    strip_ansi = true
+    strip_lines = [
+        "^platform ",
+        "^cachedir: ",
+        "^hypothesis profile ",
+        "^rootdir: ",
+        "^configfile: ",
+        "^plugins: ",
+        "^collecting \\.\\.\\.",
+        # pytest -v 单行结果：tests/foo.py::TestBar::test_baz PASSED [ 33%]
+        "^[a-zA-Z0-9_/.:\\[\\]\\-]+ PASSED\\s+\\[\\s*[0-9]+%\\]",
+        "^[a-zA-Z0-9_/.:\\[\\]\\-]+ SKIPPED",
+        # 简洁格式进度点
+        "^[a-zA-Z0-9_/.-]+\\.py [.FsExX]+\\s+\\[\\s*[0-9]+%\\]$",
+        "^=+ warnings summary =+",
+    ]
+    tail_lines = 150
+
 [pytest.module]
 match = "python -m pytest"
 strip_ansi = true
@@ -66,6 +86,23 @@ strip_lines = [
 ]
 tail_lines = 150
 on_empty = "python -m pytest: ok"
+
+    [pytest.module.on_error]
+    strip_ansi = true
+    strip_lines = [
+        "^platform ",
+        "^cachedir: ",
+        "^hypothesis profile ",
+        "^rootdir: ",
+        "^configfile: ",
+        "^plugins: ",
+        "^collecting \\.\\.\\.",
+        "^[a-zA-Z0-9_/.:\\[\\]\\-]+ PASSED\\s+\\[\\s*[0-9]+%\\]",
+        "^[a-zA-Z0-9_/.:\\[\\]\\-]+ SKIPPED",
+        "^[a-zA-Z0-9_/.-]+\\.py [.FsExX]+\\s+\\[\\s*[0-9]+%\\]$",
+        "^=+ warnings summary =+",
+    ]
+    tail_lines = 150
 
 # ---------------- venv ----------------
 

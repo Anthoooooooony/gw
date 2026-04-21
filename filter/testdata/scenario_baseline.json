@@ -3,8 +3,8 @@
     "name": "cargo build (failure, batch)",
     "mode": "batch",
     "orig_bytes": 374,
-    "out_bytes": 374,
-    "ratio": 0
+    "out_bytes": 286,
+    "ratio": 0.23529411764705888
   },
   {
     "name": "cargo build (success, batch)",
@@ -17,8 +17,8 @@
     "name": "cargo test (failure, batch)",
     "mode": "batch",
     "orig_bytes": 2093,
-    "out_bytes": 2093,
-    "ratio": 0
+    "out_bytes": 664,
+    "ratio": 0.6827520305781175
   },
   {
     "name": "cargo test (success, batch)",
@@ -171,8 +171,8 @@
     "name": "npm test (failure, batch)",
     "mode": "batch",
     "orig_bytes": 4390,
-    "out_bytes": 4390,
-    "ratio": 0
+    "out_bytes": 438,
+    "ratio": 0.9002277904328018
   },
   {
     "name": "npm test (success, batch)",
@@ -192,8 +192,8 @@
     "name": "pytest (failure, batch)",
     "mode": "batch",
     "orig_bytes": 10732,
-    "out_bytes": 10732,
-    "ratio": 0
+    "out_bytes": 2122,
+    "ratio": 0.802273574357063
   },
   {
     "name": "pytest (success, batch)",

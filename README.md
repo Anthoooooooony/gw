@@ -173,6 +173,22 @@ max_lines = 50
 
 TOML 引擎支持 7 阶段处理管道：`strip_ansi → strip_lines → keep_lines → head_lines → tail_lines → max_lines → on_empty`
 
+失败场景（exit != 0）独立配置 `[section.name.on_error]` 子表，字段集与父规则一致。缺省时 `ApplyOnError` 透传原始输出（保守默认）；配置后对 `Stdout+Stderr` 合并应用同一管道，典型压缩率 60–90%：
+
+```toml
+[pytest.run]
+match = "pytest"
+strip_lines = ["^platform ", "^collecting "]
+tail_lines = 150
+
+  [pytest.run.on_error]
+  strip_lines = [
+      "^platform ",
+      "^[a-zA-Z0-9_/.:\\[\\]\\-]+ PASSED\\s+\\[\\s*[0-9]+%\\]",  # 只保留 FAIL 行
+  ]
+  tail_lines = 150
+```
+
 内置 TOML 规则覆盖：`docker`（ps/images/logs）、`kubectl`、`node`（npm/yarn/pnpm install/test/build/ci）、`python`（pip/pytest/venv）、`rust`（cargo build/test/check/clippy）。
 
 ### 错误处理
