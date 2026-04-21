@@ -65,6 +65,7 @@ type scenario struct {
 //  1. 在 testdata/ 放 fixture 原始输出
 //  2. 这里加一行
 //  3. 跑 `go test ./filter/ -run TestScenarioCompression -args -update` 生成 baseline
+//
 // fixture 来源：
 //   - mvn_*.txt / gradle_*.txt：spring-projects/spring-petclinic 真实构建输出
 //     ·mvn_compile_failure.txt：人工注入 `private Undefined broken;` 触发 javac error
