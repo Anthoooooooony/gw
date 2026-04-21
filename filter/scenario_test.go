@@ -97,6 +97,24 @@ var scenarios = []scenario{
 	{"git status (clean, batch)", "git", []string{"status"}, "git/testdata/git_status_clean.txt", 0, modeBatch},
 	{"git status (dirty, batch)", "git", []string{"status"}, "git/testdata/git_status_dirty.txt", 0, modeBatch},
 	{"git log (default, batch)", "git", []string{"log"}, "git/testdata/git_log_default.txt", 0, modeBatch},
+
+	// ---- TOML 规则过滤器（真实项目 / 本机 state）----
+	// Docker：本机 Docker Desktop 状态
+	{"docker ps (batch)", "docker", []string{"ps"}, "toml/testdata/docker_ps.txt", 0, modeBatch},
+	{"docker images (batch)", "docker", []string{"images"}, "toml/testdata/docker_images.txt", 0, modeBatch},
+	// npm：chalk/chalk
+	{"npm install (batch)", "npm", []string{"install"}, "toml/testdata/npm_install.txt", 0, modeBatch},
+	{"npm test (success, batch)", "npm", []string{"test"}, "toml/testdata/npm_test_success.txt", 0, modeBatch},
+	{"npm test (failure, batch)", "npm", []string{"test"}, "toml/testdata/npm_test_failure.txt", 1, modeBatch},
+	// Python：python-attrs/attrs
+	{"pip install (batch)", "pip", []string{"install"}, "toml/testdata/pip_install.txt", 0, modeBatch},
+	{"pytest (success, batch)", "pytest", nil, "toml/testdata/pytest_success.txt", 0, modeBatch},
+	{"pytest (failure, batch)", "pytest", nil, "toml/testdata/pytest_failure.txt", 1, modeBatch},
+	// Rust：BurntSushi/ripgrep
+	{"cargo build (success, batch)", "cargo", []string{"build"}, "toml/testdata/cargo_build_success.txt", 0, modeBatch},
+	{"cargo build (failure, batch)", "cargo", []string{"build"}, "toml/testdata/cargo_build_failure.txt", 1, modeBatch},
+	{"cargo test (success, batch)", "cargo", []string{"test"}, "toml/testdata/cargo_test_success.txt", 0, modeBatch},
+	{"cargo test (failure, batch)", "cargo", []string{"test"}, "toml/testdata/cargo_test_failure.txt", 1, modeBatch},
 }
 
 // baselineEntry 是 scenario_baseline.json 里的单条记录。

@@ -1,5 +1,47 @@
 [
   {
+    "name": "cargo build (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 374,
+    "out_bytes": 374,
+    "ratio": 0
+  },
+  {
+    "name": "cargo build (success, batch)",
+    "mode": "batch",
+    "orig_bytes": 2007,
+    "out_bytes": 72,
+    "ratio": 0.9641255605381166
+  },
+  {
+    "name": "cargo test (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 2093,
+    "out_bytes": 2093,
+    "ratio": 0
+  },
+  {
+    "name": "cargo test (success, batch)",
+    "mode": "batch",
+    "orig_bytes": 1468,
+    "out_bytes": 115,
+    "ratio": 0.9216621253405994
+  },
+  {
+    "name": "docker images (batch)",
+    "mode": "batch",
+    "orig_bytes": 1226,
+    "out_bytes": 1226,
+    "ratio": 0
+  },
+  {
+    "name": "docker ps (batch)",
+    "mode": "batch",
+    "orig_bytes": 256,
+    "out_bytes": 256,
+    "ratio": 0
+  },
+  {
     "name": "git log (default, batch)",
     "mode": "batch",
     "orig_bytes": 3655,
@@ -117,5 +159,47 @@
     "orig_bytes": 56924,
     "out_bytes": 15236,
     "ratio": 0.7323448808938233
+  },
+  {
+    "name": "npm install (batch)",
+    "mode": "batch",
+    "orig_bytes": 961,
+    "out_bytes": 870,
+    "ratio": 0.09469302809573366
+  },
+  {
+    "name": "npm test (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 4390,
+    "out_bytes": 4390,
+    "ratio": 0
+  },
+  {
+    "name": "npm test (success, batch)",
+    "mode": "batch",
+    "orig_bytes": 4229,
+    "out_bytes": 3874,
+    "ratio": 0.08394419484511706
+  },
+  {
+    "name": "pip install (batch)",
+    "mode": "batch",
+    "orig_bytes": 1320,
+    "out_bytes": 992,
+    "ratio": 0.24848484848484853
+  },
+  {
+    "name": "pytest (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 10732,
+    "out_bytes": 10732,
+    "ratio": 0
+  },
+  {
+    "name": "pytest (success, batch)",
+    "mode": "batch",
+    "orig_bytes": 8934,
+    "out_bytes": 8659,
+    "ratio": 0.030781284978732892
   }
 ]

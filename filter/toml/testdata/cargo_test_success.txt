@@ -1,0 +1,37 @@
+   Compiling aho-corasick v1.1.3
+   Compiling regex-automata v0.4.13
+   Compiling bstr v1.12.0
+   Compiling grep-regex v0.1.14 (/private/tmp/gw-fixture-work2/ripgrep/crates/regex)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.23s
+     Running unittests src/lib.rs (target/debug/deps/grep_regex-0d8963c81012479a)
+
+running 26 tests
+test ban::tests::various ... ok
+test ast::tests::various ... ok
+test literal::tests::empty ... ok
+test literal::tests::case_insensitive_alternation ... ok
+test literal::tests::class ... ok
+test literal::tests::heuristics ... ok
+test literal::tests::concat ... ok
+test literal::tests::impossible ... ok
+test matcher::tests::candidate_lines ... ignored
+test literal::tests::crazy_repeats ... ok
+test literal::tests::anything ... ok
+test literal::tests::literal ... ok
+test literal::tests::optimize ... ok
+test literal::tests::alternation ... ok
+test non_matching::tests::dot ... ok
+test matcher::tests::line_terminator_error ... ok
+test literal::tests::look ... ok
+test non_matching::tests::anchor ... ok
+test literal::tests::various ... ok
+test non_matching::tests::literal ... ok
+test strip::tests::various ... ok
+test literal::tests::repetition ... ok
+test matcher::tests::case_smart ... ok
+test matcher::tests::word ... ok
+test matcher::tests::line_terminator_crlf ... ok
+test matcher::tests::line_terminator ... ok
+
+test result: ok. 25 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

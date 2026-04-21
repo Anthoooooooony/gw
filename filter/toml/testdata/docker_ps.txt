@@ -1,0 +1,2 @@
+CONTAINER ID   IMAGE           COMMAND                  CREATED          STATUS                     PORTS     NAMES
+3be4edfeccdb   postgres:18.3   "docker-entrypoint.s…"   21 minutes ago   Exited (0) 5 minutes ago             spring-petclinic-postgres-1

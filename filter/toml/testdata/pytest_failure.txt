@@ -1,0 +1,160 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.14.4, pytest-9.0.3, pluggy-1.6.0 -- /private/tmp/gw-fixture-work2/attrs/.venv/bin/python
+cachedir: .pytest_cache
+hypothesis profile 'patience' -> deadline=timedelta(milliseconds=400), suppress_health_check=(HealthCheck.too_slow,)
+rootdir: /private/tmp/gw-fixture-work2/attrs
+configfile: pyproject.toml
+plugins: hypothesis-6.152.1
+collecting ... collected 99 items
+
+tests/test_dunders.py::TestEqOrder::test_eq_ignore_attrib PASSED         [  1%]
+tests/test_dunders.py::TestEqOrder::test_equal[C0] FAILED                [  2%]
+tests/test_dunders.py::TestEqOrder::test_equal[C1] FAILED                [  3%]
+tests/test_dunders.py::TestEqOrder::test_equal_callable[EqCallableC] PASSED [  4%]
+tests/test_dunders.py::TestEqOrder::test_equal_callable[EqCallableCSlots] PASSED [  5%]
+tests/test_dunders.py::TestEqOrder::test_unequal_same_class[C0] PASSED   [  6%]
+tests/test_dunders.py::TestEqOrder::test_unequal_same_class[C1] PASSED   [  7%]
+tests/test_dunders.py::TestEqOrder::test_unequal_same_class_callable[EqCallableC] PASSED [  8%]
+tests/test_dunders.py::TestEqOrder::test_unequal_same_class_callable[EqCallableCSlots] PASSED [  9%]
+tests/test_dunders.py::TestEqOrder::test_unequal_different_class[C0] PASSED [ 10%]
+tests/test_dunders.py::TestEqOrder::test_unequal_different_class[C1] PASSED [ 11%]
+tests/test_dunders.py::TestEqOrder::test_unequal_different_class[EqCallableC] PASSED [ 12%]
+tests/test_dunders.py::TestEqOrder::test_unequal_different_class[EqCallableCSlots] PASSED [ 13%]
+tests/test_dunders.py::TestEqOrder::test_lt[C0] PASSED                   [ 14%]
+tests/test_dunders.py::TestEqOrder::test_lt[C1] PASSED                   [ 15%]
+tests/test_dunders.py::TestEqOrder::test_lt_callable[OrderCallableC] PASSED [ 16%]
+tests/test_dunders.py::TestEqOrder::test_lt_callable[OrderCallableCSlots] PASSED [ 17%]
+tests/test_dunders.py::TestEqOrder::test_lt_unordable[C0] PASSED         [ 18%]
+tests/test_dunders.py::TestEqOrder::test_lt_unordable[C1] PASSED         [ 19%]
+tests/test_dunders.py::TestEqOrder::test_lt_unordable[OrderCallableC] PASSED [ 20%]
+tests/test_dunders.py::TestEqOrder::test_lt_unordable[OrderCallableCSlots] PASSED [ 21%]
+tests/test_dunders.py::TestEqOrder::test_le[C0] PASSED                   [ 22%]
+tests/test_dunders.py::TestEqOrder::test_le[C1] PASSED                   [ 23%]
+tests/test_dunders.py::TestEqOrder::test_le_callable[OrderCallableC] PASSED [ 24%]
+tests/test_dunders.py::TestEqOrder::test_le_callable[OrderCallableCSlots] PASSED [ 25%]
+tests/test_dunders.py::TestEqOrder::test_le_unordable[C0] PASSED         [ 26%]
+tests/test_dunders.py::TestEqOrder::test_le_unordable[C1] PASSED         [ 27%]
+tests/test_dunders.py::TestEqOrder::test_le_unordable[OrderCallableC] PASSED [ 28%]
+tests/test_dunders.py::TestEqOrder::test_le_unordable[OrderCallableCSlots] PASSED [ 29%]
+tests/test_dunders.py::TestEqOrder::test_gt[C0] PASSED                   [ 30%]
+tests/test_dunders.py::TestEqOrder::test_gt[C1] PASSED                   [ 31%]
+tests/test_dunders.py::TestEqOrder::test_gt_callable[OrderCallableC] PASSED [ 32%]
+tests/test_dunders.py::TestEqOrder::test_gt_callable[OrderCallableCSlots] PASSED [ 33%]
+tests/test_dunders.py::TestEqOrder::test_gt_unordable[C0] PASSED         [ 34%]
+tests/test_dunders.py::TestEqOrder::test_gt_unordable[C1] PASSED         [ 35%]
+tests/test_dunders.py::TestEqOrder::test_gt_unordable[OrderCallableC] PASSED [ 36%]
+tests/test_dunders.py::TestEqOrder::test_gt_unordable[OrderCallableCSlots] PASSED [ 37%]
+tests/test_dunders.py::TestEqOrder::test_ge[C0] PASSED                   [ 38%]
+tests/test_dunders.py::TestEqOrder::test_ge[C1] PASSED                   [ 39%]
+tests/test_dunders.py::TestEqOrder::test_ge_callable[OrderCallableC] PASSED [ 40%]
+tests/test_dunders.py::TestEqOrder::test_ge_callable[OrderCallableCSlots] PASSED [ 41%]
+tests/test_dunders.py::TestEqOrder::test_ge_unordable[C0] PASSED         [ 42%]
+tests/test_dunders.py::TestEqOrder::test_ge_unordable[C1] PASSED         [ 43%]
+tests/test_dunders.py::TestEqOrder::test_ge_unordable[OrderCallableC] PASSED [ 44%]
+tests/test_dunders.py::TestEqOrder::test_ge_unordable[OrderCallableCSlots] PASSED [ 45%]
+tests/test_dunders.py::TestAddRepr::test_repr[True] PASSED               [ 46%]
+tests/test_dunders.py::TestAddRepr::test_repr[False] PASSED              [ 47%]
+tests/test_dunders.py::TestAddRepr::test_repr_works[C0] PASSED           [ 48%]
+tests/test_dunders.py::TestAddRepr::test_repr_works[C1] PASSED           [ 49%]
+tests/test_dunders.py::TestAddRepr::test_custom_repr_works PASSED        [ 50%]
+tests/test_dunders.py::TestAddRepr::test_infinite_recursion PASSED       [ 51%]
+tests/test_dunders.py::TestAddRepr::test_infinite_recursion_long_cycle PASSED [ 52%]
+tests/test_dunders.py::TestAddRepr::test_underscores PASSED              [ 53%]
+tests/test_dunders.py::TestAddRepr::test_repr_uninitialized_member PASSED [ 54%]
+tests/test_dunders.py::TestAddRepr::test_str PASSED                      [ 55%]
+tests/test_dunders.py::TestAddRepr::test_str_no_repr PASSED              [ 56%]
+tests/test_dunders.py::TestAddHash::test_enforces_type PASSED            [ 57%]
+tests/test_dunders.py::TestAddHash::test_enforce_no_cache_hash_without_hash PASSED [ 58%]
+tests/test_dunders.py::TestAddHash::test_enforce_no_cached_hash_without_init PASSED [ 59%]
+tests/test_dunders.py::TestAddHash::test_hash_attribute PASSED           [ 60%]
+tests/test_dunders.py::TestAddHash::test_hash_attribute_mirrors_eq PASSED [ 61%]
+tests/test_dunders.py::TestAddHash::test_hash_mirrors_eq PASSED          [ 62%]
+tests/test_dunders.py::TestAddHash::test_hash_works[C0] PASSED           [ 63%]
+tests/test_dunders.py::TestAddHash::test_hash_works[C1] PASSED           [ 64%]
+tests/test_dunders.py::TestAddHash::test_hash_works[C2] PASSED           [ 65%]
+tests/test_dunders.py::TestAddHash::test_hash_works[C3] PASSED           [ 66%]
+tests/test_dunders.py::TestAddHash::test_hash_works[C4] PASSED           [ 67%]
+tests/test_dunders.py::TestAddHash::test_hash_default PASSED             [ 68%]
+tests/test_dunders.py::TestAddHash::test_cache_hashing PASSED            [ 69%]
+tests/test_dunders.py::TestAddHash::test_copy_hash_cleared[True-True-True] PASSED [ 70%]
+tests/test_dunders.py::TestAddHash::test_copy_hash_cleared[True-True-False] PASSED [ 71%]
+tests/test_dunders.py::TestAddHash::test_copy_hash_cleared[True-False-True] PASSED [ 72%]
+tests/test_dunders.py::TestAddHash::test_copy_hash_cleared[True-False-False] PASSED [ 73%]
+tests/test_dunders.py::TestAddHash::test_copy_hash_cleared[False-True-True] PASSED [ 74%]
+tests/test_dunders.py::TestAddHash::test_copy_hash_cleared[False-True-False] PASSED [ 75%]
+tests/test_dunders.py::TestAddHash::test_copy_hash_cleared[False-False-True] PASSED [ 76%]
+tests/test_dunders.py::TestAddHash::test_copy_hash_cleared[False-False-False] PASSED [ 77%]
+tests/test_dunders.py::TestAddHash::test_cache_hash_serialization_hash_cleared[HashCacheSerializationTestUncached-False] PASSED [ 78%]
+tests/test_dunders.py::TestAddHash::test_cache_hash_serialization_hash_cleared[HashCacheSerializationTestCached-True] PASSED [ 79%]
+tests/test_dunders.py::TestAddHash::test_cache_hash_serialization_hash_cleared[HashCacheSerializationTestCachedSlots-True] PASSED [ 80%]
+tests/test_dunders.py::TestAddHash::test_copy_two_arg_reduce[True] PASSED [ 81%]
+tests/test_dunders.py::TestAddHash::test_copy_two_arg_reduce[False] PASSED [ 82%]
+tests/test_dunders.py::TestAddInit::test_init PASSED                     [ 83%]
+tests/test_dunders.py::TestAddInit::test_no_init_default PASSED          [ 84%]
+tests/test_dunders.py::TestAddInit::test_no_init_order PASSED            [ 85%]
+tests/test_dunders.py::TestAddInit::test_sets_attributes PASSED          [ 86%]
+tests/test_dunders.py::TestAddInit::test_default PASSED                  [ 87%]
+tests/test_dunders.py::TestAddInit::test_factory PASSED                  [ 88%]
+tests/test_dunders.py::TestAddInit::test_factory_takes_self PASSED       [ 89%]
+tests/test_dunders.py::TestAddInit::test_factory_hashable PASSED         [ 90%]
+tests/test_dunders.py::TestAddInit::test_validator PASSED                [ 91%]
+tests/test_dunders.py::TestAddInit::test_validator_slots PASSED          [ 92%]
+tests/test_dunders.py::TestAddInit::test_validator_others PASSED         [ 93%]
+tests/test_dunders.py::TestAddInit::test_underscores PASSED              [ 94%]
+tests/test_dunders.py::TestNothing::test_copy PASSED                     [ 95%]
+tests/test_dunders.py::TestNothing::test_deepcopy PASSED                 [ 96%]
+tests/test_dunders.py::TestNothing::test_eq PASSED                       [ 97%]
+tests/test_dunders.py::TestNothing::test_false PASSED                    [ 98%]
+tests/test_dunders.py::TestFilenames::test_filenames PASSED              [100%]
+
+=================================== FAILURES ===================================
+__________________________ TestEqOrder.test_equal[C0] __________________________
+
+self = <tests.test_dunders.TestEqOrder object at 0x107036210>
+cls = <class 'tests.utils.C'>
+
+    @pytest.mark.parametrize("cls", [EqC, EqCSlots])
+    def test_equal(self, cls):
+        """
+        Equal objects are detected as equal.
+        """
+>       assert cls(1, 2) == cls(99, 99)
+E       AssertionError: assert <tests.utils....t 0x10702b230> == <tests.utils....t 0x107034e10>
+E         
+E         Differing attributes:
+E         ['a', 'b']
+E         
+E         Drill down into differing attribute a:
+E           a: 1 != 99
+E         
+E         Drill down into differing attribute b:
+E           b: 2 != 99
+
+tests/test_dunders.py:141: AssertionError
+__________________________ TestEqOrder.test_equal[C1] __________________________
+
+self = <tests.test_dunders.TestEqOrder object at 0x107562060>
+cls = <class 'tests.utils.C'>
+
+    @pytest.mark.parametrize("cls", [EqC, EqCSlots])
+    def test_equal(self, cls):
+        """
+        Equal objects are detected as equal.
+        """
+>       assert cls(1, 2) == cls(99, 99)
+E       AssertionError: assert <tests.utils....t 0x1072ea7d0> == <tests.utils....t 0x1072eb950>
+E         
+E         Differing attributes:
+E         ['a', 'b']
+E         
+E         Drill down into differing attribute a:
+E           a: 1 != 99
+E         
+E         Drill down into differing attribute b:
+E           b: 2 != 99
+
+tests/test_dunders.py:141: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_dunders.py::TestEqOrder::test_equal[C0] - AssertionError: a...
+FAILED tests/test_dunders.py::TestEqOrder::test_equal[C1] - AssertionError: a...
+========================= 2 failed, 97 passed in 0.13s =========================
