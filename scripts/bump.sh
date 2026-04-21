@@ -44,10 +44,12 @@ classify_commit() {
   restore_nocasematch=$(shopt -p nocasematch)
   shopt -s nocasematch
 
-  local result=""
+  # nl 持有换行符，避免 shellcheck 把正则中的 $'\n' 里的 ' 误判为字符串终结 (SC1011)
+  local nl result=""
+  nl=$'\n'
   if [[ "$subject" =~ ^[a-z]+(\([^\)]+\))?!: ]]; then
     result="Removed"
-  elif [[ $'\n'"$msg" =~ $'\n'BREAKING[[:space:]-]CHANGE: ]]; then
+  elif [[ "${nl}${msg}" =~ ${nl}BREAKING[[:space:]-]CHANGE: ]]; then
     result="Removed"
   else
     case "$subject" in
