@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added
+- feat(claude): 新增 `gw claude [args...]` 子命令，启动本地 HTTP 代理注入 `ANTHROPIC_BASE_URL`，claude 退出时自动关闭。v0 纯透传（含 SSE），验证链路可用；后续 PR 加 DCP 风格 tool_result 去重。(#77)
 - feat(pytest): 专属 Go filter，按 summary + FAILURES 锚点做语义压缩，压缩率 99%（成功）/ 82%（失败），**语义无损**（FAILURES 区块原样保留）。
   parse 锚点缺失（输出被 `--tb=no` / `head` 截断等）时回退原文透传。
 
