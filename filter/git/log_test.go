@@ -40,30 +40,30 @@ func TestLogFilter_Apply(t *testing.T) {
 		Stdout: fixture,
 	})
 
-	// 应包含短哈希（7字符）
-	if !strings.Contains(output.Content, "dcd2ec7") {
-		t.Error("应该包含短哈希 dcd2ec7")
+	// 应包含短哈希（7 字符，fixture 取自 gw 仓库真实 log）
+	if !strings.Contains(output.Content, "9273922") {
+		t.Error("应该包含短哈希 9273922")
 	}
-	if !strings.Contains(output.Content, "cc98397") {
-		t.Error("应该包含短哈希 cc98397")
+	if !strings.Contains(output.Content, "990556c") {
+		t.Error("应该包含短哈希 990556c")
 	}
-	if !strings.Contains(output.Content, "c1d1511") {
-		t.Error("应该包含短哈希 c1d1511")
+	if !strings.Contains(output.Content, "24c338b") {
+		t.Error("应该包含短哈希 24c338b")
 	}
 
 	// 不应包含完整哈希
-	if strings.Contains(output.Content, "dcd2ec767b338e397425187b545f50670990bfe3") {
+	if strings.Contains(output.Content, "9273922ef6b548b8015b64d6407def209587d2f2") {
 		t.Error("不应该包含完整哈希")
 	}
 
 	// 应保留提交主题
-	if !strings.Contains(output.Content, "feat: add git status filter") {
+	if !strings.Contains(output.Content, "test: 场景化压缩率回归") {
 		t.Error("应该保留提交主题")
 	}
-	if !strings.Contains(output.Content, "refactor: extract filter interface") {
+	if !strings.Contains(output.Content, "fix(bump): 支持 BREAKING CHANGE footer") {
 		t.Error("应该保留提交主题")
 	}
-	if !strings.Contains(output.Content, "init: scaffold gw CLI project") {
+	if !strings.Contains(output.Content, "docs: 加 PR 模板") {
 		t.Error("应该保留提交主题")
 	}
 

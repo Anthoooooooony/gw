@@ -1,0 +1,118 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------< org.springframework.samples:spring-petclinic >------------
+[INFO] Building petclinic 4.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.2:enforce (enforce-java) @ spring-petclinic ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] 
+[INFO] --- spring-javaformat:0.0.47:validate (default) @ spring-petclinic ---
+[INFO] skipping format validate as per configuration.
+[INFO] 
+[INFO] --- checkstyle:3.6.0:check (nohttp-checkstyle-validation) @ spring-petclinic ---
+[INFO] You have 0 Checkstyle violations.
+[INFO] 
+[INFO] --- jacoco:0.8.14:prepare-agent (default) @ spring-petclinic ---
+[INFO] argLine set to -javaagent:/Users/user/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/private/tmp/gw-fixture-work/spring-petclinic/target/jacoco.exec
+[INFO] 
+[INFO] --- git-commit-id:9.0.2:revision (default) @ spring-petclinic ---
+[INFO] dotGitDirectory '/private/tmp/gw-fixture-work/spring-petclinic/.git'
+[INFO] Collected git.build.user.name with value Anthooooony
+[INFO] Collected git.build.user.email with value anthooooony@icloud.com
+[INFO] Collected git.branch with value main
+[INFO] Collected git.commit.id.describe with value c7ee170-dirty
+[INFO] Collected git.commit.id.describe-short with value c7ee170-dirty
+[INFO] Collected git.commit.id with value c7ee170434ec3e369fdc9201290ba2ea4c92b557
+[INFO] Collected git.commit.id.abbrev with value c7ee170
+[INFO] Collected git.dirty with value true
+[INFO] Collected git.commit.user.name with value Dave Syer
+[INFO] Collected git.commit.user.email with value david.syer@broadcom.com
+[INFO] Collected git.commit.message.full with value Be more careful with allowed fields in binders
+[INFO] Collected git.commit.message.short with value Be more careful with allowed fields in binders
+[INFO] Collected git.commit.time with value 2026-04-20T20:59:39+08:00
+[INFO] Collected git.commit.author.time with value 2026-04-20T20:59:39+08:00
+[INFO] Collected git.commit.committer.time with value 2026-04-20T20:59:39+08:00
+[INFO] Collected git.remote.origin.url with value https://github.com/spring-projects/spring-petclinic.git
+[INFO] Collected git.tags with value 
+[INFO] Collected git.tag with value 
+[INFO] Collected git.closest.tag.name with value 
+[INFO] Collected git.closest.tag.commit.count with value 
+[INFO] Collected git.total.commit.count with value 1
+[INFO] Collected git.local.branch.ahead with value 0
+[INFO] Collected git.local.branch.behind with value 0
+[INFO] Collected git.build.time with value 2024-11-28T22:37:52+08:00
+[INFO] Collected git.build.version with value 4.0.0-SNAPSHOT
+[INFO] Collected git.build.host with value Athena.local
+[INFO] including property 'git.tags' in results
+[INFO] including property 'git.build.version' in results
+[INFO] including property 'git.branch' in results
+[INFO] including property 'git.build.host' in results
+[INFO] including property 'git.commit.id' in results
+[INFO] including property 'git.commit.user.email' in results
+[INFO] including property 'git.local.branch.behind' in results
+[INFO] including property 'git.commit.author.time' in results
+[INFO] including property 'git.build.user.name' in results
+[INFO] including property 'git.dirty' in results
+[INFO] including property 'git.closest.tag.commit.count' in results
+[INFO] including property 'git.commit.user.name' in results
+[INFO] including property 'git.commit.id.abbrev' in results
+[INFO] including property 'git.commit.id.describe-short' in results
+[INFO] including property 'git.total.commit.count' in results
+[INFO] including property 'git.commit.id.describe' in results
+[INFO] including property 'git.build.user.email' in results
+[INFO] including property 'git.commit.message.short' in results
+[INFO] including property 'git.commit.committer.time' in results
+[INFO] including property 'git.tag' in results
+[INFO] including property 'git.closest.tag.name' in results
+[INFO] including property 'git.local.branch.ahead' in results
+[INFO] including property 'git.commit.time' in results
+[INFO] including property 'git.build.time' in results
+[INFO] including property 'git.commit.message.full' in results
+[INFO] including property 'git.remote.origin.url' in results
+[INFO] Reading existing properties file [/private/tmp/gw-fixture-work/spring-petclinic/target/classes/git.properties] (for project petclinic)...
+[INFO] Writing properties file [/private/tmp/gw-fixture-work/spring-petclinic/target/classes/git.properties] (for project petclinic)...
+[INFO] 
+[INFO] --- spring-boot:4.0.3:build-info (default) @ spring-petclinic ---
+[INFO] 
+[INFO] --- cyclonedx:2.9.1:makeAggregateBom (default) @ spring-petclinic ---
+[INFO] CycloneDX: Resolving Dependencies
+[INFO] CycloneDX: Creating BOM version 1.6 with 108 component(s)
+[INFO] CycloneDX: Writing and validating BOM (JSON): /private/tmp/gw-fixture-work/spring-petclinic/target/classes/META-INF/sbom/application.cdx.json
+[WARNING] Unknown keyword meta:enum - you should define your own Meta Schema. If the keyword is irrelevant for validation, just use a NonValidationKeyword or if it should generate annotations AnnotationKeyword
+[WARNING] Unknown keyword deprecated - you should define your own Meta Schema. If the keyword is irrelevant for validation, just use a NonValidationKeyword or if it should generate annotations AnnotationKeyword
+[INFO]            attaching as spring-petclinic-4.0.0-SNAPSHOT-cyclonedx.json
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ spring-petclinic ---
+[INFO] Copying 3 resources from src/main/resources to target/classes
+[INFO] Copying 45 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ spring-petclinic ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 30 source files with javac [debug parameters release 17] to target/classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /private/tmp/gw-fixture-work/spring-petclinic/src/main/java/org/springframework/samples/petclinic/owner/Owner.java:[50,17] cannot find symbol
+  symbol:   class Undefined
+  location: class org.springframework.samples.petclinic.owner.Owner
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.731 s
+[INFO] Finished at: 2026-04-21T11:16:25+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.1:compile (default-compile) on project spring-petclinic: Compilation failure
+[ERROR] /private/tmp/gw-fixture-work/spring-petclinic/src/main/java/org/springframework/samples/petclinic/owner/Owner.java:[50,17] cannot find symbol
+[ERROR]   symbol:   class Undefined
+[ERROR]   location: class org.springframework.samples.petclinic.owner.Owner
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
