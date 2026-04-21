@@ -136,7 +136,8 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 | `internal/timeout.go` | `GW_CMD_TIMEOUT` 解析 + 超时提示 |
 | `internal/procgroup_*.go` | 进程组 SIGTERM/SIGKILL（跨平台拆分） |
 | `track/db.go` | SQLite 存储 + raw_output 列 migration |
-| `filter/all/all.go` | blank import 聚合过滤器包 |
+| `filter/all/all.go` | blank import 聚合过滤器包；专属 filter 在 toml 之前注册（第一匹配胜出） |
+| `filter/pytest/pytest.go` | pytest / python -m pytest 语义过滤器（summary + FAILURES 锚点） |
 
 ## 代码规范
 
