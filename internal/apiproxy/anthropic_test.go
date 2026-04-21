@@ -35,7 +35,7 @@ func TestPassthrough_Body(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Start: %v", err)
 	}
-	defer srv.Shutdown(2 * time.Second)
+	defer func() { _ = srv.Shutdown(2 * time.Second) }()
 
 	reqBody := `{"model":"claude-sonnet-4","max_tokens":1024,"messages":[{"role":"user","content":"hi"}]}`
 	req, _ := http.NewRequest("POST", srv.URL()+"/v1/messages", strings.NewReader(reqBody))
@@ -48,7 +48,7 @@ func TestPassthrough_Body(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Do: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		t.Fatalf("status = %d, want 200", resp.StatusCode)
@@ -101,13 +101,13 @@ func TestPassthrough_SSE(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Start: %v", err)
 	}
-	defer srv.Shutdown(2 * time.Second)
+	defer func() { _ = srv.Shutdown(2 * time.Second) }()
 
 	resp, err := http.Post(srv.URL()+"/v1/messages", "application/json", strings.NewReader(`{}`))
 	if err != nil {
 		t.Fatalf("Post: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if got := resp.Header.Get("Content-Type"); !strings.Contains(got, "text/event-stream") {
 		t.Errorf("Content-Type = %q, want text/event-stream", got)
@@ -129,13 +129,13 @@ func TestUpstreamError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Start: %v", err)
 	}
-	defer srv.Shutdown(2 * time.Second)
+	defer func() { _ = srv.Shutdown(2 * time.Second) }()
 
 	resp, err := http.Post(srv.URL()+"/v1/messages", "application/json", strings.NewReader(`{}`))
 	if err != nil {
 		t.Fatalf("Post: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusBadGateway {
 		t.Errorf("status = %d, want 502", resp.StatusCode)
@@ -148,13 +148,13 @@ func TestHealth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Start: %v", err)
 	}
-	defer srv.Shutdown(2 * time.Second)
+	defer func() { _ = srv.Shutdown(2 * time.Second) }()
 
 	resp, err := http.Get(srv.URL() + "/_gw/health")
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != 200 {
 		t.Errorf("health status = %d", resp.StatusCode)
 	}
