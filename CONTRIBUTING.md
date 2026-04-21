@@ -1,0 +1,72 @@
+# Contributing
+
+面向维护者的操作约定。日常开发规范见 [`CLAUDE.md`](./CLAUDE.md)（Claude Code 也读这份）。
+
+## 分支与 PR
+
+- **GitHub Flow 单干**：`master` 唯一长期分支，所有改动走 `feature/*` / `fix/*` / `chore/*` / `docs/*` → PR → squash merge。
+- 仅 **`scripts/bump.sh` 触发的 release commit** 允许直推 `master`。
+- 短期分支合入后立即删除（`gh pr merge --delete-branch`）。
+- PR 必须过 7 层 CI gate：`test (ubuntu/macos)` / `build` / `shellcheck` / `actionlint` / `golangci-lint` / `govulncheck` / `bash unit tests`。
+
+## Commit message
+
+强制 [Conventional Commits](https://www.conventionalcommits.org/)：
+
+| 前缀 | 对应 CHANGELOG 节 |
+|------|-------------------|
+| `feat:` / `feat(scope):` | Added |
+| `fix:` / `fix(scope):` | Fixed |
+| `refactor:` / `perf:` | Changed |
+| `remove:` | Removed |
+| `docs:` / `chore:` / `ci:` / `test:` | 不入 CHANGELOG |
+
+**破坏性改动**两种写法都认（`scripts/bump.sh::classify_commit`）：
+
+1. 主标题带 `!`：`feat(api)!: drop /v1/legacy`
+2. body footer：
+   ```
+   feat: redesign filter API
+
+   BREAKING CHANGE: FilterFunc signature changed
+   ```
+
+两者都归入 `Removed` 节。
+
+## CHANGELOG 手工编辑时机
+
+`scripts/bump.sh` 从 commit subject 自动生成 CHANGELOG 节，**大部分情况够用**。下面几种场景**应当手工编辑 `[Unreleased]` 节**后再 bump：
+
+- Commit subject 不足以说明改动（内部重构影响到用户行为）
+- 多个 commit 合并为单一 user-facing feature，需要合并条目
+- 安全/破坏性改动需要迁移指南链接
+- 手工调整条目顺序以凸显重点
+
+手工编辑只改 `[Unreleased]` 节，bump.sh 会把它原样保留并在下方插入新版本节。
+
+## Release 流程
+
+Pre-bump 清单（在 `master` 干净、已 `git pull` 的前提下）：
+
+1. `bash scripts/bump_test.sh` 本地全绿
+2. `./scripts/bump.sh <kind> --dry-run` 预览 CHANGELOG 节
+3. 如需补充，编辑 `CHANGELOG.md` 的 `[Unreleased]` 节并提交（走 PR 流程）
+4. 正式 bump：`./scripts/bump.sh <patch|minor|major>`
+   - 运行 `EDITOR` 打开 CHANGELOG 做最终 review
+   - 编辑器关闭后 commit + tag + push 触发 `release.yml`
+
+`bump.sh` 已内置的安全护栏（勿重复造）：
+- 必须在 `master` 分支 + 干净工作区 + 与 `origin/master` 同步
+- 新 tag 不得已存在于本地或远端（幂等性）
+- `--dry-run` 可预览不落盘
+
+## 测试
+
+| 层 | 命令 | 触发条件 |
+|----|------|---------|
+| Go 单测 | `go test -race ./...` | 所有 Go 改动 |
+| bash 单测 | `bash scripts/bump_test.sh` | `scripts/` 改动 |
+| lint | `golangci-lint run` / `shellcheck scripts/*.sh` | 本地选测 |
+| vulncheck | `govulncheck ./...` | 依赖升级后 |
+
+本地覆盖率：`go test -coverprofile=coverage.out -covermode=atomic ./... && go tool cover -html=coverage.out`。
