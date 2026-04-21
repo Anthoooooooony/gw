@@ -98,6 +98,10 @@ go build -o gw .
 | `GW_CMD_TIMEOUT` | `10m` | 命令执行超时；`0` / `off` / `none` / `disable` / `disabled` 禁用；负值（`-1s` 等）等同禁用 |
 | `GW_STORE_RAW` | `0` | 设 `1` 时把原始输出存入 DB，供 `gw inspect --raw` 回溯 |
 | `GW_DB_PATH` | `~/.gw/tracking.db` | 覆盖 tracking DB 路径；HOME 只读时自动降级到 `$TMPDIR/gw-tracking.db` |
+| `GW_APIPROXY_MAX_BODY` | `33554432`（32 MiB） | `gw claude` 代理接受的最大 POST body 字节数，超限回 413 |
+| `GW_APIPROXY_HEADER_TIMEOUT` | `60s` | `gw claude` 代理等上游响应头的最长时间（不影响 SSE 正文） |
+| `GW_APIPROXY_SHUTDOWN_TIMEOUT` | `5s` | `gw claude` 代理 shutdown 的 grace period |
+| `GW_APIPROXY_UPSTREAM` | `https://api.anthropic.com` | `gw claude` 代理的上游 URL（测试用逃生舱） |
 
 ## 设计
 

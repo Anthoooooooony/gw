@@ -1,12 +1,13 @@
 package cmd
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/gw-cli/gw/internal/apiproxy"
 	"github.com/spf13/cobra"
@@ -54,9 +55,16 @@ func runClaude(cmd *cobra.Command, args []string) {
 	// 4. 运行 claude，等待其退出
 	code := runChild(args, env, logger)
 
-	// 5. 关闭代理（优雅，最多等 2 秒）
-	if err := srv.Shutdown(2 * time.Second); err != nil {
-		logger.Warnf("apiproxy shutdown: %v", err)
+	// 5. 关闭代理（优雅）；超时可通过 GW_APIPROXY_SHUTDOWN_TIMEOUT 覆盖，默认 5s。
+	// deadline 触发时是"还有连接没清理完"，实际上 claude 已退，这类连接多半是
+	// 上游端还在收尾，属于正常现象，warn 一声即可。
+	timeout := apiproxy.ShutdownTimeout()
+	if err := srv.Shutdown(timeout); err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			logger.Warnf("apiproxy shutdown deadline %s 到达，强制终止残余连接", timeout)
+		} else {
+			logger.Warnf("apiproxy shutdown: %v", err)
+		}
 	}
 
 	os.Exit(code)

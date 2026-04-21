@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added
+- feat(claude): 代理 hardening——请求 body 上限（默认 32MiB，`GW_APIPROXY_MAX_BODY` 可调）、上游响应头超时（默认 60s，`GW_APIPROXY_HEADER_TIMEOUT` 可调，不影响 SSE 长流）、shutdown grace 默认 5s（`GW_APIPROXY_SHUTDOWN_TIMEOUT` 可调）。超限请求早 413，上游卡死早 502。(#77)
 - feat(claude): `gw claude` 代理接入 DCP 风格 tool_result 去重——同签名 tool_use 的历史 tool_result 内容替换为占位符，只保留最后一次，降低 Anthropic 上下文 token 消耗。失败降级原样透传。(#77)
 - feat(claude): 新增 `gw claude [args...]` 子命令，启动本地 HTTP 代理注入 `ANTHROPIC_BASE_URL`，claude 退出时自动关闭。v0 纯透传（含 SSE），验证链路可用；后续 PR 加 DCP 风格 tool_result 去重。(#77)
 - feat(pytest): 专属 Go filter，按 summary + FAILURES 锚点做语义压缩，压缩率 99%（成功）/ 82%（失败），**语义无损**（FAILURES 区块原样保留）。
