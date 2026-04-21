@@ -276,4 +276,3 @@ func TestLoadAllRules_SortedByID(t *testing.T) {
 		}
 	}
 }
-
