@@ -11,7 +11,7 @@ import (
 var uninstallCmd = &cobra.Command{
 	Use:   "uninstall",
 	Short: "卸载 Claude Code hook",
-	Long:  "从 ~/.claude/settings.json 中移除所有带 _gw_managed 标记的 hook 条目。",
+	Long:  "从 ~/.claude/settings.json 的 hooks.PreToolUse 中移除所有带 _gw_managed 标记的 matcher。",
 	RunE:  runUninstallCmd,
 }
 

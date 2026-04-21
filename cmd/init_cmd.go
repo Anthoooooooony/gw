@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -13,11 +14,10 @@ import (
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "安装 Claude Code hook",
-	Long:  "在 ~/.claude/settings.json 中添加 gw rewrite hook，让 Claude Code 的 Bash 命令自动经过 gw 代理。",
+	Long:  "在 ~/.claude/settings.json 的 hooks.PreToolUse 中安装 gw rewrite hook，让 Claude Code 的 Bash 工具调用自动经过 gw 代理。",
 	RunE:  runInitCmd,
 }
 
-// initDryRun 控制 `gw init --dry-run` 行为：仅打印将要写入的 settings，不落盘。
 var initDryRun bool
 
 func init() {
@@ -26,27 +26,25 @@ func init() {
 }
 
 const (
-	// gwHookCommand 是 Claude Code PreToolUse hook 调用 gw 的命令模板。
-	gwHookCommand = `gw rewrite "$command"`
-	// gwManagedKey 用来标识某条 hook 条目由 gw 创建、受 gw 管理。
-	// uninstall 时按此字段匹配，避免误删用户手动添加的其他 hook。
+	// gwManagedKey 标识某条 matcher 由 gw 创建、受 gw 管理。
+	// uninstall 时按此字段匹配，避免误删用户的其他 hook。
 	gwManagedKey = "_gw_managed"
+	// bashMatcher 匹配 Claude Code 的 Bash 工具（精确匹配、大小写敏感）。
+	bashMatcher = "Bash"
+	// preToolUseEvent 是 Claude Code hook 事件名，对 Bash 工具调用前触发。
+	preToolUseEvent = "PreToolUse"
 )
 
-// init 命令的三态结果。
 const (
-	initStatusInstalled = "installed" // 成功新增 gw hook
-	initStatusAlready   = "already"   // 已存在 gw hook，幂等
+	initStatusInstalled = "installed"
+	initStatusAlready   = "already"
 )
 
-// uninstall 命令的三态结果。
 const (
-	uninstallStatusRemoved  = "removed"   // 移除了至少一个 gw hook
-	uninstallStatusNotFound = "not-found" // 没有 gw hook 可移除
+	uninstallStatusRemoved  = "removed"
+	uninstallStatusNotFound = "not-found"
 )
 
-// getSettingsPath 返回 Claude Code settings.json 的默认路径。
-// 仅用于命令入口；测试通过 runInitWith/runUninstallWith 注入 path，不经此函数。
 func getSettingsPath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -56,7 +54,19 @@ func getSettingsPath() string {
 	return filepath.Join(home, ".claude", "settings.json")
 }
 
-// readSettings 读取 settings.json 为 map。文件不存在时返回空 map。
+// shellQuote 把字符串包成单引号，并转义内部单引号。
+// Claude Code hook 的 command 字段被 bash -c 执行，路径必须做 shell 安全包装。
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// gwHookCommand 根据 gw 可执行文件的绝对路径，构造 hooks.PreToolUse 里写的 command 字段。
+// Claude Code hook 执行环境 PATH 受限（macOS Launch Agent 默认只有 /usr/bin:/bin），
+// 必须写绝对路径；路径中特殊字符通过 shellQuote 保护。
+func gwHookCommand(gwPath string) string {
+	return shellQuote(gwPath) + " rewrite"
+}
+
 func readSettings(path string) (map[string]interface{}, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -75,7 +85,6 @@ func readSettings(path string) (map[string]interface{}, error) {
 	return settings, nil
 }
 
-// marshalSettings 以稳定格式序列化 settings，末尾补一个换行符。
 func marshalSettings(settings map[string]interface{}) ([]byte, error) {
 	data, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
@@ -85,9 +94,7 @@ func marshalSettings(settings map[string]interface{}) ([]byte, error) {
 }
 
 // writeSettingsAtomic 原子写入 settings.json：同目录临时文件 + rename。
-// 同文件系统 rename 是原子操作，失败不会留半截目标文件。
-//
-// 权限策略：目标已存在则沿用其 mode（避免 0600 被降级到 0644）；首次写入用 0600（hook 命令可能含敏感内容）。
+// 权限策略：目标已存在则沿用其 mode；首次写入用 0600（hook 命令可能含敏感内容）。
 func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 	data, err := marshalSettings(settings)
 	if err != nil {
@@ -111,20 +118,18 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 		return fmt.Errorf("创建临时文件失败: %w", err)
 	}
 	tmpPath := tmp.Name()
-	// 失败时清理临时文件
 	defer func() {
 		if _, statErr := os.Stat(tmpPath); statErr == nil {
 			_ = os.Remove(tmpPath)
 		}
 	}()
 	if _, err := tmp.Write(data); err != nil {
-		_ = tmp.Close() // 写入失败时关闭临时文件，错误已不重要
+		_ = tmp.Close()
 		return fmt.Errorf("写入临时文件失败: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
 		return fmt.Errorf("关闭临时文件失败: %w", err)
 	}
-	// 权限与原文件一致（首次写入时为 0600）
 	if err := os.Chmod(tmpPath, targetMode); err != nil {
 		return fmt.Errorf("调整临时文件权限失败: %w", err)
 	}
@@ -135,83 +140,127 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 	return nil
 }
 
-// applyInitToSettings 返回插入（或保持）gw hook 后的 settings 及状态。
+// applyInitToSettings 在 settings.hooks.PreToolUse 中插入或保持 gw matcher。
 //
-// 判定：hooks[] 里任一条目带 _gw_managed=true → already；否则追加新 gw hook → installed。
-func applyInitToSettings(settings map[string]interface{}) (map[string]interface{}, string) {
+// Claude Code 的 hooks 结构是按事件名分组的 map：
+//
+//	"hooks": {
+//	  "PreToolUse": [
+//	    {"matcher": "Bash", "_gw_managed": true, "hooks": [{"type": "command", "command": "..."}]}
+//	  ]
+//	}
+//
+// 幂等：PreToolUse 数组内任一 matcher 带 _gw_managed=true → already，不动原 settings。
+// 用户自定义的其他事件（PostToolUse 等）与 PreToolUse 内他人 matcher 原样保留。
+func applyInitToSettings(settings map[string]interface{}, gwPath string) (map[string]interface{}, string) {
 	out := make(map[string]interface{}, len(settings)+1)
 	for k, v := range settings {
 		out[k] = v
 	}
 
-	var hooks []interface{}
-	if arr, ok := out["hooks"].([]interface{}); ok {
-		hooks = arr
-	}
+	hooksObj, _ := out["hooks"].(map[string]interface{})
+	preArr, _ := hooksObj["PreToolUse"].([]interface{})
 
-	for _, h := range hooks {
-		if m, ok := h.(map[string]interface{}); ok {
-			if v, ok := m[gwManagedKey].(bool); ok && v {
-				return out, initStatusAlready
-			}
+	for _, m := range preArr {
+		mm, ok := m.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if v, ok := mm[gwManagedKey].(bool); ok && v {
+			return out, initStatusAlready
 		}
 	}
 
-	gwHook := map[string]interface{}{
-		"matcher":    "Bash",
-		"hook":       gwHookCommand,
+	gwMatcher := map[string]interface{}{
+		"matcher":    bashMatcher,
 		gwManagedKey: true,
+		"hooks": []interface{}{
+			map[string]interface{}{
+				"type":    "command",
+				"command": gwHookCommand(gwPath),
+			},
+		},
 	}
-	out["hooks"] = append(hooks, gwHook)
+
+	newHooks := make(map[string]interface{}, len(hooksObj)+1)
+	for k, v := range hooksObj {
+		newHooks[k] = v
+	}
+	newHooks["PreToolUse"] = append(preArr, gwMatcher)
+	out["hooks"] = newHooks
 	return out, initStatusInstalled
 }
 
-// applyUninstallToSettings 返回移除所有带 _gw_managed 标记的条目后的 settings 及状态。
-// 不存在任何带标记的条目时返回 uninstallStatusNotFound，且不修改原 settings 的 hooks 内容。
+// applyUninstallToSettings 从 hooks.PreToolUse 移除带 _gw_managed=true 的 matcher。
+// 空后清理：PreToolUse 空 → 删该 key；hooks 空 → 删 hooks key。
 func applyUninstallToSettings(settings map[string]interface{}) (map[string]interface{}, string) {
 	out := make(map[string]interface{}, len(settings))
 	for k, v := range settings {
 		out[k] = v
 	}
-	raw, ok := out["hooks"]
+
+	hooksObj, ok := out["hooks"].(map[string]interface{})
 	if !ok {
 		return out, uninstallStatusNotFound
 	}
-	arr, ok := raw.([]interface{})
+	preArr, ok := hooksObj["PreToolUse"].([]interface{})
 	if !ok {
 		return out, uninstallStatusNotFound
 	}
 
-	filtered := make([]interface{}, 0, len(arr))
+	filtered := make([]interface{}, 0, len(preArr))
 	removed := 0
-	for _, h := range arr {
-		if m, ok := h.(map[string]interface{}); ok {
-			if v, ok := m[gwManagedKey].(bool); ok && v {
+	for _, m := range preArr {
+		mm, ok := m.(map[string]interface{})
+		if ok {
+			if v, ok := mm[gwManagedKey].(bool); ok && v {
 				removed++
 				continue
 			}
 		}
-		filtered = append(filtered, h)
+		filtered = append(filtered, m)
 	}
 	if removed == 0 {
 		return out, uninstallStatusNotFound
 	}
-	if len(filtered) == 0 {
+
+	newHooks := make(map[string]interface{}, len(hooksObj))
+	for k, v := range hooksObj {
+		if k != "PreToolUse" {
+			newHooks[k] = v
+		}
+	}
+	if len(filtered) > 0 {
+		newHooks["PreToolUse"] = filtered
+	}
+	if len(newHooks) == 0 {
 		delete(out, "hooks")
 	} else {
-		out["hooks"] = filtered
+		out["hooks"] = newHooks
 	}
 	return out, uninstallStatusRemoved
 }
 
-// runInitWith 是 init 的核心实现，接受注入的 settings 路径和输出目的地，方便测试。
-// dryRun=true 时仅把结果 JSON 打印到 stdout，不落盘。
-func runInitWith(path string, dryRun bool, stdout io.Writer) error {
+// resolveGwPath 返回当前 gw 可执行文件的绝对路径，供 init 写入 hook 使用。
+func resolveGwPath() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("无法获取 gw 可执行文件路径: %w", err)
+	}
+	abs, err := filepath.Abs(exe)
+	if err != nil {
+		return "", fmt.Errorf("无法解析 gw 绝对路径: %w", err)
+	}
+	return abs, nil
+}
+
+// runInitWith 是 init 的核心实现，接受注入的 settings 路径、gw 绝对路径和输出目的地。
+func runInitWith(path string, gwPath string, dryRun bool, stdout io.Writer) error {
 	settings, err := readSettings(path)
 	if err != nil {
 		return err
 	}
-	updated, status := applyInitToSettings(settings)
+	updated, status := applyInitToSettings(settings, gwPath)
 
 	if dryRun {
 		data, err := marshalSettings(updated)
@@ -240,7 +289,10 @@ func runInitWith(path string, dryRun bool, stdout io.Writer) error {
 	}
 }
 
-// runInitCmd 是 cobra 绑定的入口。
 func runInitCmd(cmd *cobra.Command, args []string) error {
-	return runInitWith(getSettingsPath(), initDryRun, os.Stdout)
+	gwPath, err := resolveGwPath()
+	if err != nil {
+		return err
+	}
+	return runInitWith(getSettingsPath(), gwPath, initDryRun, os.Stdout)
 }
