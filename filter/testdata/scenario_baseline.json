@@ -65,100 +65,93 @@
   {
     "name": "gradle build (success, batch)",
     "mode": "batch",
-    "orig_bytes": 22513,
+    "orig_bytes": 22508,
     "out_bytes": 59,
-    "ratio": 0.9973792919646427
+    "ratio": 0.9973787097920739
   },
   {
     "name": "gradle build (success, stream)",
     "mode": "stream",
-    "orig_bytes": 22513,
+    "orig_bytes": 22508,
     "out_bytes": 60,
-    "ratio": 0.9973348731843824
+    "ratio": 0.997334281144482
   },
   {
     "name": "gradle test (failure, batch)",
     "mode": "batch",
-    "orig_bytes": 18953,
+    "orig_bytes": 18949,
     "out_bytes": 334,
-    "ratio": 0.9823774600327125
+    "ratio": 0.9823737400390522
   },
   {
     "name": "gradle test (failure, stream)",
     "mode": "stream",
-    "orig_bytes": 18953,
+    "orig_bytes": 18949,
     "out_bytes": 335,
-    "ratio": 0.9823246979370021
+    "ratio": 0.9823209668056362
   },
   {
     "name": "gradle test (success, batch)",
     "mode": "batch",
-    "orig_bytes": 19097,
+    "orig_bytes": 19093,
     "out_bytes": 67,
-    "ratio": 0.9964915955385663
+    "ratio": 0.9964908605247996
   },
   {
     "name": "gradle test (success, stream)",
     "mode": "stream",
-    "orig_bytes": 19097,
+    "orig_bytes": 19093,
     "out_bytes": 68,
-    "ratio": 0.9964392312928733
+    "ratio": 0.9964384853087519
   },
   {
     "name": "mvn compile (failure, batch)",
     "mode": "batch",
-    "orig_bytes": 7666,
+    "orig_bytes": 7665,
     "out_bytes": 196,
-    "ratio": 0.9744325593529872
-  },
-  {
-    "name": "mvn compile (real large failure, batch)",
-    "mode": "batch",
-    "orig_bytes": 911320,
-    "out_bytes": 3140,
-    "ratio": 0.9965544484922969
+    "ratio": 0.9744292237442922
   },
   {
     "name": "mvn compile (success, batch)",
     "mode": "batch",
-    "orig_bytes": 137053,
+    "orig_bytes": 137052,
     "out_bytes": 36,
-    "ratio": 0.9997373278950479
+    "ratio": 0.9997373259784608
   },
   {
     "name": "mvn package (success, batch)",
     "mode": "batch",
-    "orig_bytes": 7568,
+    "orig_bytes": 7567,
     "out_bytes": 34,
-    "ratio": 0.995507399577167
+    "ratio": 0.9955068058675829
   },
   {
     "name": "mvn test (failure, batch)",
     "mode": "batch",
-    "orig_bytes": 335040,
-    "out_bytes": 319564,
-    "ratio": 0.046191499522445056
+    "orig_bytes": 335028,
+    "out_bytes": 319553,
+    "ratio": 0.046190169179889495
   },
   {
     "name": "mvn test (failure, stream)",
     "mode": "stream",
-    "orig_bytes": 335040,
+    "orig_bytes": 335028,
     "out_bytes": 89182,
-    "ratio": 0.7338168576886341
+    "ratio": 0.7338073235669855
   },
   {
     "name": "mvn test (success, batch)",
     "mode": "batch",
-    "orig_bytes": 56924,
+    "orig_bytes": 56915,
     "out_bytes": 15235,
-    "ratio": 0.7323624481765161
+    "ratio": 0.7323201265044365
   },
   {
     "name": "mvn test (success, stream)",
     "mode": "stream",
-    "orig_bytes": 56924,
+    "orig_bytes": 56915,
     "out_bytes": 15236,
-    "ratio": 0.7323448808938233
+    "ratio": 0.7323025564438197
   },
   {
     "name": "npm install (batch)",

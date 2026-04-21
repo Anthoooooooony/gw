@@ -13,10 +13,10 @@ func TestClassifyLine(t *testing.T) {
 
 		// LineModuleHeader
 		{"module header", "[INFO] Building myapp 1.0.0 [3/20]", LineModuleHeader},
-		{"module header simple", "[INFO] Building core-key-business 2.0.0", LineModuleHeader},
+		{"module header simple", "[INFO] Building core-module 2.0.0", LineModuleHeader},
 
 		// LineMojoHeader
-		{"mojo header kotlin", "[INFO] --- kotlin-maven-plugin:2.2.0:compile (compile) @ core-key-business ---", LineMojoHeader},
+		{"mojo header kotlin", "[INFO] --- kotlin-maven-plugin:2.2.0:compile (compile) @ core-module ---", LineMojoHeader},
 		{"mojo header resources", "[INFO] --- maven-resources-plugin:3.3.0:resources (default-resources) @ myapp ---", LineMojoHeader},
 		{"mojo header surefire", "[INFO] --- maven-surefire-plugin:3.0.0:test (default-test) @ myapp ---", LineMojoHeader},
 
@@ -37,9 +37,9 @@ func TestClassifyLine(t *testing.T) {
 		{"reactor header simple", "[INFO] Reactor Summary:", LineReactorHeader},
 
 		// LineReactorEntry
-		{"reactor success", "[INFO] core-key-business ......................... SUCCESS [  3.456 s]", LineReactorEntry},
-		{"reactor failure", "[INFO] core-key-api ............................. FAILURE [  1.234 s]", LineReactorEntry},
-		{"reactor skipped", "[INFO] core-key-web ............................. SKIPPED", LineReactorEntry},
+		{"reactor success", "[INFO] core-module ................................. SUCCESS [  3.456 s]", LineReactorEntry},
+		{"reactor failure", "[INFO] core-api .................................... FAILURE [  1.234 s]", LineReactorEntry},
+		{"reactor skipped", "[INFO] core-web .................................... SKIPPED", LineReactorEntry},
 
 		// LineBuildResult
 		{"build success", "[INFO] BUILD SUCCESS", LineBuildResult},

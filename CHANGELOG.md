@@ -35,7 +35,7 @@
 - feat(filter): Gradle StreamFilter 流式过滤器 (#1)
 - feat: 重新启用 SpringBootFilter 并实现 StreamFilter 接口，支持流式过滤长驻进程输出
 - feat: exec 命令集成流式过滤路径，优先匹配 StreamFilter 走逐行流式处理
-- feat: 用状态机重写 MavenFilter，真实 大型 Java 产线 输出压缩率 95%
+- feat: 用状态机重写 MavenFilter，真实大型 Java 产线输出压缩率 95%
 - feat: 新增 Maven 状态机内核 — 状态定义、行分类器、状态转移逻辑
 - feat: 添加 TOML 声明式过滤引擎，支持 docker/kubectl 内置规则
 
