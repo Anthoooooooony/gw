@@ -45,6 +45,9 @@ type rawRule struct {
 	KeepLines  []string `toml:"keep_lines"`
 	OnEmpty    string   `toml:"on_empty"`
 	Disabled   bool     `toml:"disabled"`
+	// OnError 对应 TOML 中 [section.name.on_error] 子表；递归复用同一 struct，
+	// 但 Match/Disabled/OnError 在子表里无意义。
+	OnError *rawRule `toml:"on_error"`
 }
 
 // LoadAllRules 按三级加载顺序（builtin → user → project）收集全部 TOML 规则，
@@ -165,21 +168,31 @@ func parseAndMerge(data, source string, byID map[string]LoadedRule, disabled map
 			// 明确取消 disabled 标记（若低层禁用、高层启用）
 			delete(disabled, id)
 			byID[id] = LoadedRule{
-				ID: id,
-				Rule: Rule{
-					Match:      rr.Match,
-					StripAnsi:  rr.StripAnsi,
-					MaxLines:   rr.MaxLines,
-					HeadLines:  rr.HeadLines,
-					TailLines:  rr.TailLines,
-					StripLines: rr.StripLines,
-					KeepLines:  rr.KeepLines,
-					OnEmpty:    rr.OnEmpty,
-				},
+				ID:     id,
+				Rule:   rawRuleToRule(&rr),
 				Source: source,
 			}
 		}
 	}
+}
+
+// rawRuleToRule 把中间表示转换为运行时 Rule，递归处理 on_error 子表。
+func rawRuleToRule(rr *rawRule) Rule {
+	r := Rule{
+		Match:      rr.Match,
+		StripAnsi:  rr.StripAnsi,
+		MaxLines:   rr.MaxLines,
+		HeadLines:  rr.HeadLines,
+		TailLines:  rr.TailLines,
+		StripLines: rr.StripLines,
+		KeepLines:  rr.KeepLines,
+		OnEmpty:    rr.OnEmpty,
+	}
+	if rr.OnError != nil {
+		sub := rawRuleToRule(rr.OnError)
+		r.OnError = &sub
+	}
+	return r
 }
 
 // defaultUserRulesDir 返回 $XDG_CONFIG_HOME/gw/rules 或平台默认配置目录。
