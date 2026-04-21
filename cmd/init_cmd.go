@@ -33,6 +33,9 @@ const (
 	bashMatcher = "Bash"
 	// preToolUseEvent 是 Claude Code hook 事件名，对 Bash 工具调用前触发。
 	preToolUseEvent = "PreToolUse"
+	// gwHookTimeoutSec 写入 hook 对象的 timeout 字段（秒）。Claude Code 超时后放弃等 hook 输出
+	// 并走默认行为，防止 gw rewrite 异常挂住整条 Claude 会话。
+	gwHookTimeoutSec = 10
 )
 
 const (
@@ -176,7 +179,11 @@ func applyInitToSettings(settings map[string]interface{}, gwPath string) (map[st
 		gwManagedKey: true,
 		"hooks": []interface{}{
 			map[string]interface{}{
-				"type":    "command",
+				"type": "command",
+				// timeout 以秒为单位，超时后 Claude Code 放弃等待并走默认行为。
+				// gw rewrite 典型耗时 <200ms；设 10 秒是保守上限，防止 rewrite 异常
+				// 挂死时整条 Claude 会话被卡住。
+				"timeout": gwHookTimeoutSec,
 				"command": gwHookCommand(gwPath),
 			},
 		},
