@@ -1,6 +1,7 @@
 package apiproxy
 
 import (
+	"bytes"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -24,9 +25,13 @@ func upstreamURL() *url.URL {
 	return u
 }
 
+// BodyTransformer 在转发前对请求 body 做修改；nil 表示纯透传。
+// 实现方应保证：失败降级为返回原 body（不抛错），任何内部异常由自己处理完。
+type BodyTransformer func(body []byte) []byte
+
 // anthropicHandler 返回一个 reverse proxy，把请求原样转发到 api.anthropic.com。
-// v0 不做任何 body 改写，只保证 header/body/stream 透传正确。
-func anthropicHandler(logger Logger) http.HandlerFunc {
+// 当 transform 非 nil 时，POST 请求的 body 会被它处理后再转发；v0 传 nil 即纯透传。
+func anthropicHandler(logger Logger, transform BodyTransformer) http.HandlerFunc {
 	target := upstreamURL()
 	rp := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
@@ -36,6 +41,22 @@ func anthropicHandler(logger Logger) http.HandlerFunc {
 			// 去掉 Go http.Client 默认加上的 Accept-Encoding，避免上游返回压缩
 			// 内容让中间态 SSE 解析复杂化。v0 让 claude 直接拿原始字节。
 			req.Header.Del("Accept-Encoding")
+
+			// 仅对 POST 做 body 修改；GET/HEAD/OPTIONS 等无 body 路径原样透传。
+			if transform == nil || req.Method != http.MethodPost || req.Body == nil {
+				return
+			}
+			raw, err := io.ReadAll(req.Body)
+			_ = req.Body.Close()
+			if err != nil {
+				logger.Warnf("apiproxy: read body failed, passthrough empty: %v", err)
+				req.Body = http.NoBody
+				req.ContentLength = 0
+				return
+			}
+			out := transform(raw)
+			req.Body = io.NopCloser(bytes.NewReader(out))
+			req.ContentLength = int64(len(out))
 		},
 		// v0 不改 body；ModifyResponse 留空，上游响应原样透传（包括 SSE）。
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {

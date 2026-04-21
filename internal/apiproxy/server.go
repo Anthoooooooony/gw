@@ -10,6 +10,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/gw-cli/gw/internal/apiproxy/dcp"
 )
 
 // Server 持有 listener 与 http.Server 双份引用，便于在 Shutdown 时释放端口。
@@ -28,8 +30,9 @@ func Start(logger Logger) (*Server, error) {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/messages", anthropicHandler(logger))
-	mux.HandleFunc("/v1/messages/count_tokens", anthropicHandler(logger))
+	transform := dcp.NewTransformer(logger)
+	mux.HandleFunc("/v1/messages", anthropicHandler(logger, transform))
+	mux.HandleFunc("/v1/messages/count_tokens", anthropicHandler(logger, transform))
 	// health 端点便于外部 probe
 	mux.HandleFunc("/_gw/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

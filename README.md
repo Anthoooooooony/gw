@@ -393,7 +393,7 @@ go test ./filter/java/  # 只跑 Java 过滤器测试
 |------|------|
 | `gw exec <cmd> [args...]` | 执行命令并过滤输出 |
 | `gw exec --dump-raw <path> <cmd> [args...]` | 执行命令并把原始输出写入指定文件（流式和批量路径都支持） |
-| `gw claude [args...]` | 透明包装 claude CLI：启动本地 API 代理注入 `ANTHROPIC_BASE_URL`，claude 退出时自动关闭（v0 纯透传，后续接入 DCP 风格上下文裁剪） |
+| `gw claude [args...]` | 透明包装 claude CLI：启动本地 API 代理注入 `ANTHROPIC_BASE_URL`，对同签名 tool_use 的历史 tool_result 做 DCP 风格去重（只保留最后一次），claude 退出时自动关闭 |
 | `gw rewrite` | PreToolUse hook 入口（内部使用，从 stdin 读 Claude Code hook JSON） |
 | `gw init` | 安装 Claude Code PreToolUse Hook |
 | `gw init --dry-run` | 打印将要写入的变更但不落盘 |
