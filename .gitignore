@@ -12,3 +12,7 @@ dist/
 # OS
 .DS_Store
 **/.DS_Store
+
+# 测试运行时生成（CI 上传为 artifact 即可，不入库）
+filter/scenario-compression-report.md
+coverage.out

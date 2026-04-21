@@ -52,6 +52,28 @@ jobs:
           path: coverage.out
           if-no-files-found: warn
 
+      # TestScenarioCompression 在 go test 阶段已经写好了 filter/scenario-compression-report.md，
+      # 这里把它贴到 Actions 运行页的 Summary，reviewer 打开 CI 就能看到每个 mvn/gradle/git
+      # 子命令的原始/压缩后字节和相对 baseline 的压缩率 Δ。同时上传 artifact 供离线查看。
+      - name: scenario compression report → summary
+        if: matrix.os == 'ubuntu-latest' && always()
+        shell: bash
+        run: |
+          report=filter/scenario-compression-report.md
+          if [ -f "$report" ]; then
+            cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "gw CI: $report 缺失（TestScenarioCompression 未执行？）" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: upload scenario compression report artifact
+        if: matrix.os == 'ubuntu-latest' && always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: scenario-compression-report
+          path: filter/scenario-compression-report.md
+          if-no-files-found: warn
+
       - name: bash unit tests
         if: matrix.os == 'ubuntu-latest'
         run: bash scripts/bump_test.sh
