@@ -128,6 +128,22 @@ BREAKING CHANGE: drops v1 support' \
   | build_changelog_section "v1.0.0" "2026-05-01")
 assert_eq "$expected" "$actual" "build_changelog_section BREAKING CHANGE footer 归入 Removed"
 
+# (#46) 模拟 git log 真实输出：NUL 分隔符之间有换行，不能吞 subject
+# git log --format='%s%n%b%x00' 的输出是 "<c1>\0\n<c2>\0\n...<cN>\0"，
+# 第 2 条起的 record 在 read -d '' 后会以 \n 开头。修复前第 2..N 条会被吞。
+expected='## [v0.4.0] - 2026-05-02
+
+### Added
+- feat: first
+- feat: second
+
+### Fixed
+- fix: third'
+
+actual=$(printf 'feat: first\n\0\nfeat: second\n\0\nfix: third\n\0' \
+  | build_changelog_section "v0.4.0" "2026-05-02")
+assert_eq "$expected" "$actual" "NUL 流带前导 \\n 的 commit 全部被分类 (#46 回归)"
+
 # ========== integration: 幂等 tag 检查 (#15) ==========
 # 预先打一个 bump 算出的 tag，dry-run 也必须拒绝（exit != 0）
 integration_idempotent_tag() {
