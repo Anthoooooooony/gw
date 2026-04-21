@@ -84,16 +84,10 @@ func marshalSettings(settings map[string]interface{}) ([]byte, error) {
 	return append(data, '\n'), nil
 }
 
-// writeSettingsAtomic 安全写入 settings.json：
-//  1. 若目标文件已存在，先复制一份为 path+".bak" 作为回滚凭证；
-//  2. 将新内容写入同目录的临时文件；
-//  3. rename 临时文件到目标路径（同文件系统 rename 为原子操作）。
+// writeSettingsAtomic 原子写入 settings.json：同目录临时文件 + rename。
+// 同文件系统 rename 是原子操作，失败不会留半截目标文件。
 //
-// 权限策略：
-//   - 原文件已存在：backup 和 tmp 文件保留原文件的 mode（避免把 0600 降级到 0644）
-//   - 首次写入（文件不存在）：新文件使用 0600（保守：hook 命令可能包含敏感内容）
-//
-// 任一步骤失败都不会留下半截的目标文件。
+// 权限策略：目标已存在则沿用其 mode（避免 0600 被降级到 0644）；首次写入用 0600（hook 命令可能含敏感内容）。
 func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 	data, err := marshalSettings(settings)
 	if err != nil {
@@ -105,7 +99,6 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 		return fmt.Errorf("创建目录 %s 失败: %w", dir, err)
 	}
 
-	// 探测原文件 mode；不存在则使用保守默认 0600
 	var targetMode os.FileMode = 0o600
 	if info, err := os.Stat(path); err == nil {
 		targetMode = info.Mode().Perm()
@@ -113,16 +106,6 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 		return fmt.Errorf("stat 原文件 %s 失败: %w", path, err)
 	}
 
-	// 1. 若目标已存在，生成备份（权限沿用原文件）
-	if existing, err := os.ReadFile(path); err == nil {
-		if err := os.WriteFile(path+".bak", existing, targetMode); err != nil {
-			return fmt.Errorf("写入备份 %s.bak 失败: %w", path, err)
-		}
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("读取原文件 %s 失败: %w", path, err)
-	}
-
-	// 2. 写入临时文件
 	tmp, err := os.CreateTemp(dir, filepath.Base(path)+".tmp-*")
 	if err != nil {
 		return fmt.Errorf("创建临时文件失败: %w", err)
@@ -146,7 +129,6 @@ func writeSettingsAtomic(path string, settings map[string]interface{}) error {
 		return fmt.Errorf("调整临时文件权限失败: %w", err)
 	}
 
-	// 3. rename
 	if err := os.Rename(tmpPath, path); err != nil {
 		return fmt.Errorf("重命名到 %s 失败: %w", path, err)
 	}
