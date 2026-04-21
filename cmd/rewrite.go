@@ -108,7 +108,9 @@ func rewriteBashCommand(command, gwPath string) (string, bool) {
 
 	anyRewritten := false
 	for i, seg := range segments {
-		parts := strings.Fields(seg.Cmd)
+		// 引号感知分词：保留 `git commit -m "fix: foo bar"` 里 message 的空格完整性，
+		// 避免 strings.Fields 切碎后 filter 匹配到错误的 args。
+		parts := shell.TokenizeSegment(seg.Cmd)
 		if len(parts) == 0 {
 			continue
 		}

@@ -122,6 +122,69 @@ func AnalyzeCommand(command string) (bool, []Segment) {
 	return true, segments
 }
 
+// TokenizeSegment 把单段 shell 命令（由 AnalyzeCommand 保证无链式/管道/重定向）
+// 按空白切成 token。引号内的空白保留在同一 token，双引号内支持反斜杠转义，
+// 外层引号剥离。Token 里的中间引号（如 --grep='a b'）归入同一 token 且剥离引号。
+//
+// 典型结果：
+//
+//	"git commit -m \"fix: foo bar\""  → ["git", "commit", "-m", "fix: foo bar"]
+//	"git log --grep='fix bar'"        → ["git", "log", "--grep=fix bar"]
+//
+// 与 strings.Fields 的差异在于不会把引号内的空白当分隔符。
+func TokenizeSegment(s string) []string {
+	var tokens []string
+	var cur strings.Builder
+	inToken := false
+	var inQuote rune
+	escaped := false
+
+	flush := func() {
+		if inToken {
+			tokens = append(tokens, cur.String())
+			cur.Reset()
+			inToken = false
+		}
+	}
+
+	for _, c := range s {
+		if escaped {
+			cur.WriteRune(c)
+			escaped = false
+			inToken = true
+			continue
+		}
+		if inQuote != 0 {
+			if inQuote == '"' && c == '\\' {
+				escaped = true
+				continue
+			}
+			if c == inQuote {
+				inQuote = 0
+				continue
+			}
+			cur.WriteRune(c)
+			continue
+		}
+		switch c {
+		case '\\':
+			escaped = true
+			continue
+		case '\'', '"':
+			inQuote = c
+			inToken = true
+			continue
+		case ' ', '\t', '\n':
+			flush()
+		default:
+			cur.WriteRune(c)
+			inToken = true
+		}
+	}
+	flush()
+	return tokens
+}
+
 // ShouldRewrite 判断命令是否可以被改写（向后兼容包装）
 func ShouldRewrite(command string) bool {
 	canRewrite, _ := AnalyzeCommand(command)
