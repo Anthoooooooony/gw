@@ -22,9 +22,32 @@
 - `filter/toml` 的 `strip_lines` / `keep_lines` / `on_error` 字段与对应 loader warning 兼容代码（不考虑 v1 配置前向兼容）。
 - `filter/toml/rules/python.toml` 的 `[pytest.*]` 规则（由专属 filter 接管）。
 
-[Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.2.0...HEAD
 [v0.1.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.0
 
+## [v0.2.0] - 2026-04-21
+
+### Added
+- feat(claude): DCP 观测——退出摘要 + verbose 逐请求日志 (#77) (#81)
+- feat(claude): 代理 hardening——body 上限 + header 超时 + shutdown grace (#77) (#80)
+- feat(claude): DCP 风格 tool_result 去重 (#77) (#79)
+- feat(claude): gw claude 子命令 + 本地 API 代理最小版（v0 纯透传） (#77) (#78)
+- feat(pytest): 专属 Go filter，语义压缩 99%/82% (#43) (#73)
+- feat(toml): on_error 子规则扩展 + 失败场景压缩 (#43) (#70)
+
+### Changed
+- refactor(toml): DSL v2 仅保留无损字段 (#43) (#72)
+
+### Fixed
+- fix(shell): TokenizeSegment 替代 strings.Fields 引号感知分词 (#66) (#67)
+- fix(init): hook 加 timeout:10 防 rewrite 挂死卡 Claude Code (#64) (#65)
+- fix(bump): trap 清理 tmp + Unreleased 节预检 (#60) (#61)
+- fix(internal): killer SIGKILL 前 peek procDone 缓解 PID 复用 race (#58) (#59)
+- fix(filter): 消除 TomlFilter matchedRule 共享状态 (#56) (#57)
+- fix(init): 重写 hook 整合对齐 Claude Code 真实 schema (#53) (#54)
+- fix(bump): 剥 NUL 流前导 \n 避免第 2+ 条 commit subject 被吞 (#46) (#47)
+- fix(bump): 支持 BREAKING CHANGE footer 完整识别 (#20) (#34)
+- fix(bump): 加 tag 幂等性检查避免重复 bump 留脏 tag (#15) (#25)
 ## [v0.1.1] - 2026-04-17
 
 ### Fixed
@@ -58,3 +81,4 @@
 - fix(P1): findProjectRulesDir 识别 .git 为文件的 worktree 场景
 - fix(P0): Windows 降级 killProcessGroup 忽略 sig，避免误导性 SIGTERM 日志
 [v0.1.1]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.1
+[v0.2.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.2.0
