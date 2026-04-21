@@ -143,7 +143,24 @@ func TestLongestMatch(t *testing.T) {
 	}
 }
 
-func TestApplyOnError(t *testing.T) {
+// TestApplyOnError_NoRule 未命中任何规则时 ApplyOnError 返回 nil
+// （上层继续透传原始输出）。
+func TestApplyOnError_NoRule(t *testing.T) {
+	f := makeFilter(Rule{Match: "other"})
+	input := filter.FilterInput{
+		Cmd:      "test",
+		Args:     []string{},
+		Stdout:   "output",
+		ExitCode: 1,
+	}
+	if result := f.ApplyOnError(input); result != nil {
+		t.Errorf("未命中规则时应返回 nil, 得到 %+v", result)
+	}
+}
+
+// TestApplyOnError_NoOnErrorConfig 命中规则但未配置 on_error 时仍返回 nil，
+// 保留历史 pass-through 语义。
+func TestApplyOnError_NoOnErrorConfig(t *testing.T) {
 	f := makeFilter(Rule{Match: "test"})
 	input := filter.FilterInput{
 		Cmd:      "test",
@@ -152,7 +169,78 @@ func TestApplyOnError(t *testing.T) {
 		ExitCode: 1,
 	}
 	if result := f.ApplyOnError(input); result != nil {
-		t.Error("ApplyOnError 应返回 nil")
+		t.Errorf("rule.OnError 为 nil 时应返回 nil, 得到 %+v", result)
+	}
+}
+
+// TestApplyOnError_WithOnError 配置了 on_error 子规则时按其 strip/tail 管道处理
+// 合并后的 Stdout+Stderr。
+func TestApplyOnError_WithOnError(t *testing.T) {
+	f := makeFilter(Rule{
+		Match: "test",
+		OnError: &Rule{
+			StripLines: []string{"^DEBUG"},
+			TailLines:  3,
+		},
+	})
+	input := filter.FilterInput{
+		Cmd:      "test",
+		Args:     []string{},
+		Stdout:   "DEBUG: noise\nline1\nline2\n",
+		Stderr:   "line3\nline4",
+		ExitCode: 1,
+	}
+	out := f.ApplyOnError(input)
+	if out == nil {
+		t.Fatal("配置了 OnError 应返回非 nil")
+	}
+	// 合并后 = "DEBUG: noise\nline1\nline2\nline3\nline4"
+	// strip DEBUG → [line1, line2, line3, line4]
+	// tail 3     → [line2, line3, line4]
+	wantLines := []string{"line2", "line3", "line4"}
+	got := strings.Split(out.Content, "\n")
+	if len(got) != len(wantLines) {
+		t.Fatalf("期望 %d 行, 得到 %d 行: %q", len(wantLines), len(got), out.Content)
+	}
+	for i, w := range wantLines {
+		if got[i] != w {
+			t.Errorf("line[%d] = %q, want %q", i, got[i], w)
+		}
+	}
+	// Original 应为合并后的原始输入
+	wantOrig := input.Stdout + input.Stderr
+	if out.Original != wantOrig {
+		t.Errorf("Original = %q, want %q", out.Original, wantOrig)
+	}
+}
+
+// TestLoadOnErrorFromTOML 确认 loader 能把 [section.name.on_error] 子表
+// 递归解析为 Rule.OnError。
+func TestLoadOnErrorFromTOML(t *testing.T) {
+	data := `
+[demo.run]
+match = "demo"
+strip_lines = ["^ok"]
+
+  [demo.run.on_error]
+  strip_lines = ["^progress"]
+  tail_lines = 42
+`
+	byID := map[string]LoadedRule{}
+	disabled := map[string]bool{}
+	parseAndMerge(data, "test", byID, disabled)
+	lr, ok := byID["demo.run"]
+	if !ok {
+		t.Fatal("应解析到 demo.run 规则")
+	}
+	if lr.Rule.OnError == nil {
+		t.Fatal("Rule.OnError 不应为 nil")
+	}
+	if lr.Rule.OnError.TailLines != 42 {
+		t.Errorf("OnError.TailLines = %d, want 42", lr.Rule.OnError.TailLines)
+	}
+	if len(lr.Rule.OnError.StripLines) != 1 || lr.Rule.OnError.StripLines[0] != "^progress" {
+		t.Errorf("OnError.StripLines = %+v, want [^progress]", lr.Rule.OnError.StripLines)
 	}
 }
 
