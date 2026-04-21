@@ -17,14 +17,30 @@ type FilterOutput struct {
 
 // Filter 定义了命令输出过滤器的接口
 type Filter interface {
-	// Name 返回过滤器的描述性名称
+	// Name 返回过滤器的**静态**名称（不依赖当前匹配的命令，所有调用返回同一值）。
+	// 子规则名（例如 TomlFilter 匹配到的 rule.Match）通过 SubnameResolver 单独暴露。
 	Name() string
-	// Match 判断当前过滤器是否匹配该命令
+	// Match 判断当前过滤器是否匹配该命令。**不应持有"本次匹配"的副作用**——
+	// 否则在并发或多次调用下会互相覆盖状态。
 	Match(cmd string, args []string) bool
 	// Apply 在命令成功执行时(exit==0)应用过滤
 	Apply(input FilterInput) FilterOutput
 	// ApplyOnError 在命令执行失败时(exit!=0)应用过滤，返回 nil 表示直接透传原始输出
 	ApplyOnError(input FilterInput) *FilterOutput
+}
+
+// SubnameResolver 是可选接口：实现后 Registry.Find 在匹配命中时顺便解析出本次匹配的
+// "子名"（如 TomlFilter 里的 rule.Match）。把子名作为**纯函数**从 (cmd, args) 推出，
+// 而不是放到 filter 实例字段里——避免共享可变状态带来的 race / TOCTOU 脆弱性。
+type SubnameResolver interface {
+	Subname(cmd string, args []string) string
+}
+
+// Match 是 Registry.Find 的返回值：匹配到的 filter 和（可选）本次匹配的子名。
+// 展示用的 FilterUsed 拼接为 "<Filter.Name>/<Subname>"；Subname 为空时只用 Filter.Name。
+type Match struct {
+	Filter  Filter
+	Subname string
 }
 
 // StreamAction 表示流式过滤中对单行的决策
