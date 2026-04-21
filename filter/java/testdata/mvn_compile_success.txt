@@ -738,7 +738,7 @@
 [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/jacoco/org.jacoco.report/0.8.14/org.jacoco.report-0.8.14.jar (131 kB at 851 kB/s)
 [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/jacoco/org.jacoco.core/0.8.14/org.jacoco.core-0.8.14.jar (230 kB at 1.3 MB/s)
 [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar (307 kB at 983 kB/s)
-[INFO] argLine set to -javaagent:/Users/mikaa/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/private/tmp/gw-fixture-work/spring-petclinic/target/jacoco.exec
+[INFO] argLine set to -javaagent:/Users/user/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/private/tmp/gw-fixture-work/spring-petclinic/target/jacoco.exec
 [INFO] 
 [INFO] --- git-commit-id:9.0.2:revision (default) @ spring-petclinic ---
 [INFO] Downloading from central: https://repo.maven.apache.org/maven2/io/github/git-commit-id/git-commit-id-plugin-core/6.0.0/git-commit-id-plugin-core-6.0.0.pom

@@ -48,7 +48,7 @@
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:20:17.548+08:00  INFO 45714 --- [           main] o.s.s.p.PetClinicIntegrationTests        : Starting PetClinicIntegrationTests using Java 17.0.12 with PID 45714 (/private/tmp/gw-fixture-work/spring-petclinic/build/classes/java/test started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:20:17.548+08:00  INFO 45714 --- [           main] o.s.s.p.PetClinicIntegrationTests        : Starting PetClinicIntegrationTests using Java 17.0.12 with PID 45714 (/private/tmp/gw-fixture-work/spring-petclinic/build/classes/java/test started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:20:17.549+08:00  INFO 45714 --- [           main] o.s.s.p.PetClinicIntegrationTests        : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:20:17.846+08:00  INFO 45714 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2026-04-21T11:20:17.866+08:00  INFO 45714 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 16 ms. Found 3 JPA repository interfaces.
@@ -85,7 +85,7 @@
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:20:19.512+08:00  INFO 45714 --- [           main] o.s.s.p.PostgresIntegrationTests         : Starting PostgresIntegrationTests using Java 17.0.12 with PID 45714 (/private/tmp/gw-fixture-work/spring-petclinic/build/classes/java/test started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:20:19.512+08:00  INFO 45714 --- [           main] o.s.s.p.PostgresIntegrationTests         : Starting PostgresIntegrationTests using Java 17.0.12 with PID 45714 (/private/tmp/gw-fixture-work/spring-petclinic/build/classes/java/test started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:20:19.512+08:00  INFO 45714 --- [           main] o.s.s.p.PostgresIntegrationTests         : The following 1 profile is active: "postgres"
 2026-04-21T11:20:19.588+08:00  INFO 45714 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2026-04-21T11:20:19.593+08:00  INFO 45714 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 3 JPA repository interfaces.
@@ -123,7 +123,7 @@
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:20:19.910+08:00  INFO 45714 --- [           main] o.s.s.p.service.ClinicServiceTests       : Starting ClinicServiceTests using Java 17.0.12 with PID 45714 (/private/tmp/gw-fixture-work/spring-petclinic/build/classes/java/test started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:20:19.910+08:00  INFO 45714 --- [           main] o.s.s.p.service.ClinicServiceTests       : Starting ClinicServiceTests using Java 17.0.12 with PID 45714 (/private/tmp/gw-fixture-work/spring-petclinic/build/classes/java/test started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:20:19.911+08:00  INFO 45714 --- [           main] o.s.s.p.service.ClinicServiceTests       : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:20:19.933+08:00  INFO 45714 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2026-04-21T11:20:19.938+08:00  INFO 45714 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 3 ms. Found 3 JPA repository interfaces.
@@ -158,7 +158,7 @@
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:20:20.058+08:00  INFO 45714 --- [           main] .s.s.p.s.CrashControllerIntegrationTests : Starting CrashControllerIntegrationTests using Java 17.0.12 with PID 45714 (/private/tmp/gw-fixture-work/spring-petclinic/build/classes/java/test started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:20:20.058+08:00  INFO 45714 --- [           main] .s.s.p.s.CrashControllerIntegrationTests : Starting CrashControllerIntegrationTests using Java 17.0.12 with PID 45714 (/private/tmp/gw-fixture-work/spring-petclinic/build/classes/java/test started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:20:20.058+08:00  INFO 45714 --- [           main] .s.s.p.s.CrashControllerIntegrationTests : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:20:20.227+08:00  INFO 45714 --- [           main] o.s.t.c.aot.TestContextAotGenerator      : Skipping AOT processing due to the presence of @DisabledInAotMode for test classes [org.springframework.samples.petclinic.vet.VetControllerTests]
 

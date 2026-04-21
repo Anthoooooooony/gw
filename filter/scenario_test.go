@@ -71,7 +71,6 @@ type scenario struct {
 //     ·mvn_compile_failure.txt：人工注入 `private Undefined broken;` 触发 javac error
 //     ·mvn_test_failure.txt：Postgres integration 因缺 Docker 而失败（真实 infra 缺失场景）
 //     ·gradle_test_failure.txt：ValidatorTests 断言反向修改后的失败
-//   - mvn_compile_real_failure.txt：NetEDS 真实产线 890 KB 大输出，作为大项目参考
 //   - git_*.txt：gw 仓库自身真实输出
 var scenarios = []scenario{
 	// ---- Maven（spring-petclinic 真实场景）----
@@ -82,8 +81,6 @@ var scenarios = []scenario{
 	{"mvn package (success, batch)", "mvn", []string{"package"}, "java/testdata/mvn_package_success.txt", 0, modeBatch},
 	{"mvn test (success, stream)", "mvn", []string{"test"}, "java/testdata/mvn_test_success.txt", 0, modeStream},
 	{"mvn test (failure, stream)", "mvn", []string{"test"}, "java/testdata/mvn_test_failure.txt", 1, modeStream},
-	// NetEDS 产线大项目参考（真实 890 KB WARNING 风暴 + 编译失败）
-	{"mvn compile (real large failure, batch)", "mvn", []string{"compile"}, "java/testdata/mvn_compile_real_failure.txt", 1, modeBatch},
 
 	// ---- Gradle（spring-petclinic 真实场景）----
 	{"gradle build (success, batch)", "gradle", []string{"build"}, "java/testdata/gradle_build_success.txt", 0, modeBatch},

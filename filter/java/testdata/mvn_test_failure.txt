@@ -14,7 +14,7 @@
 [INFO] You have 0 Checkstyle violations.
 [INFO] 
 [INFO] --- jacoco:0.8.14:prepare-agent (default) @ spring-petclinic ---
-[INFO] argLine set to -javaagent:/Users/mikaa/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/private/tmp/gw-fixture-work/spring-petclinic/target/jacoco.exec
+[INFO] argLine set to -javaagent:/Users/user/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/private/tmp/gw-fixture-work/spring-petclinic/target/jacoco.exec
 [INFO] 
 [INFO] --- git-commit-id:9.0.2:revision (default) @ spring-petclinic ---
 [INFO] dotGitDirectory '/private/tmp/gw-fixture-work/spring-petclinic/.git'
@@ -128,11 +128,11 @@
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:13:14.287+08:00  INFO 44008 --- [           main] o.s.s.petclinic.vet.VetControllerTests   : Starting VetControllerTests using Java 21.0.8 with PID 44008 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:13:14.287+08:00  INFO 44008 --- [           main] o.s.s.petclinic.vet.VetControllerTests   : Starting VetControllerTests using Java 21.0.8 with PID 44008 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:13:14.287+08:00  INFO 44008 --- [           main] o.s.s.petclinic.vet.VetControllerTests   : No active profile set, falling back to 1 default profile: "default"
 Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
 OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
-WARNING: A Java agent has been loaded dynamically (/Users/mikaa/.m2/repository/net/bytebuddy/byte-buddy-agent/1.17.8/byte-buddy-agent-1.17.8.jar)
+WARNING: A Java agent has been loaded dynamically (/Users/user/.m2/repository/net/bytebuddy/byte-buddy-agent/1.17.8/byte-buddy-agent-1.17.8.jar)
 WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
 WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
 WARNING: Dynamic loading of agents will be disallowed by default in a future release
@@ -163,7 +163,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:13:16.003+08:00  INFO 44008 --- [           main] o.s.s.p.owner.OwnerControllerTests       : Starting OwnerControllerTests using Java 21.0.8 with PID 44008 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:13:16.003+08:00  INFO 44008 --- [           main] o.s.s.p.owner.OwnerControllerTests       : Starting OwnerControllerTests using Java 21.0.8 with PID 44008 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:13:16.004+08:00  INFO 44008 --- [           main] o.s.s.p.owner.OwnerControllerTests       : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:13:16.237+08:00  INFO 44008 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
 2026-04-21T11:13:16.238+08:00  INFO 44008 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
@@ -194,7 +194,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:13:16.538+08:00  INFO 44008 --- [           main] o.s.s.p.owner.PetControllerTests         : Starting PetControllerTests using Java 21.0.8 with PID 44008 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:13:16.538+08:00  INFO 44008 --- [           main] o.s.s.p.owner.PetControllerTests         : Starting PetControllerTests using Java 21.0.8 with PID 44008 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:13:16.538+08:00  INFO 44008 --- [           main] o.s.s.p.owner.PetControllerTests         : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:13:16.656+08:00  INFO 44008 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
 2026-04-21T11:13:16.656+08:00  INFO 44008 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
@@ -229,7 +229,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:13:16.814+08:00  INFO 44008 --- [           main] o.s.s.p.owner.VisitControllerTests       : Starting VisitControllerTests using Java 21.0.8 with PID 44008 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:13:16.814+08:00  INFO 44008 --- [           main] o.s.s.p.owner.VisitControllerTests       : Starting VisitControllerTests using Java 21.0.8 with PID 44008 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:13:16.814+08:00  INFO 44008 --- [           main] o.s.s.p.owner.VisitControllerTests       : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:13:16.878+08:00  INFO 44008 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
 2026-04-21T11:13:16.878+08:00  INFO 44008 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
@@ -250,7 +250,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
   Operating System: Docker Desktop
   Total Memory: 7836 MB
   Labels: 
-    com.docker.desktop.address=unix:///Users/mikaa/Library/Containers/com.docker.docker/Data/docker-cli.sock
+    com.docker.desktop.address=unix:///Users/user/Library/Containers/com.docker.docker/Data/docker-cli.sock
 2026-04-21T11:13:18.810+08:00  INFO 44008 --- [           main] org.testcontainers.images.PullPolicy     : Image pull policy will be performed by: DefaultPullPolicy()
 2026-04-21T11:13:18.812+08:00  INFO 44008 --- [           main] o.t.utility.ImageNameSubstitutor         : Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
 2026-04-21T11:13:18.905+08:00  INFO 44008 --- [           main] tc.testcontainers/ryuk:0.13.0            : Pulling docker image: testcontainers/ryuk:0.13.0. Please be patient; this may take some time but only needs to be done once.
@@ -286,7 +286,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:13:26.105+08:00  INFO 44008 --- [           main] o.s.s.p.PostgresIntegrationTests         : Starting PostgresIntegrationTests using Java 21.0.8 with PID 44008 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:13:26.105+08:00  INFO 44008 --- [           main] o.s.s.p.PostgresIntegrationTests         : Starting PostgresIntegrationTests using Java 21.0.8 with PID 44008 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:13:26.105+08:00  INFO 44008 --- [           main] o.s.s.p.PostgresIntegrationTests         : The following 1 profile is active: "postgres"
 2026-04-21T11:13:26.109+08:00  INFO 44008 --- [           main] .s.b.d.c.l.DockerComposeLifecycleManager : Using Docker Compose file /private/tmp/gw-fixture-work/spring-petclinic/docker-compose.yml
 2026-04-21T11:13:26.503+08:00  INFO 44008 --- [utReader-stderr] o.s.boot.docker.compose.core.DockerCli   :  Image postgres:18.3 Pulling 
@@ -2652,7 +2652,7 @@ java.lang.IllegalStateException: ApplicationContext failure threshold (1) exceed
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:08.230+08:00  INFO 44008 --- [           main] o.s.s.petclinic.MySqlIntegrationTests    : Starting MySqlIntegrationTests using Java 21.0.8 with PID 44008 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:08.230+08:00  INFO 44008 --- [           main] o.s.s.petclinic.MySqlIntegrationTests    : Starting MySqlIntegrationTests using Java 21.0.8 with PID 44008 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:08.230+08:00  INFO 44008 --- [           main] o.s.s.petclinic.MySqlIntegrationTests    : The following 1 profile is active: "mysql"
 2026-04-21T11:15:08.297+08:00  INFO 44008 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2026-04-21T11:15:08.302+08:00  INFO 44008 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 3 JPA repository interfaces.
@@ -2715,7 +2715,7 @@ java.lang.IllegalStateException: ApplicationContext failure threshold (1) exceed
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:16.524+08:00  INFO 44008 --- [           main] .s.s.p.s.CrashControllerIntegrationTests : Starting CrashControllerIntegrationTests using Java 21.0.8 with PID 44008 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:16.524+08:00  INFO 44008 --- [           main] .s.s.p.s.CrashControllerIntegrationTests : Starting CrashControllerIntegrationTests using Java 21.0.8 with PID 44008 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:16.524+08:00  INFO 44008 --- [           main] .s.s.p.s.CrashControllerIntegrationTests : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:15:16.608+08:00  INFO 44008 --- [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
 2026-04-21T11:15:16.609+08:00  INFO 44008 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
@@ -2856,7 +2856,7 @@ java.lang.RuntimeException: Expected: controller used to showcase what happens w
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:16.760+08:00  INFO 44008 --- [           main] o.s.s.p.service.ClinicServiceTests       : Starting ClinicServiceTests using Java 21.0.8 with PID 44008 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:16.760+08:00  INFO 44008 --- [           main] o.s.s.p.service.ClinicServiceTests       : Starting ClinicServiceTests using Java 21.0.8 with PID 44008 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:16.760+08:00  INFO 44008 --- [           main] o.s.s.p.service.ClinicServiceTests       : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:15:16.778+08:00  INFO 44008 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2026-04-21T11:15:16.783+08:00  INFO 44008 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 3 ms. Found 3 JPA repository interfaces.
@@ -2926,7 +2926,7 @@ Hibernate: select pt1_0.id,pt1_0.name from types pt1_0 order by pt1_0.name
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:17.206+08:00  INFO 44008 --- [           main] o.s.s.p.PetClinicIntegrationTests        : Starting PetClinicIntegrationTests using Java 21.0.8 with PID 44008 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:17.206+08:00  INFO 44008 --- [           main] o.s.s.p.PetClinicIntegrationTests        : Starting PetClinicIntegrationTests using Java 21.0.8 with PID 44008 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:17.206+08:00  INFO 44008 --- [           main] o.s.s.p.PetClinicIntegrationTests        : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:15:17.263+08:00  INFO 44008 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2026-04-21T11:15:17.267+08:00  INFO 44008 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 3 ms. Found 3 JPA repository interfaces.

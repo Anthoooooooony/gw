@@ -15,7 +15,7 @@
 [INFO] You have 0 Checkstyle violations.
 [INFO] 
 [INFO] --- jacoco:0.8.14:prepare-agent (default) @ spring-petclinic ---
-[INFO] argLine set to -javaagent:/Users/mikaa/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/private/tmp/gw-fixture-work/spring-petclinic/target/jacoco.exec
+[INFO] argLine set to -javaagent:/Users/user/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/private/tmp/gw-fixture-work/spring-petclinic/target/jacoco.exec
 [INFO] 
 [INFO] --- git-commit-id:9.0.2:revision (default) @ spring-petclinic ---
 [INFO] dotGitDirectory '/private/tmp/gw-fixture-work/spring-petclinic/.git'

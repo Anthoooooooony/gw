@@ -14,7 +14,7 @@
 [INFO] You have 0 Checkstyle violations.
 [INFO] 
 [INFO] --- jacoco:0.8.14:prepare-agent (default) @ spring-petclinic ---
-[INFO] argLine set to -javaagent:/Users/mikaa/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/private/tmp/gw-fixture-work/spring-petclinic/target/jacoco.exec
+[INFO] argLine set to -javaagent:/Users/user/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/private/tmp/gw-fixture-work/spring-petclinic/target/jacoco.exec
 [INFO] 
 [INFO] --- git-commit-id:9.0.2:revision (default) @ spring-petclinic ---
 [INFO] dotGitDirectory '/private/tmp/gw-fixture-work/spring-petclinic/.git'
@@ -123,11 +123,11 @@
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:45.057+08:00  INFO 44361 --- [           main] o.s.s.petclinic.vet.VetControllerTests   : Starting VetControllerTests using Java 21.0.8 with PID 44361 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:45.057+08:00  INFO 44361 --- [           main] o.s.s.petclinic.vet.VetControllerTests   : Starting VetControllerTests using Java 21.0.8 with PID 44361 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:45.057+08:00  INFO 44361 --- [           main] o.s.s.petclinic.vet.VetControllerTests   : No active profile set, falling back to 1 default profile: "default"
 Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
 OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
-WARNING: A Java agent has been loaded dynamically (/Users/mikaa/.m2/repository/net/bytebuddy/byte-buddy-agent/1.17.8/byte-buddy-agent-1.17.8.jar)
+WARNING: A Java agent has been loaded dynamically (/Users/user/.m2/repository/net/bytebuddy/byte-buddy-agent/1.17.8/byte-buddy-agent-1.17.8.jar)
 WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
 WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
 WARNING: Dynamic loading of agents will be disallowed by default in a future release
@@ -158,7 +158,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:46.856+08:00  INFO 44361 --- [           main] o.s.s.p.owner.OwnerControllerTests       : Starting OwnerControllerTests using Java 21.0.8 with PID 44361 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:46.856+08:00  INFO 44361 --- [           main] o.s.s.p.owner.OwnerControllerTests       : Starting OwnerControllerTests using Java 21.0.8 with PID 44361 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:46.856+08:00  INFO 44361 --- [           main] o.s.s.p.owner.OwnerControllerTests       : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:15:47.047+08:00  INFO 44361 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
 2026-04-21T11:15:47.048+08:00  INFO 44361 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
@@ -189,7 +189,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:47.307+08:00  INFO 44361 --- [           main] o.s.s.p.owner.PetControllerTests         : Starting PetControllerTests using Java 21.0.8 with PID 44361 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:47.307+08:00  INFO 44361 --- [           main] o.s.s.p.owner.PetControllerTests         : Starting PetControllerTests using Java 21.0.8 with PID 44361 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:47.307+08:00  INFO 44361 --- [           main] o.s.s.p.owner.PetControllerTests         : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:15:47.424+08:00  INFO 44361 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
 2026-04-21T11:15:47.424+08:00  INFO 44361 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
@@ -224,7 +224,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:47.584+08:00  INFO 44361 --- [           main] o.s.s.p.owner.VisitControllerTests       : Starting VisitControllerTests using Java 21.0.8 with PID 44361 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:47.584+08:00  INFO 44361 --- [           main] o.s.s.p.owner.VisitControllerTests       : Starting VisitControllerTests using Java 21.0.8 with PID 44361 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:47.585+08:00  INFO 44361 --- [           main] o.s.s.p.owner.VisitControllerTests       : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:15:47.650+08:00  INFO 44361 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
 2026-04-21T11:15:47.650+08:00  INFO 44361 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
@@ -255,7 +255,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:47.723+08:00  INFO 44361 --- [           main] .s.s.p.s.CrashControllerIntegrationTests : Starting CrashControllerIntegrationTests using Java 21.0.8 with PID 44361 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:47.723+08:00  INFO 44361 --- [           main] .s.s.p.s.CrashControllerIntegrationTests : Starting CrashControllerIntegrationTests using Java 21.0.8 with PID 44361 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:47.723+08:00  INFO 44361 --- [           main] .s.s.p.s.CrashControllerIntegrationTests : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:15:48.070+08:00  INFO 44361 --- [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
 2026-04-21T11:15:48.079+08:00  INFO 44361 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
@@ -396,7 +396,7 @@ java.lang.RuntimeException: Expected: controller used to showcase what happens w
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:48.616+08:00  INFO 44361 --- [           main] o.s.s.p.service.ClinicServiceTests       : Starting ClinicServiceTests using Java 21.0.8 with PID 44361 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:48.616+08:00  INFO 44361 --- [           main] o.s.s.p.service.ClinicServiceTests       : Starting ClinicServiceTests using Java 21.0.8 with PID 44361 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:48.616+08:00  INFO 44361 --- [           main] o.s.s.p.service.ClinicServiceTests       : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:15:48.675+08:00  INFO 44361 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2026-04-21T11:15:48.695+08:00  INFO 44361 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 15 ms. Found 3 JPA repository interfaces.
@@ -468,7 +468,7 @@ Hibernate: select pt1_0.id,pt1_0.name from types pt1_0 order by pt1_0.name
 :: Built with Spring Boot :: 4.0.3
 
 
-2026-04-21T11:15:50.496+08:00  INFO 44361 --- [           main] o.s.s.p.PetClinicIntegrationTests        : Starting PetClinicIntegrationTests using Java 21.0.8 with PID 44361 (started by mikaa in /private/tmp/gw-fixture-work/spring-petclinic)
+2026-04-21T11:15:50.496+08:00  INFO 44361 --- [           main] o.s.s.p.PetClinicIntegrationTests        : Starting PetClinicIntegrationTests using Java 21.0.8 with PID 44361 (started by user in /private/tmp/gw-fixture-work/spring-petclinic)
 2026-04-21T11:15:50.496+08:00  INFO 44361 --- [           main] o.s.s.p.PetClinicIntegrationTests        : No active profile set, falling back to 1 default profile: "default"
 2026-04-21T11:15:50.575+08:00  INFO 44361 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2026-04-21T11:15:50.580+08:00  INFO 44361 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 3 JPA repository interfaces.
