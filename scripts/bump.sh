@@ -120,6 +120,10 @@ EOF
 
 main() {
   local kind="" pre="" dry_run=0
+  # 统一 trap 清理：main 里所有 mktemp 产物，任一中途 set -e 退出都不残留 /tmp。
+  # 允许空值（rm -f "" 是 no-op）。
+  local tmp="" block_file="" tmp2=""
+  trap 'rm -f "$tmp" "$block_file" "$tmp2"' EXIT
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -186,6 +190,17 @@ main() {
   changelog_section=$(git log --format='%s%n%b%x00' "$log_range" |
     build_changelog_section "$new_tag" "$date")
 
+  # 5. CHANGELOG 预检：dry-run / 真实写入都必须通过，防止进入到写入阶段才静默丢内容。
+  if [[ ! -f CHANGELOG.md ]]; then
+    echo "gw bump: CHANGELOG.md 不存在" >&2
+    exit 1
+  fi
+  # `## [Unreleased]` 节是 awk 插入锚点；缺失时插入会失败但不报错，changelog 被吞。
+  if ! grep -q '^## \[Unreleased\]' CHANGELOG.md; then
+    echo "gw bump: CHANGELOG.md 缺少 '## [Unreleased]' 节，无法定位插入点" >&2
+    exit 1
+  fi
+
   if [[ $dry_run -eq 1 ]]; then
     echo "--- 预期 CHANGELOG 新增 ---"
     printf '%s\n' "$changelog_section"
@@ -193,15 +208,8 @@ main() {
     echo "(dry-run：不 commit / 不 tag / 不 push)"
     exit 0
   fi
-
-  # 5. 插入到 CHANGELOG.md 的 [Unreleased] 节之后
-  if [[ ! -f CHANGELOG.md ]]; then
-    echo "gw bump: CHANGELOG.md 不存在" >&2
-    exit 1
-  fi
   # 用 awk 在 "## [Unreleased]" 节结束（下一个 "## [" 之前）插入新节。
   # 通过文件读取 block 避免 BSD awk 对含换行的 -v 值报错（GNU awk 无此限制）。
-  local tmp block_file
   tmp=$(mktemp)
   block_file=$(mktemp)
   printf '%s\n' "$changelog_section" > "$block_file"
@@ -216,11 +224,9 @@ main() {
     END { if (in_unreleased) printf "\n%s", block }
   ' CHANGELOG.md > "$tmp"
   mv "$tmp" CHANGELOG.md
-  rm -f "$block_file"
 
   # 5b. 维护 CHANGELOG.md 底部链接定义区
   # 更新 [Unreleased]: compare/<prev>...HEAD 为 compare/<new>...HEAD
-  local tmp2
   tmp2=$(mktemp)
   awk -v new="$new_tag" '
     /^\[Unreleased\]:/ {
