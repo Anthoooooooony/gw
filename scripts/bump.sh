@@ -150,6 +150,16 @@ main() {
   date=$(date -u +%Y-%m-%d)
   echo "gw bump: $prev_tag → $new_tag ($date)"
 
+  # 3b. 幂等性：新 tag 必须尚未存在（本地 + 远端），否则 push 阶段会炸并留脏 tag
+  if git rev-parse -q --verify "refs/tags/${new_tag}" >/dev/null; then
+    echo "gw bump: tag ${new_tag} 已存在于本地，先 git tag -d ${new_tag} 或选别的版本" >&2
+    exit 1
+  fi
+  if git ls-remote --exit-code --tags origin "refs/tags/${new_tag}" >/dev/null 2>&1; then
+    echo "gw bump: tag ${new_tag} 已存在于远端 origin" >&2
+    exit 1
+  fi
+
   # 4. 生成 CHANGELOG 节
   local commits changelog_section
   if [[ "$prev_tag" == "v0.0.0" ]]; then
