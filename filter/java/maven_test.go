@@ -115,22 +115,22 @@ func TestMavenFilter_ApplyOnError(t *testing.T) {
 		t.Error("应该保留 BUILD FAILURE")
 	}
 
-	// 应保留失败测试名
-	if !strings.Contains(content, "testAuthentication") {
-		t.Error("应该保留失败测试名 testAuthentication")
+	// 应保留失败测试名（petclinic PostgresIntegrationTests）
+	if !strings.Contains(content, "findAll") {
+		t.Error("应该保留失败测试名 findAll")
 	}
-	if !strings.Contains(content, "testGetUserProfile") {
-		t.Error("应该保留失败测试名 testGetUserProfile")
+	if !strings.Contains(content, "ownerDetails") {
+		t.Error("应该保留失败测试名 ownerDetails")
 	}
 
-	// 应保留断言详情
-	if !strings.Contains(content, "401") {
-		t.Error("应该保留断言详情(401)")
+	// 应保留异常关键字（ApplicationContext 加载失败 = 典型 Spring 测试失败）
+	if !strings.Contains(content, "IllegalState") {
+		t.Error("应该保留异常类型 IllegalState")
 	}
 
 	// 应保留测试摘要
-	if !strings.Contains(content, "Tests run: 5") {
-		t.Error("应该保留测试摘要")
+	if !strings.Contains(content, "Tests run:") {
+		t.Error("应该保留测试摘要 Tests run")
 	}
 
 	// 不应包含下载日志
