@@ -24,6 +24,13 @@ func (f *LogFilter) Apply(input filter.FilterInput) filter.FilterOutput {
 	original := input.Stdout
 	commits := parseCommits(original)
 
+	// 锚点缺失兜底：--oneline / --pretty=format:... / --graph / 自定义 format.pretty
+	// 都不会打印 "commit <hash>" + "Author:" 行，解析器产出 0 条 commit。
+	// 此时直接透传原文，避免把用户输出压成空字符串（实机发现的 data loss）。
+	if len(commits) == 0 {
+		return filter.FilterOutput{Content: original, Original: original}
+	}
+
 	var out []string
 	for _, c := range commits {
 		// 短哈希 (7字符) + 主题 + 日期 + 作者

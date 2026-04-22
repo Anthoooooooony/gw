@@ -89,3 +89,25 @@ func TestLogFilter_ApplyOnError(t *testing.T) {
 		t.Error("ApplyOnError 应该返回 nil")
 	}
 }
+
+// TestLogFilter_NonStandardFormat_Fallback 防回归：
+// --oneline / --pretty=format:... / --graph / 用户 format.pretty 配置都不产
+// "commit <hash>" + "Author:" 默认格式，解析器返回 0 条 commit。必须透传原文，
+// 不能压成空串（实机 `gw exec git log --oneline` 发现 0-byte data loss）。
+func TestLogFilter_NonStandardFormat_Fallback(t *testing.T) {
+	f := &LogFilter{}
+	cases := map[string]string{
+		"--oneline":             "abc1234 feat: something\ndef5678 fix: other\n",
+		"--pretty=format:%h %s": "abc1234 feat: foo",
+		"--graph":               "* abc1234 feat: foo\n| \n* def5678 fix: bar\n",
+		"empty":                 "",
+	}
+	for name, raw := range cases {
+		t.Run(name, func(t *testing.T) {
+			out := f.Apply(filter.FilterInput{Cmd: "git", Args: []string{"log"}, Stdout: raw})
+			if out.Content != raw {
+				t.Errorf("%s: 非标准格式应透传原文\n got=%q\nwant=%q", name, out.Content, raw)
+			}
+		})
+	}
+}
