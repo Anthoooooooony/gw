@@ -145,7 +145,15 @@ func applyLossless(stripAnsi bool, head, tail, maxL int, onEmpty, content string
 		content = filter.StripANSI(content)
 	}
 
-	lines := strings.Split(content, "\n")
+	// 内容常以 \n 结尾，strings.Split 会产出末尾空串并被 head/tail/max_lines 计数，
+	// 导致 `tail_lines=3` 实际只保留 2 行真实内容（末位是那个空串）。先剥掉末尾
+	// 的 \n 再 Split，确保"N 行"严格对应 N 行用户能看到的文本；Join 后再补回。
+	hadTrailingNewline := strings.HasSuffix(content, "\n")
+	trimmed := content
+	if hadTrailingNewline {
+		trimmed = content[:len(content)-1]
+	}
+	lines := strings.Split(trimmed, "\n")
 
 	if head > 0 && len(lines) > head {
 		lines = lines[:head]
@@ -158,6 +166,9 @@ func applyLossless(stripAnsi bool, head, tail, maxL int, onEmpty, content string
 	}
 
 	result := strings.Join(lines, "\n")
+	if hadTrailingNewline && result != "" {
+		result += "\n"
+	}
 	if onEmpty != "" && strings.TrimSpace(result) == "" {
 		return onEmpty
 	}

@@ -158,12 +158,22 @@ func detectAndSliceVitest(content string) string {
 const genericTailLines = 120
 
 // fallbackTail 对未识别格式应用通用尾截断：保留最后 N 行。
+// 与 TOML 引擎对齐：先剥末尾 \n 再 Split，避免末尾空串被计成一行。
 func fallbackTail(content string) string {
-	lines := strings.Split(content, "\n")
+	hadTrailingNewline := strings.HasSuffix(content, "\n")
+	trimmed := content
+	if hadTrailingNewline {
+		trimmed = content[:len(content)-1]
+	}
+	lines := strings.Split(trimmed, "\n")
 	if len(lines) <= genericTailLines {
 		return content
 	}
-	return strings.Join(lines[len(lines)-genericTailLines:], "\n")
+	result := strings.Join(lines[len(lines)-genericTailLines:], "\n")
+	if hadTrailingNewline && result != "" {
+		result += "\n"
+	}
+	return result
 }
 
 // detectAndSlice 依次尝试每个 runner 的嗅探器，首个命中的结果生效。
