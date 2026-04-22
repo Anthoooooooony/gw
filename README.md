@@ -1,5 +1,9 @@
 # gw
 
+[![CI](https://github.com/Anthoooooooony/gw/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Anthoooooooony/gw/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Anthoooooooony/gw?sort=semver)](https://github.com/Anthoooooooony/gw/releases/latest)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Anthoooooooony/gw.svg)](https://pkg.go.dev/github.com/Anthoooooooony/gw)
+
 CLI proxy for AI coding tools. 拦截 shell 命令，本地执行，过滤输出，减少 LLM token 消耗。
 
 ## Installation
@@ -271,6 +275,7 @@ gw/
 │   ├── rewrite.go                  # gw rewrite — Hook 调用的命令改写
 │   ├── init_cmd.go                 # gw init — 安装 Claude Code Hook
 │   ├── uninstall.go                # gw uninstall — 移除 Hook
+│   ├── claude.go                   # gw claude — 透明包装 claude CLI 并启动本地 API 代理
 │   ├── gain.go                     # gw gain — Token 节省统计
 │   ├── version.go                  # gw --version / gw version（ldflags + runtime/debug fallback）
 │   ├── inspect.go                  # gw inspect [id] — 查询历史记录，--raw 打印原文
@@ -289,14 +294,16 @@ gw/
 │   │   ├── maven_state.go         # Maven 状态机（11 态 + 21 种行分类 + 转移逻辑）
 │   │   ├── gradle.go              # Gradle 过滤器（批量白名单 + 流式状态机）
 │   │   └── springboot.go          # Spring Boot 过滤器（banner + logger name 匹配）
+│   ├── pytest/
+│   │   └── pytest.go              # pytest / python -m pytest 语义过滤器（summary + FAILURES 锚点）
 │   └── toml/
-│       ├── engine.go              # TOML 声明式过滤引擎（7 阶段管道）
+│       ├── engine.go              # TOML 声明式过滤引擎（v2 DSL 无损字段）
 │       ├── loader.go              # TOML 三级加载（builtin / user / project）
 │       └── rules/                 # 内置 TOML 规则（go:embed）
 │           ├── docker.toml
 │           ├── kubectl.toml
 │           ├── node.toml          # npm / yarn / pnpm
-│           ├── python.toml        # pip / pytest / venv
+│           ├── python.toml        # pip / venv（pytest 交由 filter/pytest 接管）
 │           └── rust.toml          # cargo build/test/check/clippy
 │
 ├── shell/
@@ -308,7 +315,16 @@ gw/
 │   ├── timeout.go                 # GW_CMD_TIMEOUT 解析 + 超时提示
 │   ├── killer.go                  # 超时 killer goroutine（runner/stream 共用）
 │   ├── procgroup_unix.go          # 进程组 SIGTERM/SIGKILL（unix 平台）
-│   └── procgroup_other.go         # 非 unix 平台降级实现（仅杀主进程）
+│   ├── procgroup_other.go         # 非 unix 平台降级实现（仅杀主进程）
+│   └── apiproxy/                  # gw claude 子命令的本地 HTTP 代理（Claude Code → Anthropic API）
+│       ├── server.go              # 127.0.0.1 随机端口 + httputil.ReverseProxy
+│       ├── anthropic.go           # /v1/messages handler + BodyTransformer 注入点
+│       ├── env.go                 # GW_APIPROXY_* 环境变量解析（body 上限 / header 超时 / 关闭 grace）
+│       └── dcp/                   # DCP 风格 tool_result 去重（同签名 tool_use 历史替换为占位符）
+│           ├── dedup.go           # Transformer.Transform：解析 → 改写 → 序列化
+│           ├── signature.go       # tool_use 签名算法（name + sorted input JSON）
+│           ├── types.go           # messagesRequest / message / tool_use_block 等 JSON 模型
+│           └── stats.go           # 原子计数器（请求/扫描/替换/字节）供摘要打印
 │
 └── track/
     ├── db.go                      # SQLite 存储（WAL + busy_timeout）
@@ -392,6 +408,18 @@ go test ./filter/java/  # 只跑 Java 过滤器测试
 ```
 
 测试 fixture 使用 Docker 从真实开源项目抓取的构建输出（Maven 3 模块项目、Gradle 2 模块项目、Spring Petclinic），不使用手写模拟数据。
+
+便捷命令：
+
+```bash
+make test        # 跑 CI 对齐的 race + cover 全量测试
+make test-fast   # 本地反复迭代用，不带 race 与 cover
+make ci          # 本地跑 CI 核心 gate（tidy / vet / test / bump-test）等价集
+```
+
+## Contributing
+
+日常贡献流程（分支命名、Commit 约定、CHANGELOG 维护、release 步骤、测试层级）见 [`CONTRIBUTING.md`](./CONTRIBUTING.md)。Claude Code 的项目级开发约定与关键不变式见 [`CLAUDE.md`](./CLAUDE.md)。
 
 ## 命令参考
 

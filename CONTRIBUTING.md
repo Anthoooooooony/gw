@@ -71,8 +71,12 @@ Pre-bump 清单（在 `master` 干净、已 `git pull` 的前提下）：
 |----|------|---------|
 | Go 单测 | `go test -race ./...` | 所有 Go 改动 |
 | bash 单测 | `bash scripts/bump_test.sh` | `scripts/` 改动 |
+| 格式 / 静态 | `gofmt -l .` / `go vet ./...` | 所有 Go 改动（CI test job 内部同跑） |
+| mod 整洁 | `go mod tidy && git diff --exit-code go.mod go.sum` | 依赖变动 |
 | lint | `golangci-lint run` / `shellcheck scripts/*.sh` | 本地选测 |
 | vulncheck | `govulncheck ./...` | 依赖升级后 |
+
+本地跑完整 CI 等价集：`make ci`（串起 tidy / vet / race test / bump-test）。
 
 本地覆盖率：`go test -coverprofile=coverage.out -covermode=atomic ./... && go tool cover -html=coverage.out`。
 
