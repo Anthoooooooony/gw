@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Anthoooooooony/gw/filter"
 	"github.com/Anthoooooooony/gw/internal"
@@ -224,14 +225,14 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 
 	var stderrBuf strings.Builder
 	exitCode, err := internal.RunCommandStreamingFull(cmdName, cmdArgs, func(line string) {
-		originalChars += len([]rune(line))
+		originalChars += utf8.RuneCountInString(line)
 		if dumpRawPath != "" || storeRaw {
 			rawBuf.WriteString(line)
 			rawBuf.WriteByte('\n')
 		}
 		action, output := proc.ProcessLine(line)
 		if action == filter.StreamEmit {
-			filteredChars += len([]rune(output))
+			filteredChars += utf8.RuneCountInString(output)
 			fmt.Println(output)
 		}
 	}, &stderrBuf)
@@ -259,7 +260,7 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 	// Flush
 	flushedLines := proc.Flush(exitCode)
 	for _, line := range flushedLines {
-		filteredChars += len([]rune(line))
+		filteredChars += utf8.RuneCountInString(line)
 		fmt.Println(line)
 	}
 

@@ -1,10 +1,13 @@
 package track
 
-import "math"
+import (
+	"math"
+	"unicode/utf8"
+)
 
 // EstimateTokens 使用 ceil(chars/4) 近似估算 token 数
 func EstimateTokens(text string) int {
-	return EstimateTokensByLen(len([]rune(text)))
+	return EstimateTokensByLen(utf8.RuneCountInString(text))
 }
 
 // EstimateTokensByLen 按字符数估算 token 数，避免分配字符串
