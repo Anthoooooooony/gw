@@ -71,14 +71,18 @@ func findFirstMatching(lines []string, re *regexp.Regexp) int {
 
 // Apply 处理成功场景：只保留 `test result: ok.` 那一行。
 // 无法 parse 出 summary 时返回原文——保守优先。
+//
+// 入口做 StripANSI：`CARGO_TERM_COLOR=always` 会给 `ok` / `FAILED` 加色码
+// （如 `test result: \x1b[32mok\x1b[0m.`），破坏行首正则锚点。去色后匹配稳定。
 func (f *TestFilter) Apply(input filter.FilterInput) filter.FilterOutput {
-	content := input.Stdout
+	original := input.Stdout
+	content := filter.StripANSI(original)
 	lines := strings.Split(content, "\n")
 	summary := findLastMatching(lines, testResultOkRe)
 	if summary == "" {
-		return filter.FilterOutput{Content: content, Original: content}
+		return filter.FilterOutput{Content: original, Original: original}
 	}
-	return filter.FilterOutput{Content: summary + "\n", Original: content}
+	return filter.FilterOutput{Content: summary + "\n", Original: original}
 }
 
 // ApplyOnError 处理失败场景：保留从首个 `failures:` 行到末尾的全部内容。
@@ -89,7 +93,8 @@ func (f *TestFilter) Apply(input filter.FilterInput) filter.FilterOutput {
 // 任一缺失都返回 nil 透传原文——避免把 `cargo test --no-run` 之类不产生
 // failures 节的失败输出误压缩。
 func (f *TestFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput {
-	content := input.Stdout + input.Stderr
+	original := input.Stdout + input.Stderr
+	content := filter.StripANSI(original)
 	lines := strings.Split(content, "\n")
 	if findLastMatching(lines, testResultFailedRe) == "" {
 		return nil
@@ -99,5 +104,5 @@ func (f *TestFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput
 		return nil
 	}
 	failBlock := strings.Join(lines[start:], "\n")
-	return &filter.FilterOutput{Content: failBlock, Original: content}
+	return &filter.FilterOutput{Content: failBlock, Original: original}
 }

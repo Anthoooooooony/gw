@@ -57,21 +57,25 @@ var errorLineRe = regexp.MustCompile(`^error(\[E\d+\])?:`)
 
 // Apply 成功场景：只保留 Finished 行。未找到返回原文。
 func (f *BuildFilter) Apply(input filter.FilterInput) filter.FilterOutput {
-	content := input.Stdout
+	original := input.Stdout
+	content := filter.StripANSI(original)
 	lines := strings.Split(content, "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
 		if finishedRe.MatchString(strings.TrimRight(lines[i], "\r")) {
-			return filter.FilterOutput{Content: strings.TrimSpace(lines[i]) + "\n", Original: content}
+			return filter.FilterOutput{Content: strings.TrimSpace(lines[i]) + "\n", Original: original}
 		}
 	}
-	return filter.FilterOutput{Content: content, Original: content}
+	return filter.FilterOutput{Content: original, Original: original}
 }
 
 // ApplyOnError 失败场景：保留从首个 `error:` 行到末尾。
 // 双锚点校验：既要存在首个 error 行，也要存在 `error: could not compile` 总结行。
 // 任一缺失返回 nil，避免误压缩 `cargo build --timings` 等非标形态。
+//
+// 入口 StripANSI 防 `CARGO_TERM_COLOR=always` 给 `error:` 加红色码破坏锚点。
 func (f *BuildFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput {
-	content := input.Stdout + input.Stderr
+	original := input.Stdout + input.Stderr
+	content := filter.StripANSI(original)
 	lines := strings.Split(content, "\n")
 
 	// 总结行（could not compile）必须存在
@@ -98,5 +102,5 @@ func (f *BuildFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutpu
 		return nil
 	}
 	block := strings.Join(lines[start:], "\n")
-	return &filter.FilterOutput{Content: block, Original: content}
+	return &filter.FilterOutput{Content: block, Original: original}
 }

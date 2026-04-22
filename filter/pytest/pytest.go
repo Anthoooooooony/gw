@@ -95,14 +95,18 @@ func findFailuresStart(lines []string) int {
 
 // Apply 处理成功场景（exit==0）：只保留最终 summary 行。
 // 无法 parse 出 summary 时返回原文，让调用方看到完整输出——保守优先。
+//
+// 入口 StripANSI：pytest 默认 TTY 外关色，但用户开 `--color=yes` 会强制输出色码
+// 破坏 `=+ ... in Ns =+` 锚点。去色保证压缩稳定。
 func (f *Filter) Apply(input filter.FilterInput) filter.FilterOutput {
-	content := input.Stdout
+	original := input.Stdout
+	content := filter.StripANSI(original)
 	lines := strings.Split(content, "\n")
 	summary := findFinalSummary(lines)
 	if summary == "" {
-		return filter.FilterOutput{Content: content, Original: content}
+		return filter.FilterOutput{Content: original, Original: original}
 	}
-	return filter.FilterOutput{Content: summary + "\n", Original: content}
+	return filter.FilterOutput{Content: summary + "\n", Original: original}
 }
 
 // ApplyOnError 处理失败场景（exit!=0）：保留从 FAILURES 节起到末尾的全部内容。
@@ -112,7 +116,8 @@ func (f *Filter) Apply(input filter.FilterInput) filter.FilterOutput {
 // 缺任一锚点（无 summary 或无 FAILURES 节）都返回 nil，让上层透传原文。
 // 这避免了"用户用了 pytest 插件把输出结构改乱"之类的长尾场景被误删。
 func (f *Filter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput {
-	content := input.Stdout + input.Stderr
+	original := input.Stdout + input.Stderr
+	content := filter.StripANSI(original)
 	lines := strings.Split(content, "\n")
 	summary := findFinalSummary(lines)
 	if summary == "" {
@@ -126,5 +131,5 @@ func (f *Filter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput {
 		return nil
 	}
 	failBlock := strings.Join(lines[start:], "\n")
-	return &filter.FilterOutput{Content: failBlock, Original: content}
+	return &filter.FilterOutput{Content: failBlock, Original: original}
 }

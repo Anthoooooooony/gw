@@ -69,6 +69,10 @@ func (f *MavenFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutpu
 
 // processMavenOutput 用状态机处理 Maven 输出
 func processMavenOutput(output string, successMode bool) string {
+	// 先剥 ANSI：maven 默认不加色，但用户若用 `mvn-color-plugin` / JPM 配色
+	// 或 Jenkins ANSIColor 会给 [INFO]/[ERROR] 前缀染色，破坏 classifyLine
+	// 的前缀识别。与 gradle 的 per-line StripANSI 行为对齐。
+	output = filter.StripANSI(output)
 	lines := strings.Split(output, "\n")
 	state := StateInit
 	seenErrors := make(map[string]bool)

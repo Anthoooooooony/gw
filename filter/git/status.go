@@ -21,7 +21,10 @@ func (f *StatusFilter) Match(cmd string, args []string) bool {
 
 func (f *StatusFilter) Apply(input filter.FilterInput) filter.FilterOutput {
 	original := input.Stdout
-	lines := strings.Split(original, "\n")
+	// `color.status=always` / `color.ui=always` 会给 modified/untracked 行加色码，
+	// 影响 `(use "git ...` 提示行的前缀判定。先去色再过滤。
+	content := filter.StripANSI(original)
+	lines := strings.Split(content, "\n")
 
 	var filtered []string
 	prevBlank := false
@@ -43,9 +46,9 @@ func (f *StatusFilter) Apply(input filter.FilterInput) filter.FilterOutput {
 		filtered = append(filtered, line)
 	}
 
-	content := strings.Join(filtered, "\n")
+	joined := strings.Join(filtered, "\n")
 	return filter.FilterOutput{
-		Content:  content,
+		Content:  joined,
 		Original: original,
 	}
 }

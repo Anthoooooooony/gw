@@ -22,7 +22,11 @@ func (f *LogFilter) Match(cmd string, args []string) bool {
 
 func (f *LogFilter) Apply(input filter.FilterInput) filter.FilterOutput {
 	original := input.Stdout
-	commits := parseCommits(original)
+	// 用户若开 `color.ui=always`，`commit <hash>` 前会带 `\x1b[33m` 黄色码，
+	// parseCommits 的 `strings.HasPrefix` 判断失败——解析成空 → #117 的 fallback
+	// 会返回原文（不丢数据），但也失去压缩；StripANSI 保证压缩在这种配置下仍生效。
+	content := filter.StripANSI(original)
+	commits := parseCommits(content)
 
 	// 锚点缺失兜底：--oneline / --pretty=format:... / --graph / 自定义 format.pretty
 	// 都不会打印 "commit <hash>" + "Author:" 行，解析器产出 0 条 commit。
@@ -53,9 +57,9 @@ func (f *LogFilter) Apply(input filter.FilterInput) filter.FilterOutput {
 		out = append(out, "")
 	}
 
-	content := strings.Join(out, "\n")
+	joined := strings.Join(out, "\n")
 	return filter.FilterOutput{
-		Content:  content,
+		Content:  joined,
 		Original: original,
 	}
 }

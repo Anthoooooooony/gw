@@ -188,20 +188,24 @@ func detectAndSlice(content string) string {
 }
 
 // Apply 成功场景：嗅探到已知 runner 则切片，否则落到通用尾截断。
+// 入口 StripANSI：AVA 的 ✔ / ✖ 常被加色码、vitest 的 ❯ 同样带色码；
+// `FORCE_COLOR=1` 或 `npm test --color` 会强制开启。去色保证嗅探器锚点稳定。
 func (f *Filter) Apply(input filter.FilterInput) filter.FilterOutput {
-	content := input.Stdout
+	original := input.Stdout
+	content := filter.StripANSI(original)
 	if sliced := detectAndSlice(content); sliced != "" {
-		return filter.FilterOutput{Content: sliced, Original: content}
+		return filter.FilterOutput{Content: sliced, Original: original}
 	}
-	return filter.FilterOutput{Content: fallbackTail(content), Original: content}
+	return filter.FilterOutput{Content: fallbackTail(content), Original: original}
 }
 
 // ApplyOnError 失败场景：嗅探已知 runner 优先切片，否则通用尾截断。
 // 无论是否识别都返回非 nil，让上层保持压缩。
 func (f *Filter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput {
-	content := input.Stdout + input.Stderr
+	original := input.Stdout + input.Stderr
+	content := filter.StripANSI(original)
 	if sliced := detectAndSlice(content); sliced != "" {
-		return &filter.FilterOutput{Content: sliced, Original: content}
+		return &filter.FilterOutput{Content: sliced, Original: original}
 	}
-	return &filter.FilterOutput{Content: fallbackTail(content), Original: content}
+	return &filter.FilterOutput{Content: fallbackTail(content), Original: original}
 }
