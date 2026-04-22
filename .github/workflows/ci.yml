@@ -84,10 +84,6 @@ jobs:
           path: filter/scenario-compression-report.md
           if-no-files-found: warn
 
-      - name: bash unit tests
-        if: matrix.os == 'ubuntu-latest'
-        run: bash scripts/bump_test.sh
-
   build:
     name: build (${{ matrix.os }}, CGO)
     timeout-minutes: 10
@@ -108,17 +104,6 @@ jobs:
         env:
           CGO_ENABLED: '1'
         run: go build ./...
-
-  shellcheck:
-    name: shellcheck (scripts/)
-    timeout-minutes: 5
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - name: Run shellcheck
-        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
-        with:
-          scandir: './scripts'
 
   actionlint:
     name: actionlint (.github/workflows/)

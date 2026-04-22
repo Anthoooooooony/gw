@@ -56,12 +56,12 @@ jobs:
             .
           ./dist/gw version
 
-      - name: Create archive (tar.gz with README/CHANGELOG)
+      - name: Create archive (tar.gz with README)
         run: |
           cd dist
-          cp ../README.md ../CHANGELOG.md .
+          cp ../README.md .
           tar czf "gw_${GITHUB_REF_NAME}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz" \
-            gw README.md CHANGELOG.md
+            gw README.md
           ls -la ./*.tar.gz
 
       - name: Upload archive artifact
@@ -95,27 +95,11 @@ jobs:
           sha256sum ./*.tar.gz > checksums.txt
           cat checksums.txt
 
-      - name: Extract release notes from CHANGELOG
+      # release-please 已在 tag push 同步创建了 GitHub Release 并填好 notes；
+      # 此处只把构建 assets 追加到对应 release，不碰 body，避免覆盖 release-please 的变更摘要。
+      - name: Upload assets to release-please-created release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
         run: |
-          version="${GITHUB_REF_NAME}"
-          awk -v v="$version" '
-            $1=="##" && $2=="["v"]" { in_block=1; next }
-            in_block && /^## \[/ { exit }
-            in_block { print }
-          ' CHANGELOG.md > "${RUNNER_TEMP}/release-notes.md"
-          if [[ ! -s "${RUNNER_TEMP}/release-notes.md" ]]; then
-            echo "警告：CHANGELOG.md 中未找到 ${version} 节，release 将用默认正文" >&2
-            echo "Release ${version}" > "${RUNNER_TEMP}/release-notes.md"
-          fi
-          head -20 "${RUNNER_TEMP}/release-notes.md"
-          echo "RELEASE_NOTES_PATH=${RUNNER_TEMP}/release-notes.md" >> "$GITHUB_ENV"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
-        with:
-          files: |
-            dist/*.tar.gz
-            dist/checksums.txt
-          body_path: ${{ env.RELEASE_NOTES_PATH }}
-          draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          gh release upload "$TAG" dist/*.tar.gz dist/checksums.txt --clobber

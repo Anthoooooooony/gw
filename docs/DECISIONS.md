@@ -18,6 +18,31 @@
 
 ---
 
+## 2026-04-22 — 切换 release 工具链到 release-please 并移除 CHANGELOG 文件
+
+**上下文**：原 release 流程由 `scripts/bump.sh`（359 行 bash + 413 行测试）承担版本 bump / CHANGELOG migration / tag 创建 / push 六步。Keep-a-Changelog 双路径（migration + auto-gen fallback）在实测中几乎不用 migration，发布频率有望上升到每周，bash 维护成本高于收益。与 merge-commit 策略的讨论同步触发了一次合并策略复核：release-please 的 best practice 是 squash-merge + PR title 遵循 Conventional Commits。
+
+**决策**：
+1. 引入 [release-please](https://github.com/googleapis/release-please) 作为 release 驱动（GitHub Action + JSON 配置）；PR title 成为唯一的 CC 约束点，squash 后进 master 的 commit subject 即 PR title
+2. **彻底移除 `CHANGELOG.md`**，配置 `skip-changelog: true`，变更说明只在 GitHub Releases 页面
+3. 删除 `scripts/bump.sh` / `scripts/bump_test.sh` / `RELEASING.md`；CI 的 shellcheck job 一并移除（scripts/ 目录已空）
+4. 合并策略保持 squash-merge（与之前瞬时的"切 merge commit"想法相反——release-please 机制依赖 squash）
+5. `.github/workflows/release.yml` 改造：不再从 CHANGELOG 提取 release notes，不再打包 CHANGELOG 进 tar.gz；tag push 触发构建 → `gh release upload` 把 assets 追加到 release-please 已创建的 Release，不碰 body
+
+**替代方案**：
+- 保留 bump.sh：维护成本实际可接受，但 release-please 的"合 release PR 即发版"比"本地跑脚本"更安全（push 到 CI 可复核）、更少本地环境依赖
+- 换 git-cliff + make release：只能替代 CHANGELOG 生成，幂等 tag / 发布触发仍需另写脚本——收益不足
+- 换 semantic-release（Node 生态）：对 Go 项目引入 Node 依赖不划算
+- 保留 CHANGELOG 但用 release-please 维护：增加一份"与 Release notes 重复"的文件，删更彻底
+
+**影响**：
+- 删：`scripts/bump.sh`、`scripts/bump_test.sh`、`CHANGELOG.md`、`RELEASING.md`
+- 新：`.github/workflows/release-please.yml`、`release-please-config.json`、`.release-please-manifest.json`
+- 改：`.github/workflows/release.yml`（去 CHANGELOG 依赖，assets 追加到已有 Release）、`.github/workflows/ci.yml`（删 bash 单测步骤 + shellcheck job）、`Makefile`（删 bump-test target）
+- 文档同步：`CONTRIBUTING.md` / `CLAUDE.md` / `README.md` / `.github/pull_request_template.md`（CI gate 从 8 层改为 7 层）
+- 运行时：release 频率可拉高；维护者不再需要本地跑 `bump.sh`
+- 对应 PR：Phase 1 #98（引入），Phase 3（本次清理）
+
 ## 2026-04-22 — 不支持 ANTHROPIC_BEDROCK_* / ANTHROPIC_VERTEX_* 环境变量
 
 **上下文**：`gw claude` 子命令透明代理 Claude Code 请求以实现 DCP 上下文压缩。Claude Code 原生支持通过环境变量切换到 AWS Bedrock / GCP Vertex 后端。用户需要明确 gw 在多厂商场景下的边界。
