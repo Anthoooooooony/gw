@@ -35,14 +35,19 @@
 
 ## CHANGELOG 手工编辑时机
 
-`scripts/bump.sh` 从 commit subject 自动生成 CHANGELOG 节，**大部分情况够用**。下面几种场景**应当手工编辑 `[Unreleased]` 节**后再 bump：
+`scripts/bump.sh` 有两条生成路径：
+
+1. **Migration 模式**（优先）：`[Unreleased]` 下有手工内容 → 整体搬到新版本节，`[Unreleased]` 自动复位为空子节骨架（`### Added / Changed / Fixed / Removed`）
+2. **Auto-gen fallback**：`[Unreleased]` 为空（仅保留子节骨架）→ 用 commit subject 按前缀（feat / fix / refactor / remove / BREAKING）自动归类生成
+
+下面几种场景**应当手工编辑 `[Unreleased]` 节**后再 bump：
 
 - Commit subject 不足以说明改动（内部重构影响到用户行为）
 - 多个 commit 合并为单一 user-facing feature，需要合并条目
 - 安全/破坏性改动需要迁移指南链接
 - 手工调整条目顺序以凸显重点
 
-手工编辑只改 `[Unreleased]` 节，bump.sh 会把它原样保留并在下方插入新版本节。
+手工编辑只改 `[Unreleased]` 节，bump.sh 会把手工内容**迁移**到新版本节（不是追加/保留）。`--dry-run` 会显示使用的路径（`migration` 或 `auto-gen fallback`）。
 
 ## Release 流程
 

@@ -165,8 +165,8 @@ integration_idempotent_tag() {
     git tag v0.1.0
     git tag v0.1.1  # bump patch 会算出 v0.1.1，预先占位
     # 空远端：用 local bare 模拟 origin
-    git init -q --bare "$tmp_repo/origin.git"
-    git remote add origin "$tmp_repo/origin.git"
+    origin_dir=$(mktemp -d); git init -q --bare "$origin_dir/origin.git"
+    git remote add origin "$origin_dir/origin.git"
     git push -q origin master --tags
   ) >/dev/null 2>&1
 
@@ -208,8 +208,8 @@ integration_missing_unreleased_rejected() {
     git add README.md CHANGELOG.md
     git commit -q -m "init"
     git tag v0.1.0
-    git init -q --bare "$tmp_repo/origin.git"
-    git remote add origin "$tmp_repo/origin.git"
+    origin_dir=$(mktemp -d); git init -q --bare "$origin_dir/origin.git"
+    git remote add origin "$origin_dir/origin.git"
     git push -q origin master --tags
   ) >/dev/null 2>&1
 
@@ -229,6 +229,184 @@ integration_missing_unreleased_rejected() {
   fi
 }
 integration_missing_unreleased_rejected
+
+# ========== integration: [Unreleased] 手工内容迁移到新版本节 ==========
+# 有真实内容时走 migration 路径：body 移到新版本节，Unreleased 复位为空子节骨架。
+integration_unreleased_migrates_to_new_version() {
+  local bump_script tmp_repo ec
+  bump_script="$(cd "$(dirname "$0")" && pwd)/bump.sh"
+
+  tmp_repo=$(mktemp -d)
+  trap 'rm -rf "$tmp_repo"' RETURN
+
+  (
+    cd "$tmp_repo"
+    git init -q -b master
+    git config user.email "t@gw.local"
+    git config user.name  "t"
+    echo "# t" > README.md
+    cat > CHANGELOG.md <<'EOF'
+# Changelog
+
+## [Unreleased]
+
+### Added
+- feat: 手工合并的条目（migration 应迁移这行到新版本节）
+
+### Changed
+
+### Fixed
+
+### Removed
+
+[Unreleased]: https://example.com/compare/v0.1.0...HEAD
+
+## [v0.1.0] - 2026-01-01
+
+### Added
+- initial
+EOF
+    git add README.md CHANGELOG.md
+    git commit -q -m "init"
+    git tag v0.1.0
+    # 再加一个 commit，确保 build_changelog_section 会生成 auto-gen 内容（用于对比）
+    echo "x" > dummy.txt
+    git add dummy.txt
+    git commit -q -m "feat: dummy from commit subject"
+    origin_dir=$(mktemp -d); git init -q --bare "$origin_dir/origin.git"
+    git remote add origin "$origin_dir/origin.git"
+    git push -q origin master --tags
+  ) >/dev/null 2>&1
+
+  set +e
+  (
+    cd "$tmp_repo"
+    EDITOR=true bash "$bump_script" patch
+  ) >/dev/null 2>&1
+  ec=$?
+  set -e
+
+  local changelog
+  changelog=$(cd "$tmp_repo" && cat CHANGELOG.md)
+
+  if [[ $ec -ne 0 ]]; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: migration——bump exit=$ec"
+  elif ! grep -q "手工合并的条目" <<<"$changelog"; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: migration——原手工条目丢失"
+  elif ! awk '/## \[v0\.1\.1\]/{f=1} /## \[v0\.1\.0\]/{exit} f && /手工合并的条目/{found=1} END{exit !found}' <<<"$changelog"; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: migration——手工条目不在新版本节 v0.1.1 下"
+  elif awk '/## \[Unreleased\]/{f=1; next} /## \[v/{exit} f && /手工合并的条目/{found=1} END{exit !found}' <<<"$changelog"; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: migration——手工条目仍残留在 [Unreleased] 下，没搬走"
+  elif grep -q "feat: dummy from commit subject" <<<"$changelog"; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: migration——auto-gen 内容不应出现（migration 模式应替换 auto-gen）"
+  elif ! awk '/## \[Unreleased\]/{f=1; next} /## \[v/{exit} f && /^### Added$/{found=1} END{exit !found}' <<<"$changelog"; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: migration——Unreleased 未复位为骨架（缺 ### Added stub）"
+  else
+    PASS=$((PASS+1))
+  fi
+}
+integration_unreleased_migrates_to_new_version
+
+# ========== integration: [Unreleased] 空（仅裸子节头）走 auto-gen fallback ==========
+integration_unreleased_empty_uses_autogen() {
+  local bump_script tmp_repo ec
+  bump_script="$(cd "$(dirname "$0")" && pwd)/bump.sh"
+
+  tmp_repo=$(mktemp -d)
+  trap 'rm -rf "$tmp_repo"' RETURN
+
+  (
+    cd "$tmp_repo"
+    git init -q -b master
+    git config user.email "t@gw.local"
+    git config user.name  "t"
+    echo "# t" > README.md
+    cat > CHANGELOG.md <<'EOF'
+# Changelog
+
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+[Unreleased]: https://example.com/compare/v0.1.0...HEAD
+
+## [v0.1.0] - 2026-01-01
+
+### Added
+- initial
+EOF
+    git add README.md CHANGELOG.md
+    git commit -q -m "init"
+    git tag v0.1.0
+    echo "x" > dummy.txt
+    git add dummy.txt
+    git commit -q -m "feat: fallback-triggering-commit"
+    origin_dir=$(mktemp -d); git init -q --bare "$origin_dir/origin.git"
+    git remote add origin "$origin_dir/origin.git"
+    git push -q origin master --tags
+  ) >/dev/null 2>&1
+
+  set +e
+  (
+    cd "$tmp_repo"
+    EDITOR=true bash "$bump_script" patch
+  ) >/dev/null 2>&1
+  ec=$?
+  set -e
+
+  local changelog
+  changelog=$(cd "$tmp_repo" && cat CHANGELOG.md)
+
+  if [[ $ec -ne 0 ]]; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: auto-gen fallback——bump exit=$ec"
+  elif ! grep -q "fallback-triggering-commit" <<<"$changelog"; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: auto-gen fallback——commit subject 应被写入新版本节"
+  else
+    PASS=$((PASS+1))
+  fi
+}
+integration_unreleased_empty_uses_autogen
+
+# ========== integration: trap 在 main 外展开不炸 unbound（tmp: unbound variable 回归） ==========
+# 直接 eval trap 字符串，期望无 stderr 输出和 exit 0（默认空展开生效）。
+integration_trap_safe_with_unset_vars() {
+  local out
+  set +e
+  # 模拟 main 已退出、所有 local 已脱离作用域的场景，
+  # 直接在纯净 bash 子进程里执行 trap 实际展开的 rm 命令。
+  out=$(bash -c '
+    set -euo pipefail
+    rm -f "${tmp:-}" "${block_file:-}" "${tmp2:-}" "${skeleton_file:-}" "${section_file:-}"
+    echo ok
+  ' 2>&1)
+  local ec=$?
+  set -e
+
+  if [[ $ec -ne 0 ]]; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: trap 清理——exit=$ec, output=$out"
+  elif [[ "$out" == *"unbound variable"* ]]; then
+    FAIL=$((FAIL+1))
+    echo "FAIL: trap 清理——仍触发 unbound variable: $out"
+  else
+    PASS=$((PASS+1))
+  fi
+}
+integration_trap_safe_with_unset_vars
 
 echo "---"
 echo "PASS: $PASS, FAIL: $FAIL"
