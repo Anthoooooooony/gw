@@ -36,13 +36,23 @@ type LoadedRule struct {
 // rawRule 是从 TOML 文件解码的中间表示。
 // 顶层是 section（如 docker），值是子名（如 ps）到 rawRule 的映射。
 type rawRule struct {
-	Match     string `toml:"match"`
+	Match     string          `toml:"match"`
+	StripAnsi bool            `toml:"strip_ansi"`
+	MaxLines  int             `toml:"max_lines"`
+	HeadLines int             `toml:"head_lines"`
+	TailLines int             `toml:"tail_lines"`
+	OnEmpty   string          `toml:"on_empty"`
+	OnError   *rawOnErrorRule `toml:"on_error"`
+	Disabled  bool            `toml:"disabled"`
+}
+
+// rawOnErrorRule 是 [section.name.on_error] 子表的中间表示。
+type rawOnErrorRule struct {
 	StripAnsi bool   `toml:"strip_ansi"`
 	MaxLines  int    `toml:"max_lines"`
 	HeadLines int    `toml:"head_lines"`
 	TailLines int    `toml:"tail_lines"`
 	OnEmpty   string `toml:"on_empty"`
-	Disabled  bool   `toml:"disabled"`
 }
 
 // LoadAllRules 按三级加载顺序（builtin → user → project）收集全部 TOML 规则，
@@ -162,16 +172,26 @@ func parseAndMerge(data, source string, byID map[string]LoadedRule, disabled map
 			}
 			// 明确取消 disabled 标记（若低层禁用、高层启用）
 			delete(disabled, id)
+			rule := Rule{
+				Match:     rr.Match,
+				StripAnsi: rr.StripAnsi,
+				MaxLines:  rr.MaxLines,
+				HeadLines: rr.HeadLines,
+				TailLines: rr.TailLines,
+				OnEmpty:   rr.OnEmpty,
+			}
+			if rr.OnError != nil {
+				rule.OnError = &OnErrorRule{
+					StripAnsi: rr.OnError.StripAnsi,
+					MaxLines:  rr.OnError.MaxLines,
+					HeadLines: rr.OnError.HeadLines,
+					TailLines: rr.OnError.TailLines,
+					OnEmpty:   rr.OnError.OnEmpty,
+				}
+			}
 			byID[id] = LoadedRule{
-				ID: id,
-				Rule: Rule{
-					Match:     rr.Match,
-					StripAnsi: rr.StripAnsi,
-					MaxLines:  rr.MaxLines,
-					HeadLines: rr.HeadLines,
-					TailLines: rr.TailLines,
-					OnEmpty:   rr.OnEmpty,
-				},
+				ID:     id,
+				Rule:   rule,
 				Source: source,
 			}
 		}

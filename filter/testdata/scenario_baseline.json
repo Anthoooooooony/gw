@@ -164,8 +164,8 @@
     "name": "npm test (failure, batch)",
     "mode": "batch",
     "orig_bytes": 4390,
-    "out_bytes": 4390,
-    "ratio": 0
+    "out_bytes": 2656,
+    "ratio": 0.39498861047835987
   },
   {
     "name": "npm test (success, batch)",
