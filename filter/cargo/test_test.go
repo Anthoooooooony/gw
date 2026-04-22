@@ -105,6 +105,29 @@ func TestApplyOnError_WithFailures(t *testing.T) {
 	}
 }
 
+// `CARGO_TERM_COLOR=always` 会给 `ok` / `FAILED` 加色码，行首正则锚点要能穿透。
+func TestApply_StripsANSI(t *testing.T) {
+	// cargo 真实彩色输出样式：`test result: \x1b[32mok\x1b[0m. 5 passed; 0 failed`
+	colored := "   Compiling foo v0.1.0\n\ntest result: \x1b[32mok\x1b[0m. 5 passed; 0 failed; 0 ignored\n"
+	f := &TestFilter{}
+	out := f.Apply(filter.FilterInput{Cmd: "cargo", Args: []string{"test"}, Stdout: colored})
+	if !strings.HasPrefix(out.Content, "test result: ok.") {
+		t.Fatalf("strip ANSI 后锚点应命中, got %q", out.Content)
+	}
+}
+
+func TestApplyOnError_StripsANSI(t *testing.T) {
+	colored := "failures:\n\n---- test_foo ----\n\x1b[31mpanic!\x1b[0m\n\nfailures:\n    test_foo\n\ntest result: \x1b[31mFAILED\x1b[0m. 0 passed; 1 failed\n"
+	f := &TestFilter{}
+	out := f.ApplyOnError(filter.FilterInput{Cmd: "cargo", Args: []string{"test"}, Stdout: colored, ExitCode: 101})
+	if out == nil {
+		t.Fatal("strip ANSI 后失败锚点应命中, 不应返回 nil")
+	}
+	if !strings.HasPrefix(out.Content, "failures:") {
+		t.Errorf("应从 failures: 起切片, got %q", out.Content)
+	}
+}
+
 // 缺 FAILED summary（如 --no-run 等不执行测试的失败）→ nil
 func TestApplyOnError_NoFailedSummary_Nil(t *testing.T) {
 	f := &TestFilter{}

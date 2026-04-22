@@ -78,21 +78,25 @@ var errorRe = regexp.MustCompile(`^ERROR: `)
 // Apply 成功场景：只保留 `Successfully installed` 行。
 // 找不到时透传原文（用户可能跑的是 `pip install -e .` 且被插件改过输出，
 // 保守不盲删）。
+//
+// 入口 StripANSI：pip 23+ 在 TTY 外也会因 `--progress-bar on` 或插件打色码。
 func (f *InstallFilter) Apply(input filter.FilterInput) filter.FilterOutput {
-	content := input.Stdout
+	original := input.Stdout
+	content := filter.StripANSI(original)
 	lines := strings.Split(content, "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
 		if successRe.MatchString(strings.TrimRight(lines[i], "\r")) {
-			return filter.FilterOutput{Content: lines[i] + "\n", Original: content}
+			return filter.FilterOutput{Content: lines[i] + "\n", Original: original}
 		}
 	}
-	return filter.FilterOutput{Content: content, Original: content}
+	return filter.FilterOutput{Content: original, Original: original}
 }
 
 // ApplyOnError 失败场景：保留所有 `ERROR: ` 行（pip 把每条失败原因打成独立 ERROR 行）。
 // 找不到 ERROR 行返回 nil 透传——未知错误形态保守放行。
 func (f *InstallFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput {
-	content := input.Stdout + input.Stderr
+	original := input.Stdout + input.Stderr
+	content := filter.StripANSI(original)
 	lines := strings.Split(content, "\n")
 	var errs []string
 	for _, line := range lines {
@@ -103,5 +107,5 @@ func (f *InstallFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOut
 	if len(errs) == 0 {
 		return nil
 	}
-	return &filter.FilterOutput{Content: strings.Join(errs, "\n") + "\n", Original: content}
+	return &filter.FilterOutput{Content: strings.Join(errs, "\n") + "\n", Original: original}
 }
