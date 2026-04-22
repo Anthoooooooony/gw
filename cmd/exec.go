@@ -167,31 +167,45 @@ func runExec(cmd *cobra.Command, args []string) {
 			inputTokens, outputTokens, savedTokens, elapsedMs)
 	}
 
-	// 写入数据库（同步，在 os.Exit 前完成）
-	// DB 打开失败属于非致命降级：verbose 时 warn，生产模式保持静默（主流程不受影响）。
-	if db, err := track.NewDB(track.DefaultDBPath()); err == nil {
-		rec := track.Record{
-			Timestamp:    time.Now().UTC(),
-			Command:      fullCmd,
-			ExitCode:     result.ExitCode,
-			InputTokens:  inputTokens,
-			OutputTokens: outputTokens,
-			SavedTokens:  savedTokens,
-			ElapsedMs:    elapsedMs,
-			FilterUsed:   filterUsed,
-		}
-		// 默认不落盘 raw_output（否则 DB 会爆炸）；仅 GW_STORE_RAW=1 时写入。
-		if os.Getenv("GW_STORE_RAW") == "1" {
-			rec.RawOutput = originalOutput
-		}
-		_ = db.InsertRecord(rec)
-		_ = db.Close()
-	} else if Verbose {
-		fmt.Fprintf(os.Stderr, "gw: warning: tracking DB open failed: %v\n", err)
+	rec := track.Record{
+		Timestamp:    time.Now().UTC(),
+		Command:      fullCmd,
+		ExitCode:     result.ExitCode,
+		InputTokens:  inputTokens,
+		OutputTokens: outputTokens,
+		SavedTokens:  savedTokens,
+		ElapsedMs:    elapsedMs,
+		FilterUsed:   filterUsed,
 	}
+	// 默认不落盘 raw_output（否则 DB 会爆炸）；仅 GW_STORE_RAW=1 时写入。
+	if os.Getenv("GW_STORE_RAW") == "1" {
+		rec.RawOutput = originalOutput
+	}
+	writeTrackRecord(rec)
 
 	// 7. 使用原始命令的退出码退出
 	os.Exit(result.ExitCode)
+}
+
+// writeTrackRecord 把一条 track.Record 写入默认 DB。
+// DB 打开 / Insert / Close 任一失败都属于非致命降级：verbose 时 warn，
+// 生产模式保持静默以免主流程被 tracking 故障带偏。
+func writeTrackRecord(rec track.Record) {
+	db, err := track.NewDB(track.DefaultDBPath())
+	if err != nil {
+		if Verbose {
+			fmt.Fprintf(os.Stderr, "gw: warning: tracking DB open failed: %v\n", err)
+		}
+		return
+	}
+	defer func() {
+		if cerr := db.Close(); cerr != nil && Verbose {
+			fmt.Fprintf(os.Stderr, "gw: warning: tracking DB close failed: %v\n", cerr)
+		}
+	}()
+	if ierr := db.InsertRecord(rec); ierr != nil && Verbose {
+		fmt.Fprintf(os.Stderr, "gw: warning: tracking DB insert failed: %v\n", ierr)
+	}
 }
 
 func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dumpRawPath string) {
@@ -263,27 +277,20 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 			inputTokens, outputTokens, inputTokens-outputTokens, elapsed.Milliseconds())
 	}
 
-	// 写入数据库（同步，在 os.Exit 前完成）
-	// DB 打开失败属于非致命降级：verbose 时 warn，生产模式保持静默。
-	if db, err := track.NewDB(track.DefaultDBPath()); err == nil {
-		rec := track.Record{
-			Timestamp:    time.Now().UTC(),
-			Command:      fullCmd,
-			ExitCode:     exitCode,
-			InputTokens:  inputTokens,
-			OutputTokens: outputTokens,
-			SavedTokens:  inputTokens - outputTokens,
-			ElapsedMs:    elapsed.Milliseconds(),
-			FilterUsed:   sf.Name() + ":stream",
-		}
-		if storeRaw {
-			rec.RawOutput = rawBuf.String()
-		}
-		_ = db.InsertRecord(rec)
-		_ = db.Close()
-	} else if Verbose {
-		fmt.Fprintf(os.Stderr, "gw: warning: tracking DB open failed: %v\n", err)
+	rec := track.Record{
+		Timestamp:    time.Now().UTC(),
+		Command:      fullCmd,
+		ExitCode:     exitCode,
+		InputTokens:  inputTokens,
+		OutputTokens: outputTokens,
+		SavedTokens:  inputTokens - outputTokens,
+		ElapsedMs:    elapsed.Milliseconds(),
+		FilterUsed:   sf.Name() + ":stream",
 	}
+	if storeRaw {
+		rec.RawOutput = rawBuf.String()
+	}
+	writeTrackRecord(rec)
 
 	// 退出码语义：
 	//   - 正常退出 / 超时（124）/ 信号终止（128+signal）由 RunCommandStreamingFull 直接返回

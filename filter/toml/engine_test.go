@@ -8,7 +8,11 @@ import (
 )
 
 func makeFilter(rules ...Rule) *TomlFilter {
-	return &TomlFilter{Rules: rules}
+	loaded := make([]LoadedRule, len(rules))
+	for i, r := range rules {
+		loaded[i] = LoadedRule{ID: r.Match, Rule: r, Source: SourceBuiltin}
+	}
+	return &TomlFilter{Loaded: loaded}
 }
 
 func TestMatch(t *testing.T) {
@@ -179,12 +183,9 @@ func TestSubname_NoRaceUnderConcurrency(t *testing.T) {
 	}
 }
 
-func TestLoadBuiltinRules(t *testing.T) {
-	f, err := LoadBuiltinRules()
-	if err != nil {
-		t.Fatalf("加载内置规则失败: %v", err)
-	}
-	if len(f.Rules) == 0 {
+func TestLoadEngineBuiltinRules(t *testing.T) {
+	f := LoadEngine()
+	if len(f.Loaded) == 0 {
 		t.Error("内置规则为空")
 	}
 	// 验证 docker ps 规则存在

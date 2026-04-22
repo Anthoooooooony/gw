@@ -4,8 +4,6 @@ import (
 	"embed"
 	"strings"
 
-	"github.com/BurntSushi/toml"
-
 	"github.com/Anthoooooooony/gw/filter"
 )
 
@@ -38,22 +36,34 @@ type Rule struct {
 
 // TomlFilter 基于 TOML 规则的声明式过滤器（无状态：所有字段一次加载后只读）
 type TomlFilter struct {
-	Rules  []Rule
-	Loaded []LoadedRule // 带来源的完整规则信息（可能为空，用于 filters list）
+	Loaded []LoadedRule // 带来源的完整规则信息，承载全部 filter 行为
 }
 
 // LoadEngine 使用三级加载器（builtin + user + project）构造过滤器实例。
 // 即使加载过程遇到错误也会返回可用的空实例，避免影响主流程。
 func LoadEngine() *TomlFilter {
-	loaded := LoadAllRules()
-	rules := make([]Rule, 0, len(loaded))
-	for _, l := range loaded {
-		rules = append(rules, l.Rule)
-	}
-	return &TomlFilter{Rules: rules, Loaded: loaded}
+	return &TomlFilter{Loaded: LoadAllRules()}
 }
 
 func (f *TomlFilter) Name() string { return "toml" }
+
+// IsFallback 声明 TomlFilter 是兜底过滤器：专属 Go filter 优先匹配。
+// 这样 filter/all 的导入顺序不再隐含优先级不变式。
+func (f *TomlFilter) IsFallback() bool { return true }
+
+// Describe 产出 `gw filters list` 所需的每条 rule 一行展开。
+func (f *TomlFilter) Describe() []filter.FilterRow {
+	rows := make([]filter.FilterRow, 0, len(f.Loaded))
+	for _, lr := range f.Loaded {
+		rows = append(rows, filter.FilterRow{
+			Name:   lr.ID,
+			Type:   "toml",
+			Source: lr.Source,
+			Match:  lr.Rule.Match,
+		})
+	}
+	return rows
+}
 
 // Subname 实现 filter.SubnameResolver：返回本次 (cmd, args) 匹配到的 rule.Match，未匹配返回空。
 // 纯函数：不依赖 / 不修改 filter 实例状态。
@@ -87,8 +97,8 @@ func (f *TomlFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput
 func (f *TomlFilter) findRule(fullCmd string) *Rule {
 	var best *Rule
 	bestLen := 0
-	for i := range f.Rules {
-		r := &f.Rules[i]
+	for i := range f.Loaded {
+		r := &f.Loaded[i].Rule
 		if strings.HasPrefix(fullCmd, r.Match) && len(r.Match) > bestLen {
 			best = r
 			bestLen = len(r.Match)
@@ -128,33 +138,4 @@ func buildFullCmd(cmd string, args []string) string {
 		return cmd
 	}
 	return cmd + " " + strings.Join(args, " ")
-}
-
-// LoadBuiltinRules 加载嵌入的 TOML 规则文件
-func LoadBuiltinRules() (*TomlFilter, error) {
-	entries, err := builtinRules.ReadDir("rules")
-	if err != nil {
-		return nil, err
-	}
-
-	f := &TomlFilter{}
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".toml") {
-			continue
-		}
-		data, err := builtinRules.ReadFile("rules/" + entry.Name())
-		if err != nil {
-			continue
-		}
-		var ruleMap map[string]map[string]Rule
-		if _, err := toml.Decode(string(data), &ruleMap); err != nil {
-			continue
-		}
-		for _, group := range ruleMap {
-			for _, rule := range group {
-				f.Rules = append(f.Rules, rule)
-			}
-		}
-	}
-	return f, nil
 }

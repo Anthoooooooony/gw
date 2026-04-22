@@ -71,7 +71,6 @@ func (s *Server) Shutdown(timeout time.Duration) error {
 }
 
 // Logger 最小接口；实现侧可用 log.Printf 或任何 logger。
-type Logger interface {
-	Infof(format string, args ...any)
-	Warnf(format string, args ...any)
-}
+// 类型别名自 dcp.Logger，避免两处声明同形接口漂移：apiproxy 依赖 dcp，
+// 复用 dcp 的声明不破坏 dcp 的独立可用性（dcp 是可单独使用的上下文压缩库）。
+type Logger = dcp.Logger

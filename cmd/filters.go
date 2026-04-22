@@ -8,7 +8,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/Anthoooooooony/gw/filter"
-	tomlfilter "github.com/Anthoooooooony/gw/filter/toml"
 	"github.com/spf13/cobra"
 )
 
@@ -30,36 +29,19 @@ func init() {
 	rootCmd.AddCommand(filtersCmd)
 }
 
-// filterRow 是表格的一行
-type filterRow struct {
-	Name   string
-	Type   string // go | toml
-	Source string // builtin | user://... | project://...
-	Match  string
-}
-
-// collectFilterRows 遍历全局注册表，为每个过滤器生成一行，
-// 若是 TomlFilter 则按其 Loaded 列表展开为多行。
-func collectFilterRows() []filterRow {
-	rows := make([]filterRow, 0)
+// collectFilterRows 遍历全局注册表，优先让实现 Describable 的 filter 自描述多行
+// （如 TOML filter 展开每条 rule），其余按 Go 硬编码过滤器生成单行。
+func collectFilterRows() []filter.FilterRow {
+	rows := make([]filter.FilterRow, 0)
 	for _, f := range filter.GlobalRegistry().List() {
-		// TOML 过滤器单独展开
-		if tf, ok := f.(*tomlfilter.TomlFilter); ok {
-			for _, lr := range tf.Loaded {
-				rows = append(rows, filterRow{
-					Name:   lr.ID,
-					Type:   "toml",
-					Source: lr.Source,
-					Match:  lr.Rule.Match,
-				})
-			}
+		if d, ok := f.(filter.Describable); ok {
+			rows = append(rows, d.Describe()...)
 			continue
 		}
-		// Go 硬编码过滤器
-		rows = append(rows, filterRow{
+		rows = append(rows, filter.FilterRow{
 			Name:   f.Name(),
 			Type:   "go",
-			Source: tomlfilter.SourceBuiltin,
+			Source: "builtin",
 			Match:  goFilterMatchHint(f),
 		})
 	}
@@ -87,7 +69,7 @@ func goFilterMatchHintFromName(name string) string {
 }
 
 // renderFilters 将 rows 写入 tabwriter 表格。
-func renderFilters(w io.Writer, rows []filterRow) {
+func renderFilters(w io.Writer, rows []filter.FilterRow) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(tw, "NAME\tTYPE\tSOURCE\tMATCH")
 	for _, r := range rows {
