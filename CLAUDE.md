@@ -21,7 +21,7 @@ GitHub Flow 单干模型：
 
 短期分支合入 master 后立即删除。所有人工改动走 PR；**release-please bot** 直接向 master 开 release PR 并在合入后 push tag，是唯一合法的非人工写入路径。
 
-版本机制：SemVer + [release-please](https://github.com/googleapis/release-please)（由 `.github/workflows/release-please.yml` 驱动）。PR title 必须是 Conventional Commits，release-please 扫 master 上的 squash-merge commit subject 推导版本 bump 与 GitHub Release notes；不维护仓库内 `CHANGELOG.md` 文件，发布记录只看 [Releases 页面](https://github.com/Anthoooooooony/gw/releases)。配置源：`release-please-config.json` + `.release-please-manifest.json`。
+版本机制：SemVer + 自写 CI workflow（`.github/workflows/release.yml` 一体化 decide → build → release）。PR title 必须是 Conventional Commits，每次 master push workflow 扫 squash-merge commit subject；有 user-facing commit 就 bump + tag + GitHub Release + 上传 assets，全流程在单 workflow run 内完成，不依赖 PAT 或跨 workflow 触发。核心分类/bump 函数在 `scripts/release-helpers.sh`。不维护仓库内 `CHANGELOG.md`，发布记录看 [Releases 页面](https://github.com/Anthoooooooony/gw/releases)。
 
 ## TOML 规则 DSL（v2：仅无损变换）
 

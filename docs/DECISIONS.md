@@ -18,6 +18,30 @@
 
 ---
 
+## 2026-04-22 — 放弃 release-please，改自写单 workflow 一体化发版 (Supersedes 同日 "切换到 release-please")
+
+**上下文**：切换 release-please 后试跑发现硬约束：`GITHUB_TOKEN` 触发的 tag push **不会**触发其他 workflow（GitHub 防递归设计），导致 release-please 打 tag 后 `release.yml` 不触发，binary assets 必须手工删 tag 重推才能上传（v0.3.2 就是这样补救的）。长期解法只有两条：引入 PAT/GitHub App 打破跨 workflow 限制；或彻底抛弃跨 workflow 架构。
+
+**决策**：抛弃 release-please，在 `.github/workflows/release.yml` 里单一 workflow 串联 `decide → build → release` 三 job：
+1. `decide` 用 `scripts/release-helpers.sh` 的 shell 函数（`classify_commit` / `kind_from_classifications` / `bump_version` / `build_release_notes`）扫 `prev_tag..HEAD` commit subject，决定是否发版 + 版本号 + notes
+2. `build` matrix 跑 CGO 编译产 `*.tar.gz`
+3. `release` 打 tag + `gh release create` 上传 assets
+
+整条链在一个 workflow run 内完成，`GITHUB_TOKEN` 的 `contents:write` 足够。
+
+**替代方案**：
+- PAT/GitHub App + release-please：社区 best practice，但引入 token 维护面和权限风险；单人项目性价比一般
+- 保留 release-please + 每次手工重推 tag 补救：维护者体验差，容易忘
+- 手写脚本但仍跑在本地（类似原 bump.sh）：发版流程不透明、不 CI 化，用户主动移除过
+
+**影响**：
+- 删：`.github/workflows/release-please.yml`、`release-please-config.json`、`.release-please-manifest.json`
+- 改写：`.github/workflows/release.yml`（从"tag 触发构建"变"master push 决定是否发版 + 构建 + 上传"）
+- 新：`scripts/release-helpers.sh`（~120 行，源自删去的 `bump.sh` 核心函数，去掉 CHANGELOG migration 与 edit/push 步骤）
+- 文档：`CONTRIBUTING.md` / `CLAUDE.md` Release 节改写为"单 workflow"
+- 运行时：发版从 "合 PR → 手工合 release PR → 手工补 tag" 变 "合 PR → workflow 全自动"；发版前丧失 release PR preview 窗口（PR title 本身是 review 过的 CC，影响可接受）
+- 同日"切换到 release-please"决策被本次反转
+
 ## 2026-04-22 — 切换 release 工具链到 release-please 并移除 CHANGELOG 文件
 
 **上下文**：原 release 流程由 `scripts/bump.sh`（359 行 bash + 413 行测试）承担版本 bump / CHANGELOG migration / tag 创建 / push 六步。Keep-a-Changelog 双路径（migration + auto-gen fallback）在实测中几乎不用 migration，发布频率有望上升到每周，bash 维护成本高于收益。与 merge-commit 策略的讨论同步触发了一次合并策略复核：release-please 的 best practice 是 squash-merge + PR title 遵循 Conventional Commits。

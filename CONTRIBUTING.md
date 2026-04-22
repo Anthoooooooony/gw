@@ -35,23 +35,33 @@
    BREAKING CHANGE: FilterFunc signature changed
    ```
 
-## Release 流程（全自动）
+## Release 流程（全自动，单 workflow）
 
-Release 由 [release-please](https://github.com/googleapis/release-please) 驱动，维护者无需手工打 tag 或编辑版本号：
+Release 由 `.github/workflows/release.yml` 一体化驱动：
 
 1. PR 合入 `master`（PR title 是 CC 格式）
-2. `release-please.yml` workflow 触发，扫自上一个 release tag 以来的 master commit
-3. 若有 `feat:` / `fix:` / `refactor:` / `perf:` / `remove:` 或 BREAKING commit，release-please 开（或更新）一个 **release PR**，PR body 预览下个版本号 + 变更摘要
-4. 审阅 release PR，合入即触发：
-   - 打 annotated tag `vX.Y.Z`
-   - 创建 GitHub Release（Release notes 自动生成，不依赖仓库内 CHANGELOG 文件）
-   - Tag push 触发 `release.yml` 构建跨平台 binary，上传 `*.tar.gz` + `checksums.txt` 到刚创建的 Release
+2. workflow 触发，`decide` job 跑 `scripts/release-helpers.sh` 的分类函数扫自上一个 release tag 以来的 commit subject
+3. 全部是 `docs:` / `chore:` / `ci:` / `test:` / `style:` / `build:` → skip，workflow 静默结束
+4. 有任一 `feat:` / `fix:` / `perf:` / `refactor:` / `revert:` / `deps:` 或 BREAKING → 进入发版链路：
+   - 计算新 tag（v0.x 阶段 feat/BREAKING→minor，其他 visible→patch）
+   - 生成 markdown release notes（分节：Features / Bug Fixes / Performance Improvements / Code Refactoring / Reverts / Dependencies / BREAKING），作为 artifact 传递
+   - `build` matrix 在 linux_amd64 / darwin_arm64 上 CGO 编译，产物 `*.tar.gz`
+   - `release` job 打 annotated tag 并 push、生成 `checksums.txt`、`gh release create` 创建 GitHub Release 并上传所有 assets
 
-配置入口：
-- `release-please-config.json` — release-type / skip-changelog / bump 策略
-- `.release-please-manifest.json` — 当前版本源（release-please 合 release PR 时自动更新）
+不开 release PR、不需要人工 approve、不依赖外部 token——整条链在一个 workflow run 内完成，`GITHUB_TOKEN` 的 `contents:write` 权限即可。
 
-不再维护 `CHANGELOG.md` 文件——变更说明只出现在 GitHub Release 页面。历史发布记录可从 [Releases](https://github.com/Anthoooooooony/gw/releases) 页面翻阅。
+不维护仓库内 `CHANGELOG.md` 文件，变更说明只在 GitHub Release 页面。历史发布记录从 [Releases](https://github.com/Anthoooooooony/gw/releases) 翻阅。
+
+### 预览将要发什么版
+
+本地也可以跑相同分类逻辑预览：
+
+```bash
+source scripts/release-helpers.sh
+prev_tag=$(git describe --tags --abbrev=0)
+git log "${prev_tag}..HEAD" --format='%s%n%b%x1F%h%x00' |
+  build_release_notes "v-next" "$prev_tag" "Anthoooooooony/gw"
+```
 
 ## 测试
 
