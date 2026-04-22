@@ -16,10 +16,12 @@ import (
 
 // claudeCmd 透明包装 claude CLI：启动本地 API 代理、注入 ANTHROPIC_BASE_URL、exec claude。
 //
-// 降级策略（Interpretation B）：
+// 降级策略：
 //   - 代理启动失败 → warn，直接 exec claude 不 hook
-//   - 检测到 Bedrock/Vertex → warn，直接 exec claude 不 hook
 //   - claude 进程 stderr/stdout/stdin 完全透传，保持 TTY 体验
+//
+// 不支持 Bedrock/Vertex：这两条路径下 claude 忽略 ANTHROPIC_BASE_URL，代理无法生效。
+// 使用 AWS Bedrock / GCP Vertex 的用户请直接运行 claude，不要经过 gw claude。
 var claudeCmd = &cobra.Command{
 	Use:                "claude [args...]",
 	Short:              "透明包装 claude CLI，启动本地 API 代理以压缩上下文",
@@ -35,14 +37,7 @@ func init() {
 func runClaude(cmd *cobra.Command, args []string) {
 	logger := &stderrLogger{verbose: Verbose}
 
-	// 1. Bedrock/Vertex 场景：ANTHROPIC_BASE_URL 不生效，直接透传
-	if enabled, which := apiproxy.BedrockOrVertexEnabled(); enabled {
-		logger.Warnf("检测到 %s=1，gw claude 不启动代理，直接 exec claude", which)
-		execClaude(args, nil)
-		return
-	}
-
-	// 2. 启动本地代理（失败则降级为直接 exec）
+	// 1. 启动本地代理（失败则降级为直接 exec）
 	srv, err := apiproxy.Start(logger)
 	if err != nil {
 		logger.Warnf("apiproxy 启动失败，降级为直接 exec claude: %v", err)
@@ -50,13 +45,13 @@ func runClaude(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// 3. 注入环境变量；仅对子进程生效，父 shell 不受影响
+	// 2. 注入环境变量；仅对子进程生效，父 shell 不受影响
 	env := append(os.Environ(), "ANTHROPIC_BASE_URL="+srv.URL())
 
-	// 4. 运行 claude，等待其退出
+	// 3. 运行 claude，等待其退出
 	code := runChild(args, env, logger)
 
-	// 5. 关闭代理（优雅）；超时可通过 GW_APIPROXY_SHUTDOWN_TIMEOUT 覆盖，默认 5s。
+	// 4. 关闭代理（优雅）；超时可通过 GW_APIPROXY_SHUTDOWN_TIMEOUT 覆盖，默认 5s。
 	// deadline 触发时是"还有连接没清理完"，实际上 claude 已退，这类连接多半是
 	// 上游端还在收尾，属于正常现象，warn 一声即可。
 	timeout := apiproxy.ShutdownTimeout()
@@ -68,7 +63,7 @@ func runClaude(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	// 6. 打印 dcp 统计摘要。非 verbose 也打印，总结性信息视作必看。
+	// 5. 打印 dcp 统计摘要。非 verbose 也打印，总结性信息视作必看。
 	//   仅在本次 session 至少处理了 1 个请求时打印，避免干扰未真实使用代理的场景。
 	//   调用时机：http.Server.Shutdown 返回即代表所有 active handler 已完成，
 	//   Stats 计数不会再被写入，故对其做多次 Load 读取是一致性快照。

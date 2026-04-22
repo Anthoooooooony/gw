@@ -85,7 +85,7 @@ myapp.logs        toml  project:///workspace/.gw/rules/custom.toml             m
 
 ### `GW_STORE_RAW` — 是否持久化原始输出到 SQLite
 
-默认 **不** 把每次执行的原始输出写入 `~/.gw.db`（避免 DB 爆炸）。设为 `1` 后 `gw exec` 会把原始输出存入 `records.raw_output` 字段，供 `gw inspect [id] --raw` 回溯。
+默认 **不** 把每次执行的原始输出写入 `~/.gw/tracking.db`（避免 DB 爆炸）。设为 `1` 后 `gw exec` 会把原始输出存入 `records.raw_output` 字段，供 `gw inspect [id] --raw` 回溯。
 
 ### `GW_DB_PATH` — 覆盖 tracking DB 路径
 
@@ -111,7 +111,7 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 - `RunCommand` 与 `RunCommandStreamingFull` 的函数签名**稳定**，超时/落盘等只通过环境变量或 flag 控制
 - 流式路径超时后必须保证 `cmd/exec.go` 能调用 `proc.Flush(exitCode)`，即 `RunCommandStreamingFull` 不泄漏 goroutine、不死锁
 - 信号终止（非超时）保持 `exitCode = -1` 语义，与超时的 `124` 区分开
-- DB schema 演进只走 `ALTER TABLE ADD COLUMN`，**禁止** `DROP TABLE`（用户 `~/.gw.db` 是生产数据）
+- DB schema 演进只走 `ALTER TABLE ADD COLUMN`，**禁止** `DROP TABLE`（用户 `~/.gw/tracking.db` 是生产数据）
 
 ## Hook 安装约定
 
@@ -141,7 +141,7 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 | `internal/procgroup_*.go` | 进程组 SIGTERM/SIGKILL（跨平台拆分） |
 | `internal/apiproxy/server.go` | 本地 HTTP 代理 Server（127.0.0.1 随机端口 + Transformer 共享） |
 | `internal/apiproxy/anthropic.go` | `/v1/messages` 反向代理 handler + BodyTransformer 注入点 |
-| `internal/apiproxy/env.go` | `GW_APIPROXY_*` 环境变量解析（body 上限 / header 超时 / shutdown grace / Bedrock/Vertex 检测） |
+| `internal/apiproxy/env.go` | `GW_APIPROXY_*` 环境变量解析（body 上限 / header 超时 / shutdown grace） |
 | `internal/apiproxy/dcp/dedup.go` | DCP 风格 tool_result 去重：扫描 tool_use → 按签名分组 → 保留最后一次、其余内容替换为占位符 |
 | `track/db.go` | SQLite 存储 + raw_output 列 migration |
 | `filter/all/all.go` | blank import 聚合过滤器包；专属 filter 在 toml 之前注册（第一匹配胜出） |
