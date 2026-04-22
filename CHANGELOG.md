@@ -5,22 +5,16 @@
 ## [Unreleased]
 
 ### Added
-- **feat(claude)**: 新增 `gw claude [args...]` 子命令——透明包装 Claude Code CLI，起本地 HTTP 代理并注入 `ANTHROPIC_BASE_URL`，对 `/v1/messages` 做 DCP 风格 tool_result 去重（参考 [Opencode-DCP](https://github.com/Opencode-DCP/opencode-dynamic-context-pruning)）：同签名 tool_use 的历史 tool_result 内容替换为占位符，只保留最后一次，降低 Anthropic 上下文 token 消耗；claude 退出时自动关闭代理并打印摘要。失败全路径降级透传（Bedrock/Vertex 检测直接 exec 原生 claude）。(#77, #78, #79, #80, #81)
-  - 可调 env：`GW_APIPROXY_MAX_BODY`（默认 32MiB 请求体上限）/ `GW_APIPROXY_HEADER_TIMEOUT`（默认 60s 上游响应头超时，不影响 SSE 长流）/ `GW_APIPROXY_SHUTDOWN_TIMEOUT`（默认 5s shutdown grace）/ `GW_APIPROXY_UPSTREAM`（测试用逃生舱）
-  - 退出示例：`gw: dcp: 42 请求 / 扫 87 tool_use / 替换 31 tool_result / 节省 418203 字节 (~104551 tokens)`
-- feat(pytest): 专属 Go filter，按 summary + FAILURES 锚点做语义压缩，压缩率 99%（成功）/ 82%（失败），**语义无损**（FAILURES 区块原样保留）。
-  parse 锚点缺失（输出被 `--tb=no` / `head` 截断等）时回退原文透传。
 
 ### Changed
-- 内置 node/python/rust TOML 规则精简为 strip_ansi + 长度兜底；需要语义压缩的命令（pytest 已接管，vitest / cargo test / npm test 待补）走专属 Go filter。
-- `filter/all` 注册顺序：专属 filter → toml（Registry 第一匹配胜出），保证 pytest 等优先命中 Go 实现。
+- refactor(apiproxy/stream/gain): 错误 / warn / info / HTTP body 文本中文化；`cmd/gain.go` 的 `[今日]` 方括号风格改为 `今日 —`，与 CLAUDE.md "禁止方括号前缀" 规范对齐 (#86)
+- refactor(filter): 新增 `filter.StripANSI` 公共工具替代 `filter/java/gradle.go` 与 `filter/toml/engine.go` 的两份 ANSI 正则（字面量大小写原本不一致）；`GradleStreamProcessor` 去导出为 `gradleStreamProcessor`（无跨包使用）；pytest `Subname("pytest")` 返回空串避免展示 `pytest/pytest` 冗余；dcp.Logger 注释纠正"避免包循环"误导 (#89)
 
 ### Fixed
+- fix(install): go.mod module path 从失效的 `github.com/gw-cli/gw` 改为 `github.com/Anthoooooooony/gw`（`go install` 原本 404）；README 安装脚本改为运行时查 `releases/latest` API 取 tag，代替硬编码 v0.1.0 tarball；CI / release workflow 改用 `go-version-file: go.mod` 消除 README `1.22+` 与 CI 硬编码 `1.25` 的漂移（govulncheck job 例外，保留 1.25 因工具自身要求） (#84)
+- fix(bump): `[Unreleased]` 有手工内容时整体迁移到新版本节，`trap` 用 `${var:-}` 默认空展开避免 unset variable，bump.sh 现覆盖 migration / auto-gen 两条路径（43 个 bash 单测全覆盖） (#83)
 
 ### Removed
-- **Breaking（TOML DSL v2）**：TOML 规则只保留语义无关的无损字段（`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`）。基于正则的 `strip_lines` / `keep_lines` / `on_error` 因误删风险移除，不考虑 v1 配置前向兼容。
-- `filter/toml` 的 `strip_lines` / `keep_lines` / `on_error` 字段与对应 loader warning 兼容代码。
-- `filter/toml/rules/python.toml` 的 `[pytest.*]` 规则（由专属 filter 接管）。
 
 [Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.2.0...HEAD
 [v0.1.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.0
