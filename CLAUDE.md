@@ -134,10 +134,15 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 | `filter/toml/engine.go` | TOML 过滤引擎（v2 DSL，仅 strip_ansi + head/tail/max_lines + on_empty 无损字段） |
 | `filter/registry.go` | 全局注册表 + `List()`（给 `gw filters list` 用） |
 | `cmd/filters.go` | `gw filters list` 命令 |
+| `cmd/claude.go` | `gw claude` 子命令：启动本地 API 代理 + 注入 ANTHROPIC_BASE_URL + exec claude + 退出摘要 |
 | `cmd/version.go` | `gw --version` / `gw version`（ldflags + runtime/debug fallback） |
 | `cmd/inspect.go` | `gw inspect [id]` 查询 DB 历史记录 |
 | `internal/timeout.go` | `GW_CMD_TIMEOUT` 解析 + 超时提示 |
 | `internal/procgroup_*.go` | 进程组 SIGTERM/SIGKILL（跨平台拆分） |
+| `internal/apiproxy/server.go` | 本地 HTTP 代理 Server（127.0.0.1 随机端口 + Transformer 共享） |
+| `internal/apiproxy/anthropic.go` | `/v1/messages` 反向代理 handler + BodyTransformer 注入点 |
+| `internal/apiproxy/env.go` | `GW_APIPROXY_*` 环境变量解析（body 上限 / header 超时 / shutdown grace / Bedrock/Vertex 检测） |
+| `internal/apiproxy/dcp/dedup.go` | DCP 风格 tool_result 去重：扫描 tool_use → 按签名分组 → 保留最后一次、其余内容替换为占位符 |
 | `track/db.go` | SQLite 存储 + raw_output 列 migration |
 | `filter/all/all.go` | blank import 聚合过滤器包；专属 filter 在 toml 之前注册（第一匹配胜出） |
 | `filter/pytest/pytest.go` | pytest / python -m pytest 语义过滤器（summary + FAILURES 锚点） |
