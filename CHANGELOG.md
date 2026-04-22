@@ -12,9 +12,16 @@
 
 ### Removed
 
-[Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.3.1...HEAD
 [v0.1.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.0
 
+## [v0.3.1] - 2026-04-22
+
+### Changed
+- refactor(review-p1): 架构与模块化修正 (#92)
+
+### Fixed
+- fix(review-p2): 代码质量修正 (#93)
 ## [v0.3.0] - 2026-04-22
 
 ### Added
@@ -88,3 +95,5 @@
 [v0.2.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.2.0
 
 [v0.3.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.3.0
+
+[v0.3.1]: https://github.com/Anthoooooooony/gw/releases/tag/v0.3.1
