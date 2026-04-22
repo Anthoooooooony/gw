@@ -17,9 +17,13 @@
 |------|------------------------|------------------------|
 | `feat:` / `feat(scope):` | minor | Features |
 | `fix:` / `fix(scope):` | patch | Bug Fixes |
-| `refactor:` / `perf:` | patch | Code Refactoring / Performance |
-| `remove:` | patch | 不单独分节（按 BREAKING 归类） |
-| `docs:` / `chore:` / `ci:` / `test:` / `style:` / `build:` | 不触发 release | 不进 notes |
+| `perf:` | patch | Performance Improvements |
+| `refactor:` | patch | Code Refactoring |
+| `revert:` | patch | Reverts |
+| `deps:` | patch | Dependencies |
+| `docs:` / `chore:` / `ci:` / `test:` / `style:` / `build:` | 不触发 release | hidden |
+
+映射在 `release-please-config.json::changelog-sections` 里显式声明（覆盖 release-please 默认值——默认会把 refactor / build 归入 hidden）。
 
 **破坏性改动**（v0.x 阶段仍只触发 minor，进 1.0 后触发 major）：
 
