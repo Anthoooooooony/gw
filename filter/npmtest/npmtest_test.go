@@ -211,12 +211,12 @@ func TestApplyOnError_Jest(t *testing.T) {
 	}
 	// 关键信息验证
 	for _, want := range []string{
-		"multiplies broken",                         // 失败用例名
-		"● math › multiplies broken",                // 失败块 bullet
-		"Expected: 7",                               // assertion detail
-		"Received: 6",                               // assertion detail
-		"Test Suites: 1 failed",                     // 汇总
-		"Tests:",                                    // 通过/失败计数
+		"multiplies broken",          // 失败用例名
+		"● math › multiplies broken", // 失败块 bullet
+		"Expected: 7",                // assertion detail
+		"Received: 6",                // assertion detail
+		"Test Suites: 1 failed",      // 汇总
+		"Tests:",                     // 通过/失败计数
 	} {
 		if !strings.Contains(out.Content, want) {
 			t.Errorf("失败压缩应保留 %q", want)
