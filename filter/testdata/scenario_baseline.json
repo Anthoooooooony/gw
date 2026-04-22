@@ -233,9 +233,9 @@
   {
     "name": "vitest (failure, batch)",
     "mode": "batch",
-    "orig_bytes": 1559,
-    "out_bytes": 1289,
-    "ratio": 0.17318794098781265
+    "orig_bytes": 1605,
+    "out_bytes": 1513,
+    "ratio": 0.057320872274143286
   },
   {
     "name": "vitest (success, batch)",

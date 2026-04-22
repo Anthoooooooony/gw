@@ -1,4 +1,8 @@
 
+> gw-vitest-fixture@1.0.0 test
+> vitest run
+
+
  RUN  v2.1.9 /private/tmp/gw-vitest-fixture
 
  ❯ math.test.js (6 tests | 2 failed) 5ms
@@ -6,6 +10,11 @@
      → expected 6 to be 7 // Object.is equality
    × strings > uppercase broken 1ms
      → expected 'ABC' to be 'XYZ' // Object.is equality
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  16:35:50
+   Duration  287ms (transform 10ms, setup 0ms, collect 6ms, tests 5ms, environment 0ms, prepare 32ms)
 
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
 
@@ -43,9 +52,4 @@ Received: "ABC"
      13| 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
-
- Test Files  1 failed (1)
-      Tests  2 failed | 4 passed (6)
-   Start at  16:20:24
-   Duration  268ms (transform 11ms, setup 0ms, collect 7ms, tests 5ms, environment 0ms, prepare 38ms)
 
