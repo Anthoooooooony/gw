@@ -550,7 +550,7 @@ func TestSettings_PreserveKeyOrderAndIndent(t *testing.T) {
 	idxMcp := orderIdx(afterStr, `"mcpServers"`)
 	idxEnv := orderIdx(afterStr, `"env"`)
 	idxHooks := orderIdx(afterStr, `"hooks"`)
-	if !(idxTheme < idxMcp && idxMcp < idxEnv && idxEnv < idxHooks) {
+	if idxTheme >= idxMcp || idxMcp >= idxEnv || idxEnv >= idxHooks {
 		t.Fatalf("top-level key 顺序被重排: theme=%d mcpServers=%d env=%d hooks=%d",
 			idxTheme, idxMcp, idxEnv, idxHooks)
 	}
