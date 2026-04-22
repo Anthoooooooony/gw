@@ -7,6 +7,19 @@
 ### Added
 
 ### Changed
+
+### Fixed
+
+### Removed
+
+[Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.3.0...HEAD
+[v0.1.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.0
+
+## [v0.3.0] - 2026-04-22
+
+### Added
+
+### Changed
 - refactor(apiproxy/stream/gain): 错误 / warn / info / HTTP body 文本中文化；`cmd/gain.go` 的 `[今日]` 方括号风格改为 `今日 —`，与 CLAUDE.md "禁止方括号前缀" 规范对齐 (#86)
 - refactor(filter): 新增 `filter.StripANSI` 公共工具替代 `filter/java/gradle.go` 与 `filter/toml/engine.go` 的两份 ANSI 正则（字面量大小写原本不一致）；`GradleStreamProcessor` 去导出为 `gradleStreamProcessor`（无跨包使用）；pytest `Subname("pytest")` 返回空串避免展示 `pytest/pytest` 冗余；dcp.Logger 注释纠正"避免包循环"误导 (#89)
 
@@ -15,9 +28,6 @@
 - fix(bump): `[Unreleased]` 有手工内容时整体迁移到新版本节，`trap` 用 `${var:-}` 默认空展开避免 unset variable，bump.sh 现覆盖 migration / auto-gen 两条路径（43 个 bash 单测全覆盖） (#83)
 
 ### Removed
-
-[Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.2.0...HEAD
-[v0.1.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.0
 
 ## [v0.2.0] - 2026-04-21
 
@@ -76,3 +86,5 @@
 - fix(P0): Windows 降级 killProcessGroup 忽略 sig，避免误导性 SIGTERM 日志
 [v0.1.1]: https://github.com/Anthoooooooony/gw/releases/tag/v0.1.1
 [v0.2.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.2.0
+
+[v0.3.0]: https://github.com/Anthoooooooony/gw/releases/tag/v0.3.0
