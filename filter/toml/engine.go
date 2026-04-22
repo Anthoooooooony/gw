@@ -139,4 +139,3 @@ func buildFullCmd(cmd string, args []string) string {
 	}
 	return cmd + " " + strings.Join(args, " ")
 }
-
