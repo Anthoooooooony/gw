@@ -19,9 +19,9 @@ GitHub Flow 单干模型：
 | `docs/*` | 纯文档改动 | `master` |
 | `hotfix/*` | 紧急修复已发布版本（语义与 feature 区分便于追踪） | `master` |
 
-短期分支合入 master 后立即删除。所有改动走 PR（`scripts/bump.sh` 的 release commit 例外——只有这一种场景允许直推 master）。
+短期分支合入 master 后立即删除。所有人工改动走 PR；**release-please bot** 直接向 master 开 release PR 并在合入后 push tag，是唯一合法的非人工写入路径。
 
-版本机制：SemVer + `scripts/bump.sh [patch|minor|major]`（`scripts/bump_test.sh` 覆盖纯函数单测 + 幂等 tag 集成测试）。
+版本机制：SemVer + [release-please](https://github.com/googleapis/release-please)（由 `.github/workflows/release-please.yml` 驱动）。PR title 必须是 Conventional Commits，release-please 扫 master 上的 squash-merge commit subject 推导版本 bump 与 GitHub Release notes；不维护仓库内 `CHANGELOG.md` 文件，发布记录只看 [Releases 页面](https://github.com/Anthoooooooony/gw/releases)。配置源：`release-please-config.json` + `.release-please-manifest.json`。
 
 ## TOML 规则 DSL（v2：仅无损变换）
 

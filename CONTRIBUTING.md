@@ -5,23 +5,23 @@
 ## 分支与 PR
 
 - **GitHub Flow 单干**：`master` 唯一长期分支，所有改动走 `feature/*` / `fix/*` / `chore/*` / `docs/*` / `hotfix/*` → PR → squash merge。
-- 仅 **`scripts/bump.sh` 触发的 release commit** 允许直推 `master`。
+- **release-please bot 例外**：它会直接向 `master` 开 release PR 并在合入后 push tag，这是由 `.github/workflows/release-please.yml` 自动处理的合法路径，不走人工 PR 流程。
 - 短期分支合入后立即删除（`gh pr merge --delete-branch`）。
-- PR 必须过 8 层 CI gate：`test (ubuntu-latest)` / `test (macos-latest)` / `build (ubuntu-latest, CGO)` / `build (macos-latest, CGO)` / `shellcheck` / `actionlint` / `golangci-lint` / `govulncheck`。`test` job 内部串联 `go mod tidy check` / `go vet` / `gofmt` / `go test -race -cover` / `bash scripts/bump_test.sh`（最后一项只在 ubuntu runner 上跑）。
+- PR 必须过 7 层 CI gate：`test (ubuntu-latest)` / `test (macos-latest)` / `build (ubuntu-latest, CGO)` / `build (macos-latest, CGO)` / `actionlint` / `golangci-lint` / `govulncheck`。`test` job 内部串联 `go mod tidy check` / `go vet` / `gofmt` / `go test -race -cover`。
 
-## Commit message
+## PR title（Conventional Commits）
 
-强制 [Conventional Commits](https://www.conventionalcommits.org/)：
+**强制**：PR title 符合 [Conventional Commits](https://www.conventionalcommits.org/)。合并策略是 squash，GitHub repo 设置 "Default commit message = Pull request title"，因此 master 上每个 commit subject 就是对应 PR 的 title——release-please 就从这些 subject 推导版本 bump 与 GitHub Release notes。
 
-| 前缀 | 对应 CHANGELOG 节 |
-|------|-------------------|
-| `feat:` / `feat(scope):` | Added |
-| `fix:` / `fix(scope):` | Fixed |
-| `refactor:` / `perf:` | Changed |
-| `remove:` | Removed |
-| `docs:` / `chore:` / `ci:` / `test:` | 不入 CHANGELOG |
+| 前缀 | 版本 bump（v0.x 阶段） | 归入 Release notes 节 |
+|------|------------------------|------------------------|
+| `feat:` / `feat(scope):` | minor | Features |
+| `fix:` / `fix(scope):` | patch | Bug Fixes |
+| `refactor:` / `perf:` | patch | Code Refactoring / Performance |
+| `remove:` | patch | 不单独分节（按 BREAKING 归类） |
+| `docs:` / `chore:` / `ci:` / `test:` / `style:` / `build:` | 不触发 release | 不进 notes |
 
-**破坏性改动**两种写法都认（`scripts/bump.sh::classify_commit`）：
+**破坏性改动**（v0.x 阶段仍只触发 minor，进 1.0 后触发 major）：
 
 1. 主标题带 `!`：`feat(api)!: drop /v1/legacy`
 2. body footer：
@@ -31,52 +31,35 @@
    BREAKING CHANGE: FilterFunc signature changed
    ```
 
-两者都归入 `Removed` 节。
+## Release 流程（全自动）
 
-## CHANGELOG 手工编辑时机
+Release 由 [release-please](https://github.com/googleapis/release-please) 驱动，维护者无需手工打 tag 或编辑版本号：
 
-`scripts/bump.sh` 有两条生成路径：
+1. PR 合入 `master`（PR title 是 CC 格式）
+2. `release-please.yml` workflow 触发，扫自上一个 release tag 以来的 master commit
+3. 若有 `feat:` / `fix:` / `refactor:` / `perf:` / `remove:` 或 BREAKING commit，release-please 开（或更新）一个 **release PR**，PR body 预览下个版本号 + 变更摘要
+4. 审阅 release PR，合入即触发：
+   - 打 annotated tag `vX.Y.Z`
+   - 创建 GitHub Release（Release notes 自动生成，不依赖仓库内 CHANGELOG 文件）
+   - Tag push 触发 `release.yml` 构建跨平台 binary，上传 `*.tar.gz` + `checksums.txt` 到刚创建的 Release
 
-1. **Migration 模式**（优先）：`[Unreleased]` 下有手工内容 → 整体搬到新版本节，`[Unreleased]` 自动复位为空子节骨架（`### Added / Changed / Fixed / Removed`）
-2. **Auto-gen fallback**：`[Unreleased]` 为空（仅保留子节骨架）→ 用 commit subject 按前缀（feat / fix / refactor / remove / BREAKING）自动归类生成
+配置入口：
+- `release-please-config.json` — release-type / skip-changelog / bump 策略
+- `.release-please-manifest.json` — 当前版本源（release-please 合 release PR 时自动更新）
 
-下面几种场景**应当手工编辑 `[Unreleased]` 节**后再 bump：
-
-- Commit subject 不足以说明改动（内部重构影响到用户行为）
-- 多个 commit 合并为单一 user-facing feature，需要合并条目
-- 安全/破坏性改动需要迁移指南链接
-- 手工调整条目顺序以凸显重点
-
-手工编辑只改 `[Unreleased]` 节，bump.sh 会把手工内容**迁移**到新版本节（不是追加/保留）。`--dry-run` 会显示使用的路径（`migration` 或 `auto-gen fallback`）。
-
-## Release 流程
-
-Pre-bump 清单（在 `master` 干净、已 `git pull` 的前提下）：
-
-1. `bash scripts/bump_test.sh` 本地全绿
-2. `./scripts/bump.sh <kind> --dry-run` 预览 CHANGELOG 节
-3. 如需补充，编辑 `CHANGELOG.md` 的 `[Unreleased]` 节并提交（走 PR 流程）
-4. 正式 bump：`./scripts/bump.sh <patch|minor|major>`
-   - 运行 `EDITOR` 打开 CHANGELOG 做最终 review
-   - 编辑器关闭后 commit + tag + push 触发 `release.yml`
-
-`bump.sh` 已内置的安全护栏（勿重复造）：
-- 必须在 `master` 分支 + 干净工作区 + 与 `origin/master` 同步
-- 新 tag 不得已存在于本地或远端（幂等性）
-- `--dry-run` 可预览不落盘
+不再维护 `CHANGELOG.md` 文件——变更说明只出现在 GitHub Release 页面。历史发布记录可从 [Releases](https://github.com/Anthoooooooony/gw/releases) 页面翻阅。
 
 ## 测试
 
 | 层 | 命令 | 触发条件 |
 |----|------|---------|
 | Go 单测 | `go test -race ./...` | 所有 Go 改动 |
-| bash 单测 | `bash scripts/bump_test.sh` | `scripts/` 改动 |
 | 格式 / 静态 | `gofmt -l .` / `go vet ./...` | 所有 Go 改动（CI test job 内部同跑） |
 | mod 整洁 | `go mod tidy && git diff --exit-code go.mod go.sum` | 依赖变动 |
-| lint | `golangci-lint run` / `shellcheck scripts/*.sh` | 本地选测 |
+| lint | `golangci-lint run` | 本地选测 |
 | vulncheck | `govulncheck ./...` | 依赖升级后 |
 
-本地跑完整 CI 等价集：`make ci`（串起 tidy / vet / race test / bump-test）。
+本地跑 CI 等价集：`make ci`（串起 tidy / vet / race test）。
 
 本地覆盖率：`go test -coverprofile=coverage.out -covermode=atomic ./... && go tool cover -html=coverage.out`。
 
