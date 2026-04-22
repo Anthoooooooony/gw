@@ -12,3 +12,34 @@ max_lines = 30
 match = "docker logs"
 strip_ansi = true
 tail_lines = 50
+
+# docker pull 的有效信息全在末尾三行（Digest / Status / image ref），
+# 前面每层的 "Pulling fs layer" / "Download complete" / "Pull complete"
+# 是纯进度噪音，截尾丢掉。
+[docker.pull]
+match = "docker pull"
+strip_ansi = true
+tail_lines = 3
+on_empty = "docker pull: ok"
+
+  # 失败（网络超时 / auth 失败）的错误信息通常在末尾，截尾 20 行够。
+  [docker.pull.on_error]
+  strip_ansi = true
+  tail_lines = 20
+
+# docker compose up 典型是"拉镜像 + 创建容器"混合；容器状态在末尾。
+[docker.compose-up]
+match = "docker compose up"
+strip_ansi = true
+tail_lines = 40
+on_empty = "docker compose up: ok"
+
+  [docker.compose-up.on_error]
+  strip_ansi = true
+  tail_lines = 60
+
+[docker.compose-down]
+match = "docker compose down"
+strip_ansi = true
+max_lines = 40
+on_empty = "docker compose down: ok"

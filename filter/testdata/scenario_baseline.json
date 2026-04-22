@@ -28,6 +28,20 @@
     "ratio": 0.9352861035422343
   },
   {
+    "name": "docker compose down (batch)",
+    "mode": "batch",
+    "orig_bytes": 463,
+    "out_bytes": 463,
+    "ratio": 0
+  },
+  {
+    "name": "docker compose up (batch)",
+    "mode": "batch",
+    "orig_bytes": 3237,
+    "out_bytes": 2273,
+    "ratio": 0.29780661105962314
+  },
+  {
     "name": "docker images (batch)",
     "mode": "batch",
     "orig_bytes": 1226,
@@ -40,6 +54,13 @@
     "orig_bytes": 256,
     "out_bytes": 256,
     "ratio": 0
+  },
+  {
+    "name": "docker pull (batch)",
+    "mode": "batch",
+    "orig_bytes": 1001,
+    "out_bytes": 89,
+    "ratio": 0.9110889110889111
   },
   {
     "name": "git log (default, batch)",
@@ -180,6 +201,20 @@
     "orig_bytes": 1320,
     "out_bytes": 1320,
     "ratio": 0
+  },
+  {
+    "name": "pnpm install (batch)",
+    "mode": "batch",
+    "orig_bytes": 4244,
+    "out_bytes": 3065,
+    "ratio": 0.277803958529689
+  },
+  {
+    "name": "pnpm test (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 66580,
+    "out_bytes": 1071,
+    "ratio": 0.9839140883148092
   },
   {
     "name": "pytest (failure, batch)",

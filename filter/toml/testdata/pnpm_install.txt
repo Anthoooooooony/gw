@@ -1,0 +1,83 @@
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 5, reused 1, downloaded 0, added 0
+Progress: resolved 11, reused 1, downloaded 0, added 0
+Progress: resolved 12, reused 1, downloaded 4, added 0
+Progress: resolved 34, reused 2, downloaded 8, added 0
+Progress: resolved 42, reused 3, downloaded 15, added 0
+Progress: resolved 49, reused 4, downloaded 29, added 0
+Progress: resolved 67, reused 5, downloaded 37, added 0
+Progress: resolved 76, reused 8, downloaded 41, added 0
+Progress: resolved 83, reused 12, downloaded 53, added 0
+Progress: resolved 99, reused 16, downloaded 63, added 0
+Progress: resolved 113, reused 19, downloaded 69, added 0
+Progress: resolved 121, reused 20, downloaded 82, added 0
+Progress: resolved 136, reused 22, downloaded 90, added 0
+Progress: resolved 148, reused 24, downloaded 99, added 0
+Progress: resolved 162, reused 34, downloaded 115, added 0
+Progress: resolved 186, reused 45, downloaded 120, added 0
+Progress: resolved 201, reused 53, downloaded 124, added 0
+Progress: resolved 214, reused 59, downloaded 135, added 0
+Progress: resolved 230, reused 61, downloaded 143, added 0
+Progress: resolved 240, reused 65, downloaded 153, added 0
+Progress: resolved 252, reused 69, downloaded 164, added 0
+Progress: resolved 279, reused 76, downloaded 170, added 0
+Progress: resolved 307, reused 96, downloaded 174, added 0
+Progress: resolved 320, reused 102, downloaded 180, added 0
+Progress: resolved 330, reused 106, downloaded 192, added 0
+Progress: resolved 340, reused 107, downloaded 193, added 0
+Progress: resolved 353, reused 109, downloaded 200, added 0
+Progress: resolved 365, reused 115, downloaded 210, added 0
+Progress: resolved 384, reused 132, downloaded 220, added 0
+Progress: resolved 408, reused 143, downloaded 225, added 0
+Progress: resolved 424, reused 143, downloaded 227, added 0
+Progress: resolved 428, reused 143, downloaded 244, added 0
+Progress: resolved 446, reused 144, downloaded 256, added 0
+Progress: resolved 458, reused 154, downloaded 261, added 0
+Progress: resolved 472, reused 165, downloaded 275, added 0
+Progress: resolved 480, reused 165, downloaded 282, added 0
+Progress: resolved 484, reused 165, downloaded 288, added 0
+Progress: resolved 488, reused 165, downloaded 297, added 0
+Progress: resolved 493, reused 165, downloaded 301, added 0
+Progress: resolved 493, reused 165, downloaded 305, added 0
+Progress: resolved 493, reused 165, downloaded 310, added 0
+Packages: +476
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 493, reused 165, downloaded 310, added 1
+Progress: resolved 493, reused 165, downloaded 310, added 476, done
+
+> @sindresorhus/is@8.0.0 prepare /private/tmp/gw-pnpm-fixture/is
+> npm run build
+
+
+> @sindresorhus/is@8.0.0 build
+> del distribution && tsc
+
+ WARN  Issues with peer dependencies found
+.
+└─┬ xo 2.0.2
+  └─┬ eslint-config-xo-react 0.29.0
+    └─┬ eslint-plugin-react 7.37.5
+      └── ✕ unmet peer eslint@"^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7": found 10.2.1
+
+devDependencies:
++ @sindresorhus/tsconfig 8.1.0
++ @types/jsdom 28.0.1
++ @types/node 25.6.0
++ @types/zen-observable 0.8.7
++ del-cli 7.0.0
++ expect-type 1.3.0
++ jsdom 29.0.2
++ rxjs 7.8.2
++ tempy 3.2.0
++ typescript 6.0.2
++ xo 2.0.2
++ zen-observable 0.10.0
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: unrs-resolver@1.11.1.                               │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Done in 45.1s using pnpm v10.33.0

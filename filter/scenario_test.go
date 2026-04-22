@@ -96,13 +96,19 @@ var scenarios = []scenario{
 	{"git log (default, batch)", "git", []string{"log"}, "git/testdata/git_log_default.txt", 0, modeBatch},
 
 	// ---- TOML 规则过滤器（真实项目 / 本机 state）----
-	// Docker：本机 Docker Desktop 状态
+	// Docker：本机 Docker Desktop 状态 + nginx:1.25-alpine pull / compose 管理 web+cache
 	{"docker ps (batch)", "docker", []string{"ps"}, "toml/testdata/docker_ps.txt", 0, modeBatch},
 	{"docker images (batch)", "docker", []string{"images"}, "toml/testdata/docker_images.txt", 0, modeBatch},
+	{"docker pull (batch)", "docker", []string{"pull", "nginx:1.25-alpine"}, "toml/testdata/docker_pull.txt", 0, modeBatch},
+	{"docker compose up (batch)", "docker", []string{"compose", "up", "-d"}, "toml/testdata/docker_compose_up.txt", 0, modeBatch},
+	{"docker compose down (batch)", "docker", []string{"compose", "down"}, "toml/testdata/docker_compose_down.txt", 0, modeBatch},
 	// npm：chalk/chalk
 	{"npm install (batch)", "npm", []string{"install"}, "toml/testdata/npm_install.txt", 0, modeBatch},
 	{"npm test (success, batch)", "npm", []string{"test"}, "toml/testdata/npm_test_success.txt", 0, modeBatch},
 	{"npm test (failure, batch)", "npm", []string{"test"}, "toml/testdata/npm_test_failure.txt", 1, modeBatch},
+	// pnpm：sindresorhus/is 实测捕获
+	{"pnpm install (batch)", "pnpm", []string{"install"}, "toml/testdata/pnpm_install.txt", 0, modeBatch},
+	{"pnpm test (failure, batch)", "pnpm", []string{"test"}, "toml/testdata/pnpm_test_failure.txt", 1, modeBatch},
 	// Python：python-attrs/attrs
 	{"pip install (batch)", "pip", []string{"install"}, "toml/testdata/pip_install.txt", 0, modeBatch},
 	{"pytest (success, batch)", "pytest", nil, "toml/testdata/pytest_success.txt", 0, modeBatch},

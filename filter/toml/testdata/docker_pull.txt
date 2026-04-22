@@ -1,0 +1,30 @@
+1.25-alpine: Pulling from library/nginx
+b4f3127eb622: Pulling fs layer
+182e691fb2cc: Pulling fs layer
+98ff282c4466: Pulling fs layer
+166b80e00f74: Pulling fs layer
+a83296a673ce: Pulling fs layer
+4f6b4e3940df: Pulling fs layer
+bca4290a9639: Pulling fs layer
+ddf9db5a05cb: Pulling fs layer
+be49f1d24740: Download complete
+166b80e00f74: Download complete
+182e691fb2cc: Download complete
+b4f3127eb622: Download complete
+98ff282c4466: Download complete
+a83296a673ce: Download complete
+beae44954c40: Download complete
+ddf9db5a05cb: Download complete
+bca4290a9639: Download complete
+b4f3127eb622: Pull complete
+a83296a673ce: Pull complete
+ddf9db5a05cb: Pull complete
+bca4290a9639: Pull complete
+166b80e00f74: Pull complete
+182e691fb2cc: Pull complete
+98ff282c4466: Pull complete
+4f6b4e3940df: Download complete
+4f6b4e3940df: Pull complete
+Digest: sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00
+Status: Downloaded newer image for nginx:1.25-alpine
+docker.io/library/nginx:1.25-alpine

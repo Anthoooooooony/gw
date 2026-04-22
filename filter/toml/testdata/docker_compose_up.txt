@@ -1,0 +1,59 @@
+ Image redis:7-alpine Pulling 
+ 206fcadbe8d4 Pulling fs layer 
+ 2dd7199cff98 Pulling fs layer 
+ 61f4be4872c1 Pulling fs layer 
+ e88abbae5588 Pulling fs layer 
+ 47a1b4a8e8ba Pulling fs layer 
+ ffdf74525bf8 Pulling fs layer 
+ bf74cc496586 Pulling fs layer 
+ 4f4fb700ef54 Pulling fs layer 
+ 4f4fb700ef54 Already exists 
+ 2dd7199cff98 Downloading [=============>                                     ]  1.049MB/3.994MB
+ 206fcadbe8d4 Download complete 
+ ed1bb9c0640b Download complete 
+ 2dd7199cff98 Downloading [=============>                                     ]  1.049MB/3.994MB
+ 61f4be4872c1 Downloading [==================================================>]     949B/949B
+ 2dd7199cff98 Downloading [==========================>                        ]  2.097MB/3.994MB
+ 2dd7199cff98 Downloading [=======================================>           ]  3.146MB/3.994MB
+ 61f4be4872c1 Download complete 
+ bf74cc496586 Download complete 
+ cdd4fb85191d Download complete 
+ 2dd7199cff98 Download complete 
+ 61f4be4872c1 Pull complete 
+ 2dd7199cff98 Pull complete 
+ e88abbae5588 Download complete 
+ e88abbae5588 Extracting 1 s
+ e88abbae5588 Pull complete 
+ 47a1b4a8e8ba Download complete 
+ ffdf74525bf8 Downloading [====>                                              ]  1.049MB/12.58MB
+ 47a1b4a8e8ba Pull complete 
+ ffdf74525bf8 Downloading [====>                                              ]  1.049MB/12.58MB
+ ffdf74525bf8 Downloading [========>                                          ]  2.097MB/12.58MB
+ ffdf74525bf8 Downloading [============>                                      ]  3.146MB/12.58MB
+ ffdf74525bf8 Downloading [================>                                  ]  4.194MB/12.58MB
+ ffdf74525bf8 Downloading [====================>                              ]  5.243MB/12.58MB
+ ffdf74525bf8 Downloading [====================>                              ]  5.243MB/12.58MB
+ ffdf74525bf8 Downloading [====================>                              ]  5.243MB/12.58MB
+ ffdf74525bf8 Downloading [=========================>                         ]  6.291MB/12.58MB
+ ffdf74525bf8 Downloading [=============================>                     ]   7.34MB/12.58MB
+ ffdf74525bf8 Downloading [=============================>                     ]   7.34MB/12.58MB
+ ffdf74525bf8 Downloading [=============================================>     ]  11.53MB/12.58MB
+ ffdf74525bf8 Downloading [=============================================>     ]  11.53MB/12.58MB
+ ffdf74525bf8 Downloading [=============================================>     ]  11.53MB/12.58MB
+ ffdf74525bf8 Download complete 
+ ffdf74525bf8 Extracting 1 s
+ 4f4fb700ef54 Pull complete 
+ 206fcadbe8d4 Pull complete 
+ bf74cc496586 Pull complete 
+ ffdf74525bf8 Pull complete 
+ Image redis:7-alpine Pulled 
+ Network gw-compose-fixture_default Creating 
+ Network gw-compose-fixture_default Created 
+ Container gw-compose-fixture-web-1 Creating 
+ Container gw-compose-fixture-cache-1 Creating 
+ Container gw-compose-fixture-cache-1 Created 
+ Container gw-compose-fixture-web-1 Created 
+ Container gw-compose-fixture-cache-1 Starting 
+ Container gw-compose-fixture-web-1 Starting 
+ Container gw-compose-fixture-web-1 Started 
+ Container gw-compose-fixture-cache-1 Started 
