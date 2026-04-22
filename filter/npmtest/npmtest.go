@@ -97,30 +97,54 @@ var vitestTestFilesRe = regexp.MustCompile(`^ Test Files  \d+ (passed|failed)`)
 // vitestFailedHeaderRe 匹配失败详情分隔符 `⎯⎯⎯⎯ Failed Tests N ⎯⎯⎯⎯`。
 var vitestFailedHeaderRe = regexp.MustCompile(`^⎯+ Failed Tests \d+ ⎯+$`)
 
+// vitestFailedFileRe 匹配失败时的文件级摘要 ` ❯ path/to/file.test.js (6 tests | 2 failed) 5ms`，
+// 这一行在 stdout 里，紧跟着 `  × test > name → err` 的逐条失败快览；用它作为首选锚点
+// 可以把"哪个测试文件失败、每个失败的摘要"一并纳入切片。
+var vitestFailedFileRe = regexp.MustCompile(`^ ❯ \S+ \(\d+ tests? \| \d+ failed\)`)
+
 // detectAndSliceVitest 区分成功/失败两种模式：
 //   - 成功：只保留 ` Test Files` 和 ` Tests` 两行汇总；
-//   - 失败：从 `Failed Tests N` 分隔符起到末尾完整保留（含 AssertionError + code frame + 汇总）。
+//   - 失败：从最早的失败锚点（` ❯ file (N | M failed)` 或 `⎯ Failed Tests N ⎯`）
+//     起到末尾完整保留。
+//
+// gw 对子进程做 stdout / stderr 分开捕获后按 "stdout + stderr" 拼接；vitest 的
+// 汇总（`Test Files ...`）在 stdout，失败详情（`Failed Tests`、AssertionError、
+// code frame）在 stderr，所以 concat 后 summary 会出现在 Failed-Tests 分隔符之前——
+// 必须以 stdout 的 ` ❯ ` 为锚，才能同时囊括 summary、进度快览和 stderr 详情。
 //
 // 无法识别返回空字符串。
 func detectAndSliceVitest(content string) string {
 	lines := strings.Split(content, "\n")
-	summaryIdx := -1
+	hasSummary := false
 	for i := len(lines) - 1; i >= 0; i-- {
 		if vitestTestFilesRe.MatchString(strings.TrimRight(lines[i], "\r")) {
-			summaryIdx = i
+			hasSummary = true
 			break
 		}
 	}
-	if summaryIdx < 0 {
+	if !hasSummary {
 		return ""
 	}
-	// 有失败分隔符 → 失败模式：从该分隔符起切片
+	// 失败模式：优先用 `❯ file (... | N failed)` 锚点（stdout 里靠前的位置），
+	// 缺失则退回 `Failed Tests N` 分隔符（stderr 里）。
+	for i, line := range lines {
+		if vitestFailedFileRe.MatchString(strings.TrimRight(line, "\r")) {
+			return strings.Join(lines[i:], "\n")
+		}
+	}
 	for i, line := range lines {
 		if vitestFailedHeaderRe.MatchString(strings.TrimRight(line, "\r")) {
 			return strings.Join(lines[i:], "\n")
 		}
 	}
-	// 无失败分隔符 → 成功模式：保留 Test Files + Tests 两行汇总
+	// 成功模式：保留 Test Files + Tests 两行汇总
+	summaryIdx := -1
+	for i, line := range lines {
+		if vitestTestFilesRe.MatchString(strings.TrimRight(line, "\r")) {
+			summaryIdx = i
+			break
+		}
+	}
 	end := summaryIdx + 1
 	if end < len(lines) && strings.HasPrefix(strings.TrimRight(lines[end], "\r"), "      Tests ") {
 		end++
@@ -134,12 +158,22 @@ func detectAndSliceVitest(content string) string {
 const genericTailLines = 120
 
 // fallbackTail 对未识别格式应用通用尾截断：保留最后 N 行。
+// 与 TOML 引擎对齐：先剥末尾 \n 再 Split，避免末尾空串被计成一行。
 func fallbackTail(content string) string {
-	lines := strings.Split(content, "\n")
+	hadTrailingNewline := strings.HasSuffix(content, "\n")
+	trimmed := content
+	if hadTrailingNewline {
+		trimmed = content[:len(content)-1]
+	}
+	lines := strings.Split(trimmed, "\n")
 	if len(lines) <= genericTailLines {
 		return content
 	}
-	return strings.Join(lines[len(lines)-genericTailLines:], "\n")
+	result := strings.Join(lines[len(lines)-genericTailLines:], "\n")
+	if hadTrailingNewline && result != "" {
+		result += "\n"
+	}
+	return result
 }
 
 // detectAndSlice 依次尝试每个 runner 的嗅探器，首个命中的结果生效。

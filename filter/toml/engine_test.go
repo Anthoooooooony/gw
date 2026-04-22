@@ -63,6 +63,23 @@ func TestTailLines(t *testing.T) {
 	}
 }
 
+// TestTailLines_WithTrailingNewline 防回归：命令输出常以 \n 结尾，
+// strings.Split 会把末尾空串计成一行，曾导致 `tail_lines=3` 的 docker pull
+// 丢掉 Digest（见实机测试，末三行只剩 2 行真实可见）。
+func TestTailLines_WithTrailingNewline(t *testing.T) {
+	f := makeFilter(Rule{Match: "docker pull", TailLines: 3})
+	input := filter.FilterInput{
+		Cmd:    "docker",
+		Args:   []string{"pull", "alpine"},
+		Stdout: "header\nlayer1\nlayer2\nDigest: sha256:xxx\nStatus: Downloaded\ndocker.io/library/alpine\n",
+	}
+	out := f.Apply(input)
+	want := "Digest: sha256:xxx\nStatus: Downloaded\ndocker.io/library/alpine\n"
+	if out.Content != want {
+		t.Errorf("tail_lines=3 + 末尾 \\n 的输出应保留完整 3 行，\n got=%q\nwant=%q", out.Content, want)
+	}
+}
+
 func TestStripAnsi(t *testing.T) {
 	f := makeFilter(Rule{Match: "test", StripAnsi: true})
 	input := filter.FilterInput{

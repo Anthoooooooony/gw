@@ -38,8 +38,8 @@
     "name": "docker compose up (batch)",
     "mode": "batch",
     "orig_bytes": 3237,
-    "out_bytes": 2273,
-    "ratio": 0.29780661105962314
+    "out_bytes": 2306,
+    "ratio": 0.2876119864071671
   },
   {
     "name": "docker images (batch)",
@@ -59,8 +59,8 @@
     "name": "docker pull (batch)",
     "mode": "batch",
     "orig_bytes": 1001,
-    "out_bytes": 89,
-    "ratio": 0.9110889110889111
+    "out_bytes": 169,
+    "ratio": 0.8311688311688312
   },
   {
     "name": "git log (default, batch)",
@@ -206,15 +206,15 @@
     "name": "pnpm install (batch)",
     "mode": "batch",
     "orig_bytes": 4244,
-    "out_bytes": 3065,
-    "ratio": 0.277803958529689
+    "out_bytes": 3066,
+    "ratio": 0.2775683317624882
   },
   {
     "name": "pnpm test (failure, batch)",
     "mode": "batch",
     "orig_bytes": 66580,
-    "out_bytes": 2667,
-    "ratio": 0.9599429258035446
+    "out_bytes": 2694,
+    "ratio": 0.9595373986182036
   },
   {
     "name": "pytest (failure, batch)",
@@ -233,9 +233,9 @@
   {
     "name": "vitest (failure, batch)",
     "mode": "batch",
-    "orig_bytes": 1559,
-    "out_bytes": 1289,
-    "ratio": 0.17318794098781265
+    "orig_bytes": 1605,
+    "out_bytes": 1513,
+    "ratio": 0.057320872274143286
   },
   {
     "name": "vitest (success, batch)",

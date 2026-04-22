@@ -145,18 +145,27 @@ func TestApplyOnError_Vitest(t *testing.T) {
 	if out == nil {
 		t.Fatal("vitest failure 应返回非 nil")
 	}
+	// gw 拼接 stdout + stderr，vitest 的 Test Files/Tests summary 在 stdout 里、
+	// Failed Tests 详情分隔符在 stderr 里；切片必须包含两部分。
 	if !strings.Contains(out.Content, "Failed Tests") {
 		t.Error("应保留 Failed Tests 分隔符")
 	}
 	if !strings.Contains(out.Content, "AssertionError") {
 		t.Error("应保留 AssertionError 详情")
 	}
-	if !strings.Contains(out.Content, "Test Files") {
+	if !strings.Contains(out.Content, "Test Files  1 failed") {
 		t.Error("应保留 Test Files 汇总")
 	}
-	// 前部的 ❯ 文件汇总与 × 测试行应在切片范围之前
-	if strings.HasPrefix(out.Content, " ❯ math.test.js") {
-		t.Error("切片应从 Failed Tests 起，而非 ❯ 文件汇总")
+	if !strings.Contains(out.Content, "Tests  2 failed | 4 passed") {
+		t.Error("应保留 Tests 通过/失败计数")
+	}
+	// 切片应从 `❯ file (N | M failed)` 起，包含 × 进度快览
+	if !strings.Contains(out.Content, "× math > multiplies broken") {
+		t.Error("应保留失败测试的进度快览")
+	}
+	// RUN 头行和 npm 包装行应在切片之前，不保留
+	if strings.Contains(out.Content, "RUN  v") {
+		t.Error("RUN 头行应被丢弃")
 	}
 }
 
