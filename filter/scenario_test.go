@@ -112,6 +112,9 @@ var scenarios = []scenario{
 	// vitest：本地 minimal fixture
 	{"vitest (success, batch)", "vitest", []string{"run"}, "toml/testdata/vitest_success.txt", 0, modeBatch},
 	{"vitest (failure, batch)", "vitest", []string{"run"}, "toml/testdata/vitest_failure.txt", 1, modeBatch},
+	// jest：本地 minimal fixture（npm test 调用 jest）
+	{"jest (success, batch)", "npm", []string{"test"}, "toml/testdata/jest_success.txt", 0, modeBatch},
+	{"jest (failure, batch)", "npm", []string{"test"}, "toml/testdata/jest_failure.txt", 1, modeBatch},
 	// Python：python-attrs/attrs
 	{"pip install (batch)", "pip", []string{"install"}, "toml/testdata/pip_install.txt", 0, modeBatch},
 	{"pytest (success, batch)", "pytest", nil, "toml/testdata/pytest_success.txt", 0, modeBatch},
