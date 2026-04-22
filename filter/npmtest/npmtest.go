@@ -29,8 +29,12 @@ type Filter struct{}
 // Name 返回 "npm/test"。
 func (f *Filter) Name() string { return "npm/test" }
 
-// Match 覆盖三种包管理器：`npm test [...]`、`yarn test [...]`、`pnpm test [...]`、`pnpm t`。
-// 排除 `npm run test:unit` 等自定义脚本——那些脚本输出不一定是标准 test runner 格式。
+// Match 覆盖包管理器的测试命令 + 直接调用的 vitest：
+//
+//	npm test / yarn test / pnpm test / pnpm t
+//	vitest run / vitest --run / vitest（以及 npx/pnpm dlx wrapper 会在各自 cmd 下透传）
+//
+// 排除 `npm run test:unit` 等自定义脚本——那些脚本输出不保证是标准 runner 格式。
 func (f *Filter) Match(cmd string, args []string) bool {
 	switch cmd {
 	case "npm":
@@ -39,6 +43,9 @@ func (f *Filter) Match(cmd string, args []string) bool {
 		return len(args) > 0 && args[0] == "test"
 	case "pnpm":
 		return len(args) > 0 && (args[0] == "test" || args[0] == "t")
+	case "vitest":
+		// bare `vitest`、`vitest run`、`vitest --run` 都接管
+		return true
 	}
 	return false
 }
@@ -81,6 +88,46 @@ func detectAndSliceAVA(content string) string {
 	return ""
 }
 
+// --- vitest detection & compression ---
+
+// vitestTestFilesRe 匹配 vitest summary 首行 ` Test Files  N passed (N)` / ` Test Files  1 failed (1)`。
+// 行首单空格缩进是稳定特征。
+var vitestTestFilesRe = regexp.MustCompile(`^ Test Files  \d+ (passed|failed)`)
+
+// vitestFailedHeaderRe 匹配失败详情分隔符 `⎯⎯⎯⎯ Failed Tests N ⎯⎯⎯⎯`。
+var vitestFailedHeaderRe = regexp.MustCompile(`^⎯+ Failed Tests \d+ ⎯+$`)
+
+// detectAndSliceVitest 区分成功/失败两种模式：
+//   - 成功：只保留 ` Test Files` 和 ` Tests` 两行汇总；
+//   - 失败：从 `Failed Tests N` 分隔符起到末尾完整保留（含 AssertionError + code frame + 汇总）。
+//
+// 无法识别返回空字符串。
+func detectAndSliceVitest(content string) string {
+	lines := strings.Split(content, "\n")
+	summaryIdx := -1
+	for i := len(lines) - 1; i >= 0; i-- {
+		if vitestTestFilesRe.MatchString(strings.TrimRight(lines[i], "\r")) {
+			summaryIdx = i
+			break
+		}
+	}
+	if summaryIdx < 0 {
+		return ""
+	}
+	// 有失败分隔符 → 失败模式：从该分隔符起切片
+	for i, line := range lines {
+		if vitestFailedHeaderRe.MatchString(strings.TrimRight(line, "\r")) {
+			return strings.Join(lines[i:], "\n")
+		}
+	}
+	// 无失败分隔符 → 成功模式：保留 Test Files + Tests 两行汇总
+	end := summaryIdx + 1
+	if end < len(lines) && strings.HasPrefix(strings.TrimRight(lines[end], "\r"), "      Tests ") {
+		end++
+	}
+	return strings.Join(lines[summaryIdx:end], "\n")
+}
+
 // genericTailLines 是未识别到具体 runner 格式时的 fallback 截尾长度——
 // 对齐旧 TOML 规则 `[npm.test].tail_lines = 120` 的既有行为，避免 jest/vitest
 // 用户在本 filter 接管后失去 TOML 层面的基础压缩。
@@ -95,20 +142,31 @@ func fallbackTail(content string) string {
 	return strings.Join(lines[len(lines)-genericTailLines:], "\n")
 }
 
-// Apply 成功场景：嗅探到 AVA 则切片，否则落到通用尾截断（对齐旧 TOML 行为）。
+// detectAndSlice 依次尝试每个 runner 的嗅探器，首个命中的结果生效。
+func detectAndSlice(content string) string {
+	if s := detectAndSliceVitest(content); s != "" {
+		return s
+	}
+	if s := detectAndSliceAVA(content); s != "" {
+		return s
+	}
+	return ""
+}
+
+// Apply 成功场景：嗅探到已知 runner 则切片，否则落到通用尾截断。
 func (f *Filter) Apply(input filter.FilterInput) filter.FilterOutput {
 	content := input.Stdout
-	if sliced := detectAndSliceAVA(content); sliced != "" {
+	if sliced := detectAndSlice(content); sliced != "" {
 		return filter.FilterOutput{Content: sliced, Original: content}
 	}
 	return filter.FilterOutput{Content: fallbackTail(content), Original: content}
 }
 
-// ApplyOnError 失败场景：AVA 与成功场景共用相同分隔线锚点——切片一样做；
-// 非 AVA 格式做通用尾截断。无论是否匹配到 runner 都返回非 nil，让上层保持压缩。
+// ApplyOnError 失败场景：嗅探已知 runner 优先切片，否则通用尾截断。
+// 无论是否识别都返回非 nil，让上层保持压缩。
 func (f *Filter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput {
 	content := input.Stdout + input.Stderr
-	if sliced := detectAndSliceAVA(content); sliced != "" {
+	if sliced := detectAndSlice(content); sliced != "" {
 		return &filter.FilterOutput{Content: sliced, Original: content}
 	}
 	return &filter.FilterOutput{Content: fallbackTail(content), Original: content}

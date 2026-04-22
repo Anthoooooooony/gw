@@ -229,5 +229,19 @@
     "orig_bytes": 8934,
     "out_bytes": 81,
     "ratio": 0.9909335124244459
+  },
+  {
+    "name": "vitest (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 1559,
+    "out_bytes": 1289,
+    "ratio": 0.17318794098781265
+  },
+  {
+    "name": "vitest (success, batch)",
+    "mode": "batch",
+    "orig_bytes": 256,
+    "out_bytes": 51,
+    "ratio": 0.80078125
   }
 ]

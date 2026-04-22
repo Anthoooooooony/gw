@@ -1,0 +1,51 @@
+
+ RUN  v2.1.9 /private/tmp/gw-vitest-fixture
+
+ ❯ math.test.js (6 tests | 2 failed) 5ms
+   × math > multiplies broken 3ms
+     → expected 6 to be 7 // Object.is equality
+   × strings > uppercase broken 1ms
+     → expected 'ABC' to be 'XYZ' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  math.test.js > math > multiplies broken
+AssertionError: expected 6 to be 7 // Object.is equality
+
+- Expected
++ Received
+
+- 7
++ 6
+
+ ❯ math.test.js:6:49
+      4|   it('adds', () => { expect(1 + 1).toBe(2) })
+      5|   it('subtracts', () => { expect(3 - 1).toBe(2) })
+      6|   it('multiplies broken', () => { expect(2 * 3).toBe(7) })
+       |                                                 ^
+      7| })
+      8| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  math.test.js > strings > uppercase broken
+AssertionError: expected 'ABC' to be 'XYZ' // Object.is equality
+
+Expected: "XYZ"
+Received: "ABC"
+
+ ❯ math.test.js:11:62
+      9| describe('strings', () => {
+     10|   it('concats', () => { expect('a' + 'b').toBe('ab') })
+     11|   it('uppercase broken', () => { expect('abc'.toUpperCase()).toBe('XYZ…
+       |                                                              ^
+     12| })
+     13| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  16:20:24
+   Duration  268ms (transform 11ms, setup 0ms, collect 7ms, tests 5ms, environment 0ms, prepare 38ms)
+
