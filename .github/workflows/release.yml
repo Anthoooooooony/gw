@@ -1,31 +1,94 @@
 name: release
 
+# CI-driven 自动发版：master 每次 push 触发一次 decide；若有 user-facing commit
+# 则自动 bump 版本、打 tag、构建跨平台 assets、创建 GitHub Release 并上传。
+# 所有步骤在同一 workflow run 内顺序执行，不依赖跨 workflow 触发，GITHUB_TOKEN 足够。
+
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [master]
 
-# 默认最小权限；release job 单独提升到 write
 permissions:
-  contents: read
+  contents: write
 
-# 同一 tag 的并发跑串行化，避免竞争 release asset 上传
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  # 每平台在原生 runner 上编译（CGO 需要原生 toolchain）
+  decide:
+    name: decide
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_release: ${{ steps.decide.outputs.should_release }}
+      new_tag: ${{ steps.decide.outputs.new_tag }}
+      prev_tag: ${{ steps.decide.outputs.prev_tag }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - id: decide
+        shell: bash
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          source scripts/release-helpers.sh
+
+          prev_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "prev_tag=${prev_tag}"
+
+          mapfile -d '' commits < <(git log "${prev_tag}..HEAD" --format='%s%n%b%x00')
+          classifications=()
+          for msg in "${commits[@]}"; do
+            [[ -z "$msg" ]] && continue
+            cls=$(classify_commit "$msg")
+            [[ -n "$cls" ]] && classifications+=("$cls")
+          done
+
+          kind=$(kind_from_classifications "${classifications[@]}")
+          echo "classifications=${#classifications[@]} kind=${kind}"
+          if [[ "$kind" == "none" ]]; then
+            echo "no user-facing commits since ${prev_tag}, skipping release"
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          new_tag=$(bump_version "$prev_tag" "$kind")
+          {
+            echo "should_release=true"
+            echo "new_tag=${new_tag}"
+            echo "prev_tag=${prev_tag}"
+          } >> "$GITHUB_OUTPUT"
+          echo "bumping ${prev_tag} → ${new_tag} (${kind})"
+
+          git log "${prev_tag}..HEAD" --format='%s%n%b%x1F%h%x00' |
+            build_release_notes "$new_tag" "$prev_tag" "$REPO" > release-notes.md
+
+          echo "--- release notes preview ---"
+          cat release-notes.md
+
+      - name: Upload release notes artifact
+        if: steps.decide.outputs.should_release == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-notes
+          path: release-notes.md
+          retention-days: 1
+
   build:
+    name: build (${{ matrix.goos }}-${{ matrix.goarch }})
+    needs: decide
+    if: needs.decide.outputs.should_release == 'true'
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         include:
           - { runner: ubuntu-latest, goos: linux,  goarch: amd64 }
-          - { runner: macos-latest,  goos: darwin, goarch: arm64 }   # Apple Silicon
-          # macos-13（Intel amd64）暂不覆盖——GitHub free tier 排队过长，Intel Mac
-          # 装机份额已低于 5%，用户可用 `go install` 自建。后续视需求增补。
+          - { runner: macos-latest,  goos: darwin, goarch: arm64 }
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -37,69 +100,89 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Build native binary with version injection
+      - name: Build with version injection
         env:
           CGO_ENABLED: '1'
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          NEW_TAG: ${{ needs.decide.outputs.new_tag }}
         run: |
           mkdir -p dist
-          version="${GITHUB_REF_NAME}"
           commit=$(git rev-parse --short HEAD)
           date=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           go build -trimpath \
             -ldflags "-s -w \
-              -X github.com/Anthoooooooony/gw/cmd.Version=${version} \
+              -X github.com/Anthoooooooony/gw/cmd.Version=${NEW_TAG} \
               -X github.com/Anthoooooooony/gw/cmd.Commit=${commit} \
               -X github.com/Anthoooooooony/gw/cmd.BuildDate=${date}" \
             -o dist/gw \
             .
-          ./dist/gw version
 
-      - name: Create archive (tar.gz with README)
+      - name: Archive tar.gz
+        env:
+          NEW_TAG: ${{ needs.decide.outputs.new_tag }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
         run: |
           cd dist
           cp ../README.md .
-          tar czf "gw_${GITHUB_REF_NAME}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz" \
-            gw README.md
+          tar czf "gw_${NEW_TAG}_${GOOS}_${GOARCH}.tar.gz" gw README.md
           ls -la ./*.tar.gz
 
-      - name: Upload archive artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: gw-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/*.tar.gz
           retention-days: 1
 
   release:
-    needs: build
-    timeout-minutes: 10
+    name: tag & release
+    needs: [decide, build]
+    if: needs.decide.outputs.should_release == 'true'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write   # 创建 GitHub Release 需要写权限
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+          fetch-tags: true
 
-      - name: Download all archives into dist/
+      - name: Download artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          path: dist/
-          pattern: gw-*
-          merge-multiple: true
+          path: artifacts
 
-      - name: Generate checksums.txt
+      - name: Stage assets + checksums
         run: |
+          mkdir -p dist
+          find artifacts -name '*.tar.gz' -exec cp {} dist/ \;
+          cp artifacts/release-notes/release-notes.md ./release-notes.md
           cd dist
           sha256sum ./*.tar.gz > checksums.txt
           cat checksums.txt
 
-      # release-please 已在 tag push 同步创建了 GitHub Release 并填好 notes；
-      # 此处只把构建 assets 追加到对应 release，不碰 body，避免覆盖 release-please 的变更摘要。
-      - name: Upload assets to release-please-created release
+      - name: Configure git identity for tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and push annotated tag
+        env:
+          NEW_TAG: ${{ needs.decide.outputs.new_tag }}
+        run: |
+          git tag -a "$NEW_TAG" -m "release $NEW_TAG"
+          git push origin "$NEW_TAG"
+
+      - name: Create GitHub Release with assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
+          NEW_TAG: ${{ needs.decide.outputs.new_tag }}
         run: |
-          gh release upload "$TAG" dist/*.tar.gz dist/checksums.txt --clobber
+          args=(
+            --title "$NEW_TAG"
+            --notes-file release-notes.md
+          )
+          if [[ "$NEW_TAG" == *-* ]]; then
+            args+=(--prerelease)
+          fi
+          gh release create "$NEW_TAG" "${args[@]}" dist/*.tar.gz dist/checksums.txt
