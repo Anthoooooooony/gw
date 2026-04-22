@@ -16,17 +16,7 @@ strip_ansi = true
 max_lines = 80
 on_empty = "npm ci: ok"
 
-[npm.test]
-match = "npm test"
-strip_ansi = true
-tail_lines = 120
-on_empty = "npm test: ok"
-
-  # jest/mocha 失败输出末尾是 FAIL 列表 + summary，取最后 50 行足够。
-  [npm.test.on_error]
-  strip_ansi = true
-  tail_lines = 50
-  on_empty = "npm test: 失败但无输出"
+# npm test 由 filter/npmtest（Go filter）接管，不再需要 TOML 规则。
 
 [npm.run-build]
 match = "npm run build"
@@ -42,16 +32,7 @@ strip_ansi = true
 max_lines = 60
 on_empty = "yarn install: ok"
 
-[yarn.test]
-match = "yarn test"
-strip_ansi = true
-tail_lines = 120
-on_empty = "yarn test: ok"
-
-  [yarn.test.on_error]
-  strip_ansi = true
-  tail_lines = 50
-  on_empty = "yarn test: 失败但无输出"
+# yarn test 由 filter/npmtest 接管
 
 [yarn.build]
 match = "yarn build"
@@ -73,16 +54,7 @@ strip_ansi = true
 max_lines = 60
 on_empty = "pnpm i: ok"
 
-[pnpm.test]
-match = "pnpm test"
-strip_ansi = true
-tail_lines = 120
-on_empty = "pnpm test: ok"
-
-  [pnpm.test.on_error]
-  strip_ansi = true
-  tail_lines = 50
-  on_empty = "pnpm test: 失败但无输出"
+# pnpm test 由 filter/npmtest 接管
 
 [pnpm.build]
 match = "pnpm build"

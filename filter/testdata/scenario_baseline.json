@@ -185,15 +185,15 @@
     "name": "npm test (failure, batch)",
     "mode": "batch",
     "orig_bytes": 4390,
-    "out_bytes": 2656,
-    "ratio": 0.39498861047835987
+    "out_bytes": 1445,
+    "ratio": 0.6708428246013667
   },
   {
     "name": "npm test (success, batch)",
     "mode": "batch",
     "orig_bytes": 4229,
-    "out_bytes": 4229,
-    "ratio": 0
+    "out_bytes": 1285,
+    "ratio": 0.6961456609127453
   },
   {
     "name": "pip install (batch)",
@@ -213,8 +213,8 @@
     "name": "pnpm test (failure, batch)",
     "mode": "batch",
     "orig_bytes": 66580,
-    "out_bytes": 1071,
-    "ratio": 0.9839140883148092
+    "out_bytes": 2667,
+    "ratio": 0.9599429258035446
   },
   {
     "name": "pytest (failure, batch)",
