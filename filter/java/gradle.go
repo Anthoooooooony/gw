@@ -330,23 +330,25 @@ var gradleStackFrameRegexp = regexp.MustCompile(`^\s+at\s`)
 // gradleMaxStackFrames 是单个错误块最多保留的栈帧数，避免日志爆炸。
 const gradleMaxStackFrames = 20
 
+// gradleDedupCap 是 seenLines 集合的硬上限；超出后不再吸收新键，避免长构建
+// OOM。10000 已远超真实构建中的独立 warning 数。
+const gradleDedupCap = 10000
+
 // NewStreamInstance 创建新的流式处理器实例（每次命令执行一份状态）。
 func (f *GradleFilter) NewStreamInstance() filter.StreamProcessor {
 	return &gradleStreamProcessor{
-		section:     gradleSectionNormal,
-		seenLines:   make(map[string]bool),
-		emittedAny:  false,
-		stackFrames: 0,
+		section:   gradleSectionNormal,
+		seenLines: newBoundedDedupSet(gradleDedupCap),
 	}
 }
 
 // gradleStreamProcessor 是 GradleFilter 的流式状态机。
 type gradleStreamProcessor struct {
-	section     gradleSection   // 当前所处的输出段
-	seenLines   map[string]bool // 已发射的行内容集合，用于去重 deprecation 等重复警告
-	emittedAny  bool            // 本次执行是否已经发出过任何输出
-	stackFrames int             // 当前错误块内已保留的栈帧数
-	taskCount   int             // 已观察到的成功 Task 数（Flush 时用于摘要）
+	section     gradleSection    // 当前所处的输出段
+	seenLines   *boundedDedupSet // 已发射的行内容集合，用于去重 deprecation 等重复警告（容量受限）
+	emittedAny  bool             // 本次执行是否已经发出过任何输出
+	stackFrames int              // 当前错误块内已保留的栈帧数
+	taskCount   int              // 已观察到的成功 Task 数（Flush 时用于摘要）
 }
 
 // ProcessLine 处理单行输出，返回是否发射以及发射内容。
@@ -502,10 +504,10 @@ func (p *gradleStreamProcessor) emit(line string) (filter.StreamAction, string) 
 	trimmed := strings.TrimSpace(line)
 	// 空行与栈帧不去重
 	if trimmed != "" && !gradleStackFrameRegexp.MatchString(line) {
-		if p.seenLines[trimmed] {
+		if p.seenLines.Has(trimmed) {
 			return filter.StreamDrop, ""
 		}
-		p.seenLines[trimmed] = true
+		p.seenLines.Add(trimmed)
 	}
 	p.emittedAny = true
 	return filter.StreamEmit, line

@@ -156,7 +156,7 @@ func ensureRawOutputColumn(sqlDB *sql.DB) error {
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return err
+		return fmt.Errorf("遍历列信息失败: %w", err)
 	}
 
 	if !hasRaw {

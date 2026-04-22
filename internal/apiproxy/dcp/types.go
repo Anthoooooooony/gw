@@ -39,7 +39,7 @@ func (r *messagesRequest) UnmarshalJSON(data []byte) error {
 // MarshalJSON 按原字节回写 extra，再拼回 messages。
 // Go map 迭代顺序不稳定，但 JSON object 字段本身就无序，Anthropic 不依赖顺序。
 func (r *messagesRequest) MarshalJSON() ([]byte, error) {
-	buf := bytes.NewBuffer(nil)
+	var buf bytes.Buffer
 	buf.WriteByte('{')
 	first := true
 
