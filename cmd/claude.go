@@ -9,8 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gw-cli/gw/internal/apiproxy"
-	"github.com/gw-cli/gw/track"
+	"github.com/Anthoooooooony/gw/internal/apiproxy"
+	"github.com/Anthoooooooony/gw/track"
 	"github.com/spf13/cobra"
 )
 

@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
           cache: true
 
       - name: Build native binary with version injection
@@ -42,9 +42,9 @@ jobs:
           date=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           go build -trimpath \
             -ldflags "-s -w \
-              -X github.com/gw-cli/gw/cmd.Version=${version} \
-              -X github.com/gw-cli/gw/cmd.Commit=${commit} \
-              -X github.com/gw-cli/gw/cmd.BuildDate=${date}" \
+              -X github.com/Anthoooooooony/gw/cmd.Version=${version} \
+              -X github.com/Anthoooooooony/gw/cmd.Commit=${commit} \
+              -X github.com/Anthoooooooony/gw/cmd.BuildDate=${date}" \
             -o dist/gw \
             .
           ./dist/gw version

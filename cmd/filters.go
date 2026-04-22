@@ -7,8 +7,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/gw-cli/gw/filter"
-	tomlfilter "github.com/gw-cli/gw/filter/toml"
+	"github.com/Anthoooooooony/gw/filter"
+	tomlfilter "github.com/Anthoooooooony/gw/filter/toml"
 	"github.com/spf13/cobra"
 )
 

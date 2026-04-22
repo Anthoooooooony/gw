@@ -6,11 +6,12 @@ CLI proxy for AI coding tools. 拦截 shell 命令，本地执行，过滤输出
 
 ### 下载预编译二进制（推荐）
 
-从 [GitHub Releases](https://github.com/Anthoooooooony/gw/releases/latest) 下载对应平台 tar.gz，解压后把 `gw` 放入 `PATH`：
+从 [GitHub Releases](https://github.com/Anthoooooooony/gw/releases/latest) 下载对应平台 tar.gz，解压后把 `gw` 放入 `PATH`。下面脚本会先查当前最新 tag，再拉对应 asset：
 
 ```bash
 # macOS Apple Silicon（M 系列）
-curl -L -o gw.tar.gz https://github.com/Anthoooooooony/gw/releases/latest/download/gw_v0.1.0_darwin_arm64.tar.gz
+tag=$(curl -fsSL https://api.github.com/repos/Anthoooooooony/gw/releases/latest | grep -m1 '"tag_name":' | cut -d'"' -f4)
+curl -L -o gw.tar.gz "https://github.com/Anthoooooooony/gw/releases/latest/download/gw_${tag}_darwin_arm64.tar.gz"
 tar xzf gw.tar.gz
 sudo mv gw /usr/local/bin/
 gw version
@@ -18,7 +19,8 @@ gw version
 
 ```bash
 # Linux amd64
-curl -L -o gw.tar.gz https://github.com/Anthoooooooony/gw/releases/latest/download/gw_v0.1.0_linux_amd64.tar.gz
+tag=$(curl -fsSL https://api.github.com/repos/Anthoooooooony/gw/releases/latest | grep -m1 '"tag_name":' | cut -d'"' -f4)
+curl -L -o gw.tar.gz "https://github.com/Anthoooooooony/gw/releases/latest/download/gw_${tag}_linux_amd64.tar.gz"
 tar xzf gw.tar.gz
 sudo mv gw /usr/local/bin/
 gw version
@@ -29,7 +31,7 @@ gw version
 ### 从源码构建
 
 ```bash
-go install github.com/gw-cli/gw@latest
+go install github.com/Anthoooooooony/gw@latest
 ```
 
 注意：需要 CGO（go-sqlite3 依赖），本地需有 C 编译器（gcc / clang）。
@@ -242,9 +244,9 @@ func init() {
 
 ```go
 import (
-    _ "github.com/gw-cli/gw/filter/git"
-    _ "github.com/gw-cli/gw/filter/java"
-    _ "github.com/gw-cli/gw/filter/toml"
+    _ "github.com/Anthoooooooony/gw/filter/git"
+    _ "github.com/Anthoooooooony/gw/filter/java"
+    _ "github.com/Anthoooooooony/gw/filter/toml"
 )
 ```
 
@@ -321,7 +323,7 @@ gw/
 // filter/node/npm.go
 package node
 
-import "github.com/gw-cli/gw/filter"
+import "github.com/Anthoooooooony/gw/filter"
 
 func init() {
     filter.Register(&NpmFilter{})
@@ -342,7 +344,7 @@ func (f *NpmFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutput 
 然后在 `filter/all/all.go` 加一行：
 
 ```go
-_ "github.com/gw-cli/gw/filter/node"
+_ "github.com/Anthoooooooony/gw/filter/node"
 ```
 
 ### 添加 TOML 声明式规则

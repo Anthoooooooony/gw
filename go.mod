@@ -1,4 +1,4 @@
-module github.com/gw-cli/gw
+module github.com/Anthoooooooony/gw
 
 go 1.22
 

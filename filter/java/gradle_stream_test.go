@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gw-cli/gw/filter"
+	"github.com/Anthoooooooony/gw/filter"
 )
 
 // TestGradleStreamFilter_Interface 编译期校验 GradleFilter 实现 StreamFilter 接口
