@@ -2,38 +2,5 @@
 # 这里只做 strip_ansi + 长度截断。去编译进度、只保留失败用例等语义压缩
 # 需要写专属 Go filter（见 ROADMAP / ARCHITECTURE）。
 
-[cargo.build]
-match = "cargo build"
-strip_ansi = true
-tail_lines = 120
-on_empty = "cargo build: ok"
-
-  # 失败时 cargo 通常只留若干 error 块 + 总结行，截到最后 40 行即可覆盖典型诊断。
-  [cargo.build.on_error]
-  strip_ansi = true
-  tail_lines = 40
-  on_empty = "cargo build: 失败但无输出"
-
-[cargo.check]
-match = "cargo check"
-strip_ansi = true
-tail_lines = 120
-on_empty = "cargo check: ok"
-
-  [cargo.check.on_error]
-  strip_ansi = true
-  tail_lines = 40
-  on_empty = "cargo check: 失败但无输出"
-
-[cargo.clippy]
-match = "cargo clippy"
-strip_ansi = true
-tail_lines = 120
-on_empty = "cargo clippy: ok"
-
-  [cargo.clippy.on_error]
-  strip_ansi = true
-  tail_lines = 40
-  on_empty = "cargo clippy: 失败但无输出"
-
-# 注：`cargo test` 已由 filter/cargo（Go filter）语义接管，不再需要 TOML 规则。
+# 注：`cargo build` / `cargo check` / `cargo clippy` / `cargo test` 均由
+# filter/cargo 语义接管，不再在 TOML 维护规则。
