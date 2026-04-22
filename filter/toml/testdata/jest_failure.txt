@@ -1,0 +1,51 @@
+
+> gw-jest-fixture@1.0.0 test
+> jest
+
+FAIL ./math.test.js
+  math
+    ✓ adds (1 ms)
+    ✓ subtracts
+    ✕ multiplies broken (1 ms)
+  strings
+    ✓ concat
+    ✕ uppercase broken (1 ms)
+
+  ● math › multiplies broken
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 7
+    Received: 6
+
+      2 |   test('adds', () => { expect(1 + 1).toBe(2); });
+      3 |   test('subtracts', () => { expect(3 - 1).toBe(2); });
+    > 4 |   test('multiplies broken', () => { expect(2 * 3).toBe(7); });
+        |                                                   ^
+      5 | });
+      6 | describe('strings', () => {
+      7 |   test('concat', () => { expect('a' + 'b').toBe('ab'); });
+
+      at Object.toBe (math.test.js:4:51)
+
+  ● strings › uppercase broken
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "XYZ"
+    Received: "ABC"
+
+       6 | describe('strings', () => {
+       7 |   test('concat', () => { expect('a' + 'b').toBe('ab'); });
+    >  8 |   test('uppercase broken', () => { expect('abc'.toUpperCase()).toBe('XYZ'); });
+         |                                                                ^
+       9 | });
+      10 |
+
+      at Object.toBe (math.test.js:8:64)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 3 passed, 5 total
+Snapshots:   0 total
+Time:        0.134 s, estimated 1 s
+Ran all test suites.

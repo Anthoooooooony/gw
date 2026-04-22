@@ -177,14 +177,79 @@ func fallbackTail(content string) string {
 }
 
 // detectAndSlice 依次尝试每个 runner 的嗅探器，首个命中的结果生效。
+// 顺序按 runner 特征锚点的独占性排：vitest 和 jest 的 summary 行前缀唯一，
+// AVA 的 `  ─` 分隔符也唯一；无冲突。
 func detectAndSlice(content string) string {
 	if s := detectAndSliceVitest(content); s != "" {
+		return s
+	}
+	if s := detectAndSliceJest(content); s != "" {
 		return s
 	}
 	if s := detectAndSliceAVA(content); s != "" {
 		return s
 	}
 	return ""
+}
+
+// --- jest detection & compression ---
+
+// jestSuitesRe 匹配 jest 终态汇总 `Test Suites: 1 passed, 1 total` / `Test Suites: 1 failed, 1 total`。
+// 行首无缩进、Suites 是首词。
+var jestSuitesRe = regexp.MustCompile(`^Test Suites:\s+\d+ (passed|failed)`)
+
+// jestFileResultRe 匹配文件级结果 `PASS ./file.test.js` / `FAIL src/foo.test.ts`。
+// 行首无缩进、PASS/FAIL 后跟空格和路径。
+var jestFileResultRe = regexp.MustCompile(`^(PASS|FAIL) \S+\.`)
+
+// detectAndSliceJest 根据 Test Suites summary 存在与否判定 jest 输出：
+//   - 失败场景（summary 里有 failed）：从首个 PASS/FAIL 文件行起到末尾，覆盖
+//     测试树、● 失败块、code frame、汇总。
+//   - 成功场景：只保留 Test Suites: / Tests: / Snapshots: / Time: 四行汇总。
+//
+// 未识别返回空字符串。
+func detectAndSliceJest(content string) string {
+	lines := strings.Split(content, "\n")
+
+	// 找 summary 行
+	summaryIdx := -1
+	summaryFailed := false
+	for i := len(lines) - 1; i >= 0; i-- {
+		trimmed := strings.TrimRight(lines[i], "\r")
+		if jestSuitesRe.MatchString(trimmed) {
+			summaryIdx = i
+			summaryFailed = strings.Contains(trimmed, "failed")
+			break
+		}
+	}
+	if summaryIdx < 0 {
+		return ""
+	}
+
+	// 失败场景：切片从首个 PASS/FAIL 文件行到末尾（覆盖 ✓/✕ 树 + ● 详情 + 汇总）
+	if summaryFailed {
+		for i, line := range lines {
+			if jestFileResultRe.MatchString(strings.TrimRight(line, "\r")) {
+				return strings.Join(lines[i:], "\n")
+			}
+		}
+		// 文件行缺失（罕见）：退回到 summary 起点
+		return strings.Join(lines[summaryIdx:], "\n")
+	}
+
+	// 成功场景：只留 summary 起的 4 行（Test Suites / Tests / Snapshots / Time）
+	end := summaryIdx + 1
+	for end < len(lines) && end-summaryIdx < 4 {
+		trimmed := strings.TrimRight(lines[end], "\r")
+		if strings.HasPrefix(trimmed, "Tests:") ||
+			strings.HasPrefix(trimmed, "Snapshots:") ||
+			strings.HasPrefix(trimmed, "Time:") {
+			end++
+			continue
+		}
+		break
+	}
+	return strings.Join(lines[summaryIdx:end], "\n")
 }
 
 // Apply 成功场景：嗅探到已知 runner 则切片，否则落到通用尾截断。

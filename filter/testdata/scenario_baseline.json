@@ -126,6 +126,20 @@
     "ratio": 0.9964384853087519
   },
   {
+    "name": "jest (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 1375,
+    "out_bytes": 1337,
+    "ratio": 0.02763636363636368
+  },
+  {
+    "name": "jest (success, batch)",
+    "mode": "batch",
+    "orig_bytes": 254,
+    "out_bytes": 103,
+    "ratio": 0.594488188976378
+  },
+  {
     "name": "mvn compile (failure, batch)",
     "mode": "batch",
     "orig_bytes": 7665,

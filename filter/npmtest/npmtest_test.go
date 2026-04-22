@@ -169,6 +169,65 @@ func TestApplyOnError_Vitest(t *testing.T) {
 	}
 }
 
+func TestApply_Success_Jest(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "toml", "testdata", "jest_success.txt"))
+	if err != nil {
+		t.Fatalf("读取 fixture 失败: %v", err)
+	}
+	out := (&Filter{}).Apply(filter.FilterInput{
+		Cmd:    "npm",
+		Args:   []string{"test"},
+		Stdout: string(data),
+	})
+	if !strings.Contains(out.Content, "Test Suites:") || !strings.Contains(out.Content, "Tests:") {
+		t.Fatalf("应保留 jest 汇总, got %q", out.Content)
+	}
+	// ✓ 进度行应丢弃
+	if strings.Contains(out.Content, "✓ adds") {
+		t.Error("✓ 进度行应被丢弃")
+	}
+	if strings.Contains(out.Content, "PASS ./math.test.js") {
+		t.Error("文件结果行应在成功场景被丢弃（jest 成功只留 summary）")
+	}
+}
+
+func TestApplyOnError_Jest(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "toml", "testdata", "jest_failure.txt"))
+	if err != nil {
+		t.Fatalf("读取 fixture 失败: %v", err)
+	}
+	out := (&Filter{}).ApplyOnError(filter.FilterInput{
+		Cmd:      "npm",
+		Args:     []string{"test"},
+		Stdout:   string(data),
+		ExitCode: 1,
+	})
+	if out == nil {
+		t.Fatal("jest failure 应返回非 nil")
+	}
+	// 起点应为 FAIL 文件行
+	if !strings.HasPrefix(out.Content, "FAIL ") {
+		t.Errorf("应从 FAIL 文件行开始, got %q", out.Content[:min(80, len(out.Content))])
+	}
+	// 关键信息验证
+	for _, want := range []string{
+		"multiplies broken",                         // 失败用例名
+		"● math › multiplies broken",                // 失败块 bullet
+		"Expected: 7",                               // assertion detail
+		"Received: 6",                               // assertion detail
+		"Test Suites: 1 failed",                     // 汇总
+		"Tests:",                                    // 通过/失败计数
+	} {
+		if !strings.Contains(out.Content, want) {
+			t.Errorf("失败压缩应保留 %q", want)
+		}
+	}
+	// banner `> jest` 和前置的 npm 包装应被丢弃
+	if strings.Contains(out.Content, "> jest") {
+		t.Error("npm banner 应被丢弃")
+	}
+}
+
 func TestApplyOnError_NonAVA_FallbackTail(t *testing.T) {
 	out := (&Filter{}).ApplyOnError(filter.FilterInput{
 		Cmd:      "npm",
