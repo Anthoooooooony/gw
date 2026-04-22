@@ -97,12 +97,16 @@ func TestMaxBodyBytes_DefaultAllowsNormalSize(t *testing.T) {
 
 // TestResponseHeaderTimeout 验证上游不返回响应头时代理回 502 而不是 hang。
 func TestResponseHeaderTimeout(t *testing.T) {
-	// 上游永远 sleep，不返回响应头
+	// 上游 handler 阻塞到测试清理，用 channel 替代 time.Sleep 避免真实墙钟等待。
+	// defer 顺序很关键：close(block) 必须在 slow.Close 之前执行（LIFO：
+	// 后 defer 先执行），否则 slow.Close() 会等待还在 <-block 上阻塞的 handler。
+	block := make(chan struct{})
 	slow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(3 * time.Second)
+		<-block
 		w.WriteHeader(200)
 	}))
 	defer slow.Close()
+	defer close(block)
 
 	t.Setenv("GW_APIPROXY_UPSTREAM", slow.URL)
 	t.Setenv("GW_APIPROXY_HEADER_TIMEOUT", "100ms")
