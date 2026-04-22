@@ -1,0 +1,2331 @@
+
+> @sindresorhus/is@8.0.0 test /private/tmp/gw-pnpm-fixture/is
+> tsc --noEmit && tsc --project test/tsconfig.json --noEmit && xo && node --experimental-transform-types --test test/test.ts
+
+/private/tmp/gw-pnpm-fixture/is/node_modules/.pnpm/@typescript-eslint+type-utils@8.59.0_eslint@10.2.1_typescript@5.9.3/node_modules/@typescript-eslint/type-utils/dist/typeFlagUtils.js:47
+    for (const t of tsutils.unionConstituents(type)) {
+                            ^
+
+TypeError: tsutils.unionConstituents is not a function or its return value is not iterable
+Occurred while linting /private/tmp/gw-pnpm-fixture/is/source/index.ts:49
+Rule: "@typescript-eslint/no-unsafe-assignment"
+    at getTypeFlags (/private/tmp/gw-pnpm-fixture/is/node_modules/.pnpm/@typescript-eslint+type-utils@8.59.0_eslint@10.2.1_typescript@5.9.3/node_modules/@typescript-eslint/type-utils/dist/typeFlagUtils.js:47:29)
+    at isTypeFlagSet (/private/tmp/gw-pnpm-fixture/is/node_modules/.pnpm/@typescript-eslint+type-utils@8.59.0_eslint@10.2.1_typescript@5.9.3/node_modules/@typescript-eslint/type-utils/dist/typeFlagUtils.js:64:19)
+    at isTypeAnyType (/private/tmp/gw-pnpm-fixture/is/node_modules/.pnpm/@typescript-eslint+type-utils@8.59.0_eslint@10.2.1_typescript@5.9.3/node_modules/@typescript-eslint/type-utils/dist/predicates.js:109:43)
+    at checkAssignment (/private/tmp/gw-pnpm-fixture/is/node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.59.0_@typescript-eslint+parser@8.59.0_eslint@10.2.1__23698b9dbf82bf7730e56021f6107a64/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-unsafe-assignment.js:209:42)
+    at VariableDeclarator[init != null] (/private/tmp/gw-pnpm-fixture/is/node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.59.0_@typescript-eslint+parser@8.59.0_eslint@10.2.1__23698b9dbf82bf7730e56021f6107a64/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-unsafe-assignment.js:285:33)
+    at visitor.<computed> (file:///private/tmp/gw-pnpm-fixture/is/node_modules/.pnpm/@eslint+compat@2.0.5_eslint@10.2.1/node_modules/@eslint/compat/dist/esm/index.js:373:19)
+    at ruleErrorHandler (/private/tmp/gw-pnpm-fixture/is/node_modules/.pnpm/eslint@10.2.1/node_modules/eslint/lib/linter/linter.js:645:33)
+    at /private/tmp/gw-pnpm-fixture/is/node_modules/.pnpm/eslint@10.2.1/node_modules/eslint/lib/linter/source-code-visitor.js:76:46
+    at Array.forEach (<anonymous>)
+    at SourceCodeVisitor.callSync (/private/tmp/gw-pnpm-fixture/is/node_modules/.pnpm/eslint@10.2.1/node_modules/eslint/lib/linter/source-code-visitor.js:76:30) {
+  ruleId: '@typescript-eslint/no-unsafe-assignment',
+  currentNode: <ref *1> {
+    type: 'VariableDeclarator',
+    definite: false,
+    id: {
+      type: 'Identifier',
+      decorators: [],
+      name: 'typedArrayTypeNames',
+      optional: false,
+      typeAnnotation: undefined,
+      range: [ 909, 928 ],
+      loc: { end: { column: 25, line: 49 }, start: { column: 6, line: 49 } },
+      parent: [Circular *1]
+    },
+    init: <ref *3> {
+      type: 'TSAsExpression',
+      expression: <ref *2> {
+        type: 'ArrayExpression',
+        elements: [
+          {
+            type: 'Literal',
+            raw: "'Int8Array'",
+            value: 'Int8Array',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          },
+          {
+            type: 'Literal',
+            raw: "'Uint8Array'",
+            value: 'Uint8Array',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          },
+          {
+            type: 'Literal',
+            raw: "'Uint8ClampedArray'",
+            value: 'Uint8ClampedArray',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          },
+          {
+            type: 'Literal',
+            raw: "'Int16Array'",
+            value: 'Int16Array',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          },
+          {
+            type: 'Literal',
+            raw: "'Uint16Array'",
+            value: 'Uint16Array',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          },
+          {
+            type: 'Literal',
+            raw: "'Int32Array'",
+            value: 'Int32Array',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          },
+          {
+            type: 'Literal',
+            raw: "'Uint32Array'",
+            value: 'Uint32Array',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          },
+          {
+            type: 'Literal',
+            raw: "'Float32Array'",
+            value: 'Float32Array',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          },
+          {
+            type: 'Literal',
+            raw: "'Float64Array'",
+            value: 'Float64Array',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          },
+          {
+            type: 'Literal',
+            raw: "'BigInt64Array'",
+            value: 'BigInt64Array',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          },
+          {
+            type: 'Literal',
+            raw: "'BigUint64Array'",
+            value: 'BigUint64Array',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *2]
+          }
+        ],
+        range: [ 931, 1118 ],
+        loc: {
+          end: { column: 1, line: 61 },
+          start: { column: 28, line: 49 }
+        },
+        parent: [Circular *3]
+      },
+      typeAnnotation: <ref *4> {
+        type: 'TSTypeReference',
+        typeArguments: undefined,
+        typeName: {
+          type: 'Identifier',
+          decorators: [],
+          name: 'const',
+          optional: false,
+          typeAnnotation: undefined,
+          range: [ 1122, 1127 ],
+          loc: { end: [Object], start: [Object] },
+          parent: [Circular *4]
+        },
+        range: [ 1122, 1127 ],
+        loc: {
+          end: { column: 10, line: 61 },
+          start: { column: 5, line: 61 }
+        },
+        parent: [Circular *3]
+      },
+      range: [ 931, 1127 ],
+      loc: {
+        end: { column: 10, line: 61 },
+        start: { column: 28, line: 49 }
+      },
+      parent: [Circular *1]
+    },
+    range: [ 909, 1127 ],
+    loc: { end: { column: 10, line: 61 }, start: { column: 6, line: 49 } },
+    parent: <ref *6> {
+      type: 'VariableDeclaration',
+      declarations: [ [Circular *1] ],
+      declare: false,
+      kind: 'const',
+      range: [ 903, 1128 ],
+      loc: { end: { column: 11, line: 61 }, start: { column: 0, line: 49 } },
+      parent: <ref *5> {
+        type: 'Program',
+        range: [ 0, 71295 ],
+        body: [
+          {
+            type: 'ImportDeclaration',
+            attributes: [],
+            importKind: 'type',
+            source: [Object],
+            specifiers: [Array],
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ImportDeclaration',
+            attributes: [],
+            importKind: 'value',
+            source: [Object],
+            specifiers: [Array],
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'TSTypeAliasDeclaration',
+            declare: false,
+            id: [Object],
+            typeAnnotation: [Object],
+            typeParameters: [Object],
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'TSTypeAliasDeclaration',
+            declare: false,
+            id: [Object],
+            typeAnnotation: [Object],
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'TSTypeAliasDeclaration',
+            declare: false,
+            id: [Object],
+            typeAnnotation: [Object],
+            typeParameters: [Object],
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          [Circular *6],
+          {
+            type: 'TSTypeAliasDeclaration',
+            declare: false,
+            id: [Object],
+            typeAnnotation: [Object],
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'FunctionDeclaration',
+            async: false,
+            body: [Object],
+            declare: false,
+            expression: false,
+            generator: false,
+            id: [Object],
+            params: [Array],
+            returnType: [Object],
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'VariableDeclaration',
+            declarations: [Array],
+            declare: false,
+            kind: 'const',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'TSTypeAliasDeclaration',
+            declare: false,
+            id: [Object],
+            typeAnnotation: [Object],
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'FunctionDeclaration',
+            async: false,
+            body: [Object],
+            declare: false,
+            expression: false,
+            generator: false,
+            id: [Object],
+            params: [Array],
+            returnType: [Object],
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'VariableDeclaration',
+            declarations: [Array],
+            declare: false,
+            kind: 'const',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'TSTypeAliasDeclaration',
+            declare: false,
+            id: [Object],
+            typeAnnotation: [Object],
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'FunctionDeclaration',
+            async: false,
+            body: [Object],
+            declare: false,
+            expression: false,
+            generator: false,
+            id: [Object],
+            params: [Array],
+            returnType: [Object],
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'type',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'VariableDeclaration',
+            declarations: [Array],
+            declare: false,
+            kind: 'const',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'type',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'VariableDeclaration',
+            declarations: [Array],
+            declare: false,
+            kind: 'const',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'FunctionDeclaration',
+            async: false,
+            body: [Object],
+            declare: false,
+            expression: false,
+            generator: false,
+            id: [Object],
+            params: [Array],
+            returnType: [Object],
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'FunctionDeclaration',
+            async: false,
+            body: [Object],
+            declare: false,
+            expression: false,
+            generator: false,
+            id: [Object],
+            params: [Array],
+            returnType: [Object],
+            typeParameters: [Object],
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'FunctionDeclaration',
+            async: false,
+            body: [Object],
+            declare: false,
+            expression: false,
+            generator: false,
+            id: [Object],
+            params: [Array],
+            returnType: [Object],
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'FunctionDeclaration',
+            async: false,
+            body: [Object],
+            declare: false,
+            expression: false,
+            generator: false,
+            id: [Object],
+            params: [Array],
+            returnType: [Object],
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'VariableDeclaration',
+            declarations: [Array],
+            declare: false,
+            kind: 'const',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'FunctionDeclaration',
+            async: false,
+            body: [Object],
+            declare: false,
+            expression: false,
+            generator: false,
+            id: [Object],
+            params: [Array],
+            returnType: undefined,
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'TSTypeAliasDeclaration',
+            declare: false,
+            id: [Object],
+            typeAnnotation: [Object],
+            typeParameters: [Object],
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'FunctionDeclaration',
+            async: false,
+            body: [Object],
+            declare: false,
+            expression: false,
+            generator: false,
+            id: [Object],
+            params: [Array],
+            returnType: undefined,
+            typeParameters: undefined,
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'VariableDeclaration',
+            declarations: [Array],
+            declare: false,
+            kind: 'const',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'VariableDeclaration',
+            declarations: [Array],
+            declare: false,
+            kind: 'const',
+            range: [Array],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          {
+            type: 'ExportNamedDeclaration',
+            range: [Array],
+            attributes: [],
+            declaration: [Object],
+            exportKind: 'value',
+            source: null,
+            specifiers: [],
+            loc: [Object],
+            parent: [Circular *5]
+          },
+          ... 168 more items
+        ],
+        comments: [
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' From type-fest.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' `Object.prototype.toString` can be spoofed via `Symbol.toStringTag`, but the'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' boxed primitive `valueOf` methods still enforce the real internal brand.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Next major release: throw for empty predicate arrays to avoid vacuous results.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: " throw new TypeError('Invalid predicate array');"
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Predicate factory overloads - return a type guard when called with only predicates'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Evaluator overload - check if all values match the predicate'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Predicate factory overloads - return a type guard when called with only predicates'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Evaluator overload - check if any value matches any predicate'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-argument'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-function-type'
+          },
+          {
+            type: 'Block',
+            loc: [Object],
+            range: [Array],
+            value: '*\n' +
+              'Note: [Prefer using `Uint8Array` instead of `Buffer`.](https://sindresorhus.com/blog/goodbye-nodejs-buffer)\n'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Numeric enums have reverse mappings (e.g. `Direction[0] = "Up"`), so their runtime object contains both `{ Up: 0 }` and `{ "0": "Up" }`. Filtering out entries that round-trip like a canonical number and point back to an own property leaves only actual enum member values.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' TODO: Use `Error.isError` when targeting Node.js 24.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' For numeric guards, preserve branded narrowing for `unknown`, keep the false branch usable for plain `number`, and still narrow mixed unions to `number`.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: " Example: `is.falsy = (value: unknown): value is (not true | 0 | '' | undefined | null) => Boolean(value);`"
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' TODO: Support detecting Float16Array when targeting Node.js 24.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-function-type'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-line @typescript-eslint/naming-convention'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-line @typescript-eslint/naming-convention'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' TODO: Use `not` operator here to remove `Map` and `Set` from type guard:'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' - https://github.com/Microsoft/TypeScript/pull/29317'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: " TODO: Use `not ''` when the `not` operator is available."
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: " TODO: Use `not ''` when the `not` operator is available."
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' From: https://github.com/sindresorhus/is-plain-obj/blob/main/index.js'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-assignment'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: " `PropertyKey` is any value that can be used as an object key (string, number, or symbol). Note: NaN is technically `typeof 'number'` and thus fits TypeScript's `PropertyKey`, but we intentionally exclude it here because using NaN as a property key is almost always a mistake."
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: " Example: `is.truthy = (value: unknown): value is (not false | not 0 | not '' | not undefined | not null) => Boolean(value);`"
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line unicorn/prefer-native-coercion-functions'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line unicorn/prevent-abbreviations'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-line no-new'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line unicorn/prefer-spread'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Type assertions have to be declared with an explicit type.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Keep assertion outputs unbranded even when the corresponding `is.*` guard uses a branded subtype.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' The brands exist to preserve useful false-branch narrowing for type guards on `number` inputs, which does not apply to `asserts`.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Unknowns.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-function-type'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-function-type'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-function-type'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Numbers.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Two arguments.'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' Variadic functions.'
+          },
+          {
+            type: 'Block',
+            loc: [Object],
+            range: [Array],
+            value: '*\n' +
+              '\tAsserts that `value` is `undefined` or satisfies the provided `assertion`.\n' +
+              '\n' +
+              '\tUseful for optional inputs.\n' +
+              '\t'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' @ts-expect-error: "Assertions require every name in the call target to be declared with an explicit type annotation."'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-function-type'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-function-type'
+          },
+          {
+            type: 'Block',
+            loc: [Object],
+            range: [Array],
+            value: '*\n' +
+              'Note: [Prefer using `Uint8Array` instead of `Buffer`.](https://sindresorhus.com/blog/goodbye-nodejs-buffer)\n'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-unsafe-function-type'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line unicorn/prevent-abbreviations'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          },
+          {
+            type: 'Line',
+            loc: [Object],
+            range: [Array],
+            value: ' eslint-disable-next-line @typescript-eslint/no-restricted-types'
+          }
+        ],
+        sourceType: 'module',
+        tokens: [
+          {
+            type: 'Keyword',
+            loc: [Object],
+            range: [Array],
+            value: 'import'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'type'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '{'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'ArrayLike'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'Class'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'EvenInteger'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'Falsy'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'FiniteNumber'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'Integer'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'NaN'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'as'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'NaNType'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'NegativeInfinity'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'NegativeInteger'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'NegativeNumber'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'NodeStream'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'NonEmptyString'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'NonNegativeInteger'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'NonNegativeNumber'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'ObservableLike'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'OddInteger'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'Predicate'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'Primitive'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'PositiveInfinity'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'PositiveInteger'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'PositiveNumber'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'SafeInteger'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'TypedArray'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'UrlString'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'ValidLength'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'WeakRef'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'Whitespace'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '}'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'from'
+          },
+          {
+            type: 'String',
+            loc: [Object],
+            range: [Array],
+            value: "'./types.ts'"
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ';'
+          },
+          {
+            type: 'Keyword',
+            loc: [Object],
+            range: [Array],
+            value: 'import'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '{'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'keysOf'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '}'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'from'
+          },
+          {
+            type: 'String',
+            loc: [Object],
+            range: [Array],
+            value: "'./utilities.ts'"
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ';'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'type'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'ExtractFromGlobalConstructors'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '<'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'Name'
+          },
+          {
+            type: 'Keyword',
+            loc: [Object],
+            range: [Array],
+            value: 'extends'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'string'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '>'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '='
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'Name'
+          },
+          {
+            type: 'Keyword',
+            loc: [Object],
+            range: [Array],
+            value: 'extends'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'string'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '?'
+          },
+          {
+            type: 'Keyword',
+            loc: [Object],
+            range: [Array],
+            value: 'typeof'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'globalThis'
+          },
+          {
+            type: 'Keyword',
+            loc: [Object],
+            range: [Array],
+            value: 'extends'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'Record'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '<'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'Name'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ','
+          },
+          {
+            type: 'Keyword',
+            loc: [Object],
+            range: [Array],
+            value: 'new'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '('
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '...'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'arguments_'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ':'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'any'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '['
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ']'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: ')'
+          },
+          {
+            type: 'Punctuator',
+            loc: [Object],
+            range: [Array],
+            value: '=>'
+          },
+          {
+            type: 'Identifier',
+            loc: [Object],
+            range: [Array],
+            value: 'infer'
+          },
+          ... 13634 more items
+        ],
+        loc: {
+          end: { column: 0, line: 1975 },
+          start: { column: 0, line: 1 }
+        },
+        parent: null
+      }
+    }
+  }
+}
+
+Node.js v25.9.0
+ ELIFECYCLE  Test failed. See above for more details.
