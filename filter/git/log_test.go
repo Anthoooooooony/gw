@@ -97,10 +97,10 @@ func TestLogFilter_ApplyOnError(t *testing.T) {
 func TestLogFilter_NonStandardFormat_Fallback(t *testing.T) {
 	f := &LogFilter{}
 	cases := map[string]string{
-		"--oneline":            "abc1234 feat: something\ndef5678 fix: other\n",
+		"--oneline":             "abc1234 feat: something\ndef5678 fix: other\n",
 		"--pretty=format:%h %s": "abc1234 feat: foo",
-		"--graph":              "* abc1234 feat: foo\n| \n* def5678 fix: bar\n",
-		"empty":                "",
+		"--graph":               "* abc1234 feat: foo\n| \n* def5678 fix: bar\n",
+		"empty":                 "",
 	}
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {
