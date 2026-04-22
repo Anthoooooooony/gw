@@ -22,6 +22,12 @@ strip_ansi = true
 tail_lines = 120
 on_empty = "npm test: ok"
 
+  # jest/mocha 失败输出末尾是 FAIL 列表 + summary，取最后 50 行足够。
+  [npm.test.on_error]
+  strip_ansi = true
+  tail_lines = 50
+  on_empty = "npm test: 失败但无输出"
+
 [npm.run-build]
 match = "npm run build"
 strip_ansi = true
@@ -41,6 +47,11 @@ match = "yarn test"
 strip_ansi = true
 tail_lines = 120
 on_empty = "yarn test: ok"
+
+  [yarn.test.on_error]
+  strip_ansi = true
+  tail_lines = 50
+  on_empty = "yarn test: 失败但无输出"
 
 [yarn.build]
 match = "yarn build"
@@ -67,6 +78,11 @@ match = "pnpm test"
 strip_ansi = true
 tail_lines = 120
 on_empty = "pnpm test: ok"
+
+  [pnpm.test.on_error]
+  strip_ansi = true
+  tail_lines = 50
+  on_empty = "pnpm test: 失败但无输出"
 
 [pnpm.build]
 match = "pnpm build"

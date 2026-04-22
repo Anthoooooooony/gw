@@ -110,16 +110,87 @@ func TestLongestMatch(t *testing.T) {
 	}
 }
 
-func TestApplyOnError(t *testing.T) {
+// 无 on_error 子表 → 透传原始输出（维持原 v2 行为）
+func TestApplyOnError_NoOnErrorReturnsNil(t *testing.T) {
 	f := makeFilter(Rule{Match: "test"})
 	input := filter.FilterInput{
 		Cmd:      "test",
-		Args:     []string{},
 		Stdout:   "output",
 		ExitCode: 1,
 	}
 	if result := f.ApplyOnError(input); result != nil {
-		t.Error("ApplyOnError 应返回 nil")
+		t.Error("没有 on_error 子表时 ApplyOnError 必须返回 nil (透传原文)")
+	}
+}
+
+// 配了 on_error.tail_lines → 失败场景按子规则截尾
+func TestApplyOnError_TailLinesFromOnError(t *testing.T) {
+	rule := Rule{
+		Match:     "test",
+		TailLines: 100, // 成功场景的大值，不能影响失败场景
+		OnError: &OnErrorRule{
+			TailLines: 3,
+		},
+	}
+	f := makeFilter(rule)
+	input := filter.FilterInput{
+		Cmd:      "test",
+		Stdout:   "l1\nl2\nl3\nl4\nl5\nl6\nl7\nl8",
+		ExitCode: 1,
+	}
+	out := f.ApplyOnError(input)
+	if out == nil {
+		t.Fatal("有 on_error 子表时 ApplyOnError 应返回非 nil")
+	}
+	if out.Content != "l6\nl7\nl8" {
+		t.Errorf("应按 on_error.tail_lines=3 截尾, got %q", out.Content)
+	}
+}
+
+// on_error 的 strip_ansi / on_empty 等字段独立于主规则生效
+func TestApplyOnError_StripAnsiAndOnEmpty(t *testing.T) {
+	rule := Rule{
+		Match: "test",
+		OnError: &OnErrorRule{
+			StripAnsi: true,
+			MaxLines:  0,
+			OnEmpty:   "build failed silently",
+		},
+	}
+	f := makeFilter(rule)
+
+	// ANSI 处理
+	ansi := "\x1b[31merror: boom\x1b[0m"
+	out := f.ApplyOnError(filter.FilterInput{Cmd: "test", Stdout: ansi, ExitCode: 1})
+	if out == nil || out.Content != "error: boom" {
+		t.Errorf("strip_ansi 未生效, got %+v", out)
+	}
+
+	// on_empty 回退
+	out = f.ApplyOnError(filter.FilterInput{Cmd: "test", Stdout: "", Stderr: "", ExitCode: 1})
+	if out == nil || out.Content != "build failed silently" {
+		t.Errorf("on_empty 未生效, got %+v", out)
+	}
+}
+
+// on_error 规则同时合并 stdout + stderr（失败场景的错误信息常出现在 stderr）
+func TestApplyOnError_IncludesStderr(t *testing.T) {
+	rule := Rule{
+		Match:   "test",
+		OnError: &OnErrorRule{TailLines: 10},
+	}
+	f := makeFilter(rule)
+	out := f.ApplyOnError(filter.FilterInput{
+		Cmd:      "test",
+		Stdout:   "stdout-line",
+		Stderr:   "stderr-line",
+		ExitCode: 1,
+	})
+	if out == nil {
+		t.Fatal("应返回非 nil")
+	}
+	if !strings.Contains(out.Content, "stdout-line") || !strings.Contains(out.Content, "stderr-line") {
+		t.Errorf("应合并 stdout+stderr, got %q", out.Content)
 	}
 }
 
