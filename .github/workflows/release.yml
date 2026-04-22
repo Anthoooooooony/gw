@@ -5,12 +5,19 @@ on:
     tags:
       - 'v*.*.*'
 
+# 默认最小权限；release job 单独提升到 write
 permissions:
-  contents: write   # 创建 GitHub Release 需要
+  contents: read
+
+# 同一 tag 的并发跑串行化，避免竞争 release asset 上传
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   # 每平台在原生 runner 上编译（CGO 需要原生 toolchain）
   build:
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -66,7 +73,10 @@ jobs:
 
   release:
     needs: build
+    timeout-minutes: 10
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # 创建 GitHub Release 需要写权限
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -92,12 +102,13 @@ jobs:
             $1=="##" && $2=="["v"]" { in_block=1; next }
             in_block && /^## \[/ { exit }
             in_block { print }
-          ' CHANGELOG.md > /tmp/release-notes.md
-          if [[ ! -s /tmp/release-notes.md ]]; then
+          ' CHANGELOG.md > "${RUNNER_TEMP}/release-notes.md"
+          if [[ ! -s "${RUNNER_TEMP}/release-notes.md" ]]; then
             echo "警告：CHANGELOG.md 中未找到 ${version} 节，release 将用默认正文" >&2
-            echo "Release ${version}" > /tmp/release-notes.md
+            echo "Release ${version}" > "${RUNNER_TEMP}/release-notes.md"
           fi
-          head -20 /tmp/release-notes.md
+          head -20 "${RUNNER_TEMP}/release-notes.md"
+          echo "RELEASE_NOTES_PATH=${RUNNER_TEMP}/release-notes.md" >> "$GITHUB_ENV"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
@@ -105,6 +116,6 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/checksums.txt
-          body_path: /tmp/release-notes.md
+          body_path: ${{ env.RELEASE_NOTES_PATH }}
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
