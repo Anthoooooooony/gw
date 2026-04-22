@@ -149,8 +149,67 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 
 ## 代码规范
 
+### 通用
+
 - Go 代码注释、日志、错误消息使用中文（项目主语言）
 - 文件末尾统一 `\n` 行结尾
 - 不引新依赖（TOML 解析器固定 `github.com/BurntSushi/toml`）
 - 测试：`go test ./...`；超时相关 `go test -run Timeout ./internal/ -timeout 60s`
 - 加载失败只 warning 不 panic（企业部署稳定性硬要求）
+
+### 决策留痕（ADR-lite）
+
+凡是影响**架构 / 公开接口 / 产品边界 / 环境依赖**的决策，必须在 `docs/DECISIONS.md` 追加一条。
+触发条件举例：
+
+- 新增或移除 CLI 子命令、环境变量、TOML DSL 字段
+- 调整过滤器优先级机制、注册表 API、DB schema
+- 决定**不**做某事（否决方案同等重要，防止半年后被同一想法轮回再提）
+- 依赖升级/更换（BurntSushi/toml、go-sqlite3 等）
+- 产品层面边界（如"只支持 Anthropic 协议，不做多厂商适配"）
+
+**不**触发：内部重构、bug fix、测试补齐、文档润色、CI 调参。
+
+格式：每条 `## YYYY-MM-DD — 标题`，含 **上下文 / 决策 / 替代方案 / 影响** 四段。新条目追加到文件顶部（最新在上）。PR 如触发上述场景，`docs/DECISIONS.md` 的新增条目与代码改动同批提交，reviewer 可一并审阅决策本身。
+
+### 模块与接口
+
+- 跨包访问能力用**显式接口**，不用具体类型断言。示例：
+  - 过滤器在全局注册表中的优先级由 `filter.Fallback` 接口表达（`IsFallback() bool`），而不是靠 `filter/all/all.go` 的 import 顺序
+  - `gw filters list` 通过 `filter.Describable` 拿过滤器来源，不 import `filter/toml` 具体类型
+- `cmd/` 只依赖 `filter/` / `internal/` 的公开接口；新增"向 cmd 层暴露的能力"先在目标包加接口，再改 cmd，避免反向依赖
+- 同名接口跨包复用时用类型别名（`type Logger = dcp.Logger`），不要重复声明
+
+### 并发
+
+- 全局可变状态必须显式加锁。`filter.Registry` 用 `sync.RWMutex`，`Find` / `List` 走 `RLock`，`Register` 走 `Lock`
+- 信号 goroutine 关停顺序：**先 `signal.Stop(sigCh)`，再 `close(done)`**。反了会把信号送进已关闭的 channel 触发 panic（详见 `cmd/claude.go` 的 `waitForExit`）
+- 流式路径禁止在回调里无上限累积。dedup/seen 集合走 `filter/java/dedupset.go::boundedDedupSet` 模式：到达 cap 后新元素不再入集，等同放弃去重但不 OOM
+
+### 内存与字符串
+
+- 纯集合语义用 `map[string]struct{}`，不要 `map[string]bool`（value 永远是 `true`，既浪费一个字节又让读者误以为语义是"map 到布尔"）
+- 零值可用的类型优先零值：`var buf bytes.Buffer` 好于 `bytes.NewBuffer(nil)`；`var b strings.Builder` 同理
+- 字符计数用 `utf8.RuneCountInString(s)`，**不要** `len([]rune(s))`——后者会分配完整 rune 切片。统一入口在 `track/token.go`
+- 错误包装一律 `fmt.Errorf("... %w", err)` 保留因果链；直接丢 err 只有在加了独立语境且原 err 无信息量时才可行
+
+### 测试
+
+- 临时目录一律 `t.TempDir()`；**禁止** `os.MkdirTemp + defer os.RemoveAll`（测试 panic 下 defer 不跑会留脏目录，`t.TempDir` 注册到 testing runtime）
+- 需要触发"慢响应"的 handler 用 channel 阻塞，不要 `time.Sleep`。`httptest.Server` 的 defer 顺序利用 LIFO：
+  ```go
+  block := make(chan struct{})
+  slow := httptest.NewServer(...)   // handler 内 <-block
+  defer slow.Close()                // 后声明，LIFO 里后跑
+  defer close(block)                // 先声明，LIFO 里先跑：解除 handler 阻塞让 Close 能收敛
+  ```
+  顺序反了会导致 Close 等 handler、handler 等 close(block)，测试 hang 到超时
+- 流式过滤器（`filter.StreamFilter`）的 `Flush` 必须覆盖三条路径：成功无 buffer / 失败有 buffer / 失败空 buffer
+- 写 stderr/stdout 的函数参数化 `io.Writer`，测试注入 `&bytes.Buffer{}` 断言内容。示例：`cmd/claude.go::writeDCPSummary(w io.Writer, ...)`
+- 场景压缩率改动同时更新 `filter/testdata/scenario_baseline.json`（流程见 `CONTRIBUTING.md`）
+
+### API 边界
+
+- `gw claude` 代理只接入 Anthropic 原生协议（`ANTHROPIC_BASE_URL` 指向本地 apiproxy）。**不**支持 `ANTHROPIC_BEDROCK` / `ANTHROPIC_VERTEX` 切换——DCP 上下文压缩依赖 Anthropic messages schema，第三方供应商协议差异会让去重逻辑失配
+- DB schema 演进只走 `ALTER TABLE ADD COLUMN`，**禁止** `DROP COLUMN` / `DROP TABLE`（见 `track/db.go` 迁移约定）
+- `RunCommand` / `RunCommandStreamingFull` 的函数签名稳定；新配置开关走环境变量或 flag，不改签名
