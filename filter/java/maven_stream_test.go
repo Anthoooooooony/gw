@@ -123,3 +123,50 @@ func TestMavenStreamFilter_ErrorsEmitted(t *testing.T) {
 		t.Error("不同的 Unresolved reference 应该被输出")
 	}
 }
+
+// TestMavenStreamFilter_Flush_SuccessNoBuffer 成功退出时 Flush 返回空，无缓冲也不输出。
+func TestMavenStreamFilter_Flush_SuccessNoBuffer(t *testing.T) {
+	f := &MavenFilter{}
+	proc := f.NewStreamInstance()
+	if got := proc.Flush(0); got != nil {
+		t.Errorf("成功退出 Flush 应为 nil，得到 %v", got)
+	}
+}
+
+// TestMavenStreamFilter_Flush_FailureWithBuffer 失败退出且 buffer 有内容时 Flush 返回全部 buffer。
+// Mojo 之后进入 PluginOutput，非 error/stackTrace 会落到 buffer。
+func TestMavenStreamFilter_Flush_FailureWithBuffer(t *testing.T) {
+	f := &MavenFilter{}
+	proc := f.NewStreamInstance().(*mavenStreamProcessor)
+
+	setupLines := []string{
+		"[INFO] Scanning for projects...",
+		"[INFO] ------------------------------------------------------------------------",
+		"[INFO] Reactor Build Order:",
+		"[INFO]",
+		"[INFO] ------------------< com.example:demo >------------------",
+		"[INFO] Building demo 1.0.0",
+		"[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ demo ---",
+	}
+	for _, line := range setupLines {
+		proc.ProcessLine(line)
+	}
+
+	// PluginOutput 状态下，非 error/stackTrace 行会落到 buffer
+	proc.ProcessLine("[INFO] some plugin context line A")
+	proc.ProcessLine("[INFO] some plugin context line B")
+
+	flushed := proc.Flush(1)
+	if len(flushed) < 2 {
+		t.Fatalf("失败退出 Flush 应返回 buffer，得到 %d 行: %v", len(flushed), flushed)
+	}
+}
+
+// TestMavenStreamFilter_Flush_FailureEmptyBuffer 失败退出但无 buffer 时 Flush 仍为 nil。
+func TestMavenStreamFilter_Flush_FailureEmptyBuffer(t *testing.T) {
+	f := &MavenFilter{}
+	proc := f.NewStreamInstance()
+	if got := proc.Flush(1); got != nil {
+		t.Errorf("失败退出无 buffer 时 Flush 应为 nil，得到 %v", got)
+	}
+}

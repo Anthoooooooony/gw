@@ -187,3 +187,16 @@ func TestSpringBootFilter_ApplyOnError(t *testing.T) {
 		t.Error("ApplyOnError 应该返回 nil（启动失败需要完整栈追踪）")
 	}
 }
+
+// TestSpringBootStreamFilter_Flush Flush 当前始终返回 nil（Spring Boot 无跨行缓冲），
+// 锁定该契约避免后续误加状态而不维护 Flush。
+func TestSpringBootStreamFilter_Flush(t *testing.T) {
+	f := &SpringBootFilter{}
+	proc := f.NewStreamInstance()
+	if got := proc.Flush(0); got != nil {
+		t.Errorf("exit=0 Flush 应为 nil，得到 %v", got)
+	}
+	if got := proc.Flush(1); got != nil {
+		t.Errorf("exit=1 Flush 应为 nil，得到 %v", got)
+	}
+}

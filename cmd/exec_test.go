@@ -149,12 +149,7 @@ func TestRewrite_BinaryNoMatchSilent(t *testing.T) {
 
 // TestExec_DumpRaw_Batch 验证批量路径 --dump-raw 能把原始输出写入指定文件。
 func TestExec_DumpRaw_Batch(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "gw-dumpraw-batch")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
-
+	tmpDir := t.TempDir()
 	dumpPath := filepath.Join(tmpDir, "raw.txt")
 	// echo 无专用过滤器，走批量透传路径
 	cmd := exec.Command(gwBinary, "exec", "--dump-raw", dumpPath, "echo", "hello raw world")
@@ -179,12 +174,7 @@ func TestExec_DumpRaw_Batch(t *testing.T) {
 
 // TestExec_DumpRaw_Equals 验证 --dump-raw=PATH 等号形式同样工作。
 func TestExec_DumpRaw_Equals(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "gw-dumpraw-eq")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
-
+	tmpDir := t.TempDir()
 	dumpPath := filepath.Join(tmpDir, "raw.txt")
 	cmd := exec.Command(gwBinary, "exec", "--dump-raw="+dumpPath, "echo", "eq form")
 	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
@@ -204,12 +194,7 @@ func TestExec_DumpRaw_Equals(t *testing.T) {
 
 // TestExec_DumpRaw_WriteFail 写入不存在目录下的文件应给 warning 但不中断主流程。
 func TestExec_DumpRaw_WriteFail(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "gw-dumpraw-fail")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
-
+	tmpDir := t.TempDir()
 	// /nonexistent/.../raw.txt 无法创建
 	badPath := "/nonexistent-gw-dir-abc/raw.txt"
 	cmd := exec.Command(gwBinary, "exec", "--dump-raw", badPath, "echo", "still ok")
@@ -234,12 +219,7 @@ func TestExec_DumpRaw_Stream(t *testing.T) {
 	if _, err := exec.LookPath("java"); err != nil {
 		t.Skip("java 不可用，跳过流式路径集成测试")
 	}
-	tmpDir, err := os.MkdirTemp("", "gw-dumpraw-stream")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
-
+	tmpDir := t.TempDir()
 	dumpPath := filepath.Join(tmpDir, "raw-stream.txt")
 	cmd := exec.Command(gwBinary, "exec", "--dump-raw", dumpPath,
 		"java", "-jar", "/nonexistent-gw-test.jar")
@@ -277,13 +257,8 @@ func TestVersion_Command(t *testing.T) {
 
 // TestGain_NoData 测试空数据库不崩溃
 func TestGain_NoData(t *testing.T) {
-	// 设置一个不存在的 HOME 目录，使 DB 路径指向空目录
-	tmpDir, err := os.MkdirTemp("", "gw-gain-test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
-
+	// 设置一个新的 HOME 目录，使 DB 路径指向空目录
+	tmpDir := t.TempDir()
 	cmd := exec.Command(gwBinary, "gain")
 	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
 	out, err := cmd.CombinedOutput()
