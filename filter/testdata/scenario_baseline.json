@@ -199,8 +199,8 @@
     "name": "pip install (batch)",
     "mode": "batch",
     "orig_bytes": 1320,
-    "out_bytes": 1320,
-    "ratio": 0
+    "out_bytes": 38,
+    "ratio": 0.9712121212121212
   },
   {
     "name": "pnpm install (batch)",

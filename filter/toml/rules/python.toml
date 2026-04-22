@@ -3,12 +3,7 @@
 # 等语义压缩需要写专属 Go filter（见 ROADMAP / ARCHITECTURE）。
 
 # ---------------- pip ----------------
-
-[pip.install]
-match = "pip install"
-strip_ansi = true
-max_lines = 60
-on_empty = "pip install: ok"
+# pip install 由 filter/pip 专属 Go filter 接管。
 
 [pip.list]
 match = "pip list"
