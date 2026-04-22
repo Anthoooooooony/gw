@@ -2,7 +2,7 @@
 name: Feature request
 about: 提议新功能或改进现有行为
 title: ''
-labels: enhancement
+labels: ''
 assignees: ''
 ---
 
