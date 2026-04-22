@@ -266,13 +266,17 @@ func collapseBlankLines(lines []string) string {
 func (f *MavenFilter) NewStreamInstance() filter.StreamProcessor {
 	return &mavenStreamProcessor{
 		state:      StateInit,
-		seenErrors: make(map[string]bool),
+		seenErrors: newBoundedDedupSet(mavenDedupCap),
 	}
 }
 
+// mavenDedupCap 是 stream 版本 seenErrors 的硬上限，防止长构建 OOM。
+// 批量版本（processMavenOutput）一次性处理固定 buffer 不受此影响。
+const mavenDedupCap = 10000
+
 type mavenStreamProcessor struct {
 	state      MavenState
-	seenErrors map[string]bool
+	seenErrors *boundedDedupSet
 	buffer     []string
 }
 
@@ -304,10 +308,10 @@ func (p *mavenStreamProcessor) ProcessLine(line string) (filter.StreamAction, st
 			stripped := stripPrefix(line)
 			key := extractErrorKey(stripped)
 			if key != "" {
-				if p.seenErrors[key] {
+				if p.seenErrors.Has(key) {
 					return filter.StreamDrop, ""
 				}
-				p.seenErrors[key] = true
+				p.seenErrors.Add(key)
 			}
 			return filter.StreamEmit, stripped
 		}
@@ -332,10 +336,10 @@ func (p *mavenStreamProcessor) ProcessLine(line string) (filter.StreamAction, st
 			stripped := stripPrefix(line)
 			key := extractErrorKey(stripped)
 			if key != "" {
-				if p.seenErrors[key] {
+				if p.seenErrors.Has(key) {
 					return filter.StreamDrop, ""
 				}
-				p.seenErrors[key] = true
+				p.seenErrors.Add(key)
 			}
 			return filter.StreamEmit, stripped
 		}
@@ -368,10 +372,10 @@ func (p *mavenStreamProcessor) ProcessLine(line string) (filter.StreamAction, st
 			stripped := stripPrefix(line)
 			key := extractErrorKey(stripped)
 			if key != "" {
-				if p.seenErrors[key] {
+				if p.seenErrors.Has(key) {
 					return filter.StreamDrop, ""
 				}
-				p.seenErrors[key] = true
+				p.seenErrors.Add(key)
 			}
 			return filter.StreamEmit, stripped
 		}

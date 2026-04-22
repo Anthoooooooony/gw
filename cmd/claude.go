@@ -128,8 +128,10 @@ func runChild(args, env []string, logger apiproxy.Logger) int {
 	}()
 
 	err = c.Wait()
-	close(done)
+	// 先 signal.Stop 停止投递到 sigCh，再 close(done) 退出转发 goroutine。
+	// 反过来会在两步之间留一个窗口：sigCh 仍接收信号，但 goroutine 已退出。
 	signal.Stop(sigCh)
+	close(done)
 
 	if err == nil {
 		return 0
