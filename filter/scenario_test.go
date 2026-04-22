@@ -21,10 +21,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gw-cli/gw/filter"
+	"github.com/Anthoooooooony/gw/filter"
 
 	// 触发所有过滤器的 init() 自注册
-	_ "github.com/gw-cli/gw/filter/all"
+	_ "github.com/Anthoooooooony/gw/filter/all"
 )
 
 // updateBaseline=true 时 TestScenarioCompression 写入新的 baseline 文件代替断言，

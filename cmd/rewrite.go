@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gw-cli/gw/filter"
-	"github.com/gw-cli/gw/shell"
+	"github.com/Anthoooooooony/gw/filter"
+	"github.com/Anthoooooooony/gw/shell"
 	"github.com/spf13/cobra"
 )
 

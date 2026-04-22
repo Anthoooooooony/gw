@@ -26,9 +26,9 @@ builds:
         goarch: arm64
     ldflags:
       - -s -w
-      - -X github.com/gw-cli/gw/cmd.Version={{ .Version }}
-      - -X github.com/gw-cli/gw/cmd.Commit={{ .Commit }}
-      - -X github.com/gw-cli/gw/cmd.BuildDate={{ .Date }}
+      - -X github.com/Anthoooooooony/gw/cmd.Version={{ .Version }}
+      - -X github.com/Anthoooooooony/gw/cmd.Commit={{ .Commit }}
+      - -X github.com/Anthoooooooony/gw/cmd.BuildDate={{ .Date }}
 
 archives:
   - id: gw

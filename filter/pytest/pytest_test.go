@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gw-cli/gw/filter"
+	"github.com/Anthoooooooony/gw/filter"
 )
 
 func TestMatch(t *testing.T) {

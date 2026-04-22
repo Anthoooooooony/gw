@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gw-cli/gw/filter"
+	"github.com/Anthoooooooony/gw/filter"
 )
 
 // TestMavenStreamFilter_Interface 验证 MavenFilter 实现了 StreamFilter 接口
