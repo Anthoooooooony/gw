@@ -21,7 +21,7 @@ func TestMatch(t *testing.T) {
 		{"pnpm", []string{"test"}, true},
 		{"pnpm", []string{"t"}, true},
 		{"npm", []string{"install"}, false},
-		{"npm", []string{"run", "test"}, false},  // 自定义脚本不保证 runner 格式
+		{"npm", []string{"run", "test"}, false}, // 自定义脚本不保证 runner 格式
 		{"npm", []string{"run", "test:unit"}, false},
 		{"pnpm", []string{}, false},
 		{"node", []string{"test"}, false},
