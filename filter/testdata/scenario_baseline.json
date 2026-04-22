@@ -129,8 +129,8 @@
     "name": "mvn test (failure, batch)",
     "mode": "batch",
     "orig_bytes": 335028,
-    "out_bytes": 319553,
-    "ratio": 0.046190169179889495
+    "out_bytes": 90542,
+    "ratio": 0.7297479613644233
   },
   {
     "name": "mvn test (failure, stream)",

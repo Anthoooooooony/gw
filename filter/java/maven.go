@@ -159,10 +159,11 @@ func decideAction(state MavenState, lc MavenLineClass, successMode bool) actionT
 		if lc == LineStackTrace {
 			return ActionKeep
 		}
-		if successMode {
-			return ActionDrop
-		}
-		return ActionKeep
+		// 与 stream 版本对齐：测试输出状态下非诊断行（应用日志、时间戳行、
+		// Spring ApplicationContext 诊断对象序列化等）在失败模式下也必须 Drop，
+		// 否则 spring-boot 类项目一次集成测试失败的 ApplicationContext 加载输出
+		// 能把 300KB 原始压到只剩几 KB 的压缩优势吃掉（issue #42：batch 4.6% vs stream 73%）。
+		return ActionDrop
 
 	case StateReactor:
 		if lc == LineReactorEntry {
