@@ -54,9 +54,11 @@ func (f *Filter) Match(cmd string, args []string) bool {
 }
 
 // Subname 告诉 registry 本次匹配的 "子名"，用于 FilterUsed 展示。
+// cmd == "pytest" 时返回空，避免显示冗余的 "pytest/pytest"；
+// 通过 python -m pytest 触发时则返回具体调用形式，方便诊断。
 func (f *Filter) Subname(cmd string, args []string) string {
 	if cmd == "pytest" {
-		return "pytest"
+		return ""
 	}
 	return "python -m pytest"
 }
