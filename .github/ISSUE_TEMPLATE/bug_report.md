@@ -2,7 +2,7 @@
 name: Bug report
 about: 汇报 gw 的异常行为
 title: ''
-labels: bug
+labels: ''
 assignees: ''
 ---
 
