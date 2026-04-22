@@ -402,7 +402,7 @@ func (p *npmStreamProcessor) Flush(exitCode int) []string {
 ## 测试
 
 ```bash
-go test ./...           # 运行全部 164 个测试
+go test ./...           # 运行全部测试
 go test ./... -v        # 详细输出
 go test ./filter/java/  # 只跑 Java 过滤器测试
 ```

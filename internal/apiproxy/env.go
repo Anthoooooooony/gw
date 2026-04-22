@@ -12,18 +12,6 @@ func envUpstream() string {
 	return os.Getenv("GW_APIPROXY_UPSTREAM")
 }
 
-// BedrockOrVertexEnabled 检测 Claude Code 的 Bedrock/Vertex 开关。
-// 这两条路径下 ANTHROPIC_BASE_URL 失效，gw claude 不应启动代理。
-func BedrockOrVertexEnabled() (enabled bool, which string) {
-	if os.Getenv("CLAUDE_CODE_USE_BEDROCK") == "1" {
-		return true, "CLAUDE_CODE_USE_BEDROCK"
-	}
-	if os.Getenv("CLAUDE_CODE_USE_VERTEX") == "1" {
-		return true, "CLAUDE_CODE_USE_VERTEX"
-	}
-	return false, ""
-}
-
 // 默认 hardening 参数。Claude Code 上下文窗口 200K tokens ≈ 1MB，32MB 留出 30x 余量。
 const (
 	defaultMaxBodyBytes          int64         = 32 << 20 // 32 MiB
