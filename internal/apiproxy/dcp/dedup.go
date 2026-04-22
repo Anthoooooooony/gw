@@ -8,7 +8,11 @@ import (
 // 与 Opencode-DCP 保持一致（lib/messages/prune.ts:9）。
 const PlaceholderContent = "[Output removed to save context - information superseded or no longer needed]"
 
-// Logger 最小日志接口（与 internal/apiproxy.Logger 同形，但独立声明避免包循环）。
+// Logger 最小日志接口。
+//
+// 与 internal/apiproxy.Logger 形状相同但独立声明：dcp 设计为可单独使用的上下文
+// 压缩库，不应强耦合 apiproxy 包（虽然当前仅 apiproxy 调用它）。Go 结构化类型系统
+// 天然允许同形 interface 互用，调用方传任何同时实现 Infof/Warnf 的 logger 即可。
 type Logger interface {
 	Infof(format string, args ...any)
 	Warnf(format string, args ...any)

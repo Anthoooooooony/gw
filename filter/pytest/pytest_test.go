@@ -143,8 +143,9 @@ func TestApplyOnError_NoSummary_ReturnsNil(t *testing.T) {
 
 func TestSubname(t *testing.T) {
 	f := &Filter{}
-	if got := f.Subname("pytest", nil); got != "pytest" {
-		t.Errorf("Subname(pytest) = %q, want pytest", got)
+	// cmd == "pytest" 时返回空：Registry 展示回退到 Filter.Name()，避免 "pytest/pytest" 冗余
+	if got := f.Subname("pytest", nil); got != "" {
+		t.Errorf("Subname(pytest) = %q, want empty", got)
 	}
 	if got := f.Subname("python", []string{"-m", "pytest"}); got != "python -m pytest" {
 		t.Errorf("Subname(python -m pytest) = %q, want 'python -m pytest'", got)

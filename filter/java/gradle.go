@@ -43,14 +43,6 @@ func (f *GradleFilter) Match(cmd string, args []string) bool {
 	return true
 }
 
-// ansiRegexp 匹配 ANSI 转义序列
-var ansiRegexp = regexp.MustCompile(`\x1B\[[0-9;]*[a-zA-Z]`)
-
-// stripANSI 去除 ANSI 转义序列
-func stripANSI(s string) string {
-	return ansiRegexp.ReplaceAllString(s, "")
-}
-
 // javaCompileErrorRegexp 匹配 Java 编译错误行
 var javaCompileErrorRegexp = regexp.MustCompile(`\.java:\d+: error:`)
 
@@ -101,7 +93,7 @@ func (f *GradleFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutp
 	inException := false
 
 	for _, line := range lines {
-		cleaned := stripANSI(line)
+		cleaned := filter.StripANSI(line)
 		trimmed := strings.TrimSpace(cleaned)
 
 		// --- 丢弃规则 ---
@@ -298,7 +290,7 @@ func (f *GradleFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutp
 
 // --- 流式过滤器 ---
 //
-// GradleStreamProcessor 实现 filter.StreamProcessor，逐行解析 Gradle 构建输出。
+// gradleStreamProcessor 实现 filter.StreamProcessor，逐行解析 Gradle 构建输出。
 // 状态机维护当前是否处于 What went wrong / Exception is / Try 块，以及已发射
 // 行集合用于去重（同一 deprecation/警告反复出现时只保留首次）。
 //
@@ -340,7 +332,7 @@ const gradleMaxStackFrames = 20
 
 // NewStreamInstance 创建新的流式处理器实例（每次命令执行一份状态）。
 func (f *GradleFilter) NewStreamInstance() filter.StreamProcessor {
-	return &GradleStreamProcessor{
+	return &gradleStreamProcessor{
 		section:     gradleSectionNormal,
 		seenLines:   make(map[string]bool),
 		emittedAny:  false,
@@ -348,8 +340,8 @@ func (f *GradleFilter) NewStreamInstance() filter.StreamProcessor {
 	}
 }
 
-// GradleStreamProcessor 是 GradleFilter 的流式状态机。
-type GradleStreamProcessor struct {
+// gradleStreamProcessor 是 GradleFilter 的流式状态机。
+type gradleStreamProcessor struct {
 	section     gradleSection   // 当前所处的输出段
 	seenLines   map[string]bool // 已发射的行内容集合，用于去重 deprecation 等重复警告
 	emittedAny  bool            // 本次执行是否已经发出过任何输出
@@ -358,8 +350,8 @@ type GradleStreamProcessor struct {
 }
 
 // ProcessLine 处理单行输出，返回是否发射以及发射内容。
-func (p *GradleStreamProcessor) ProcessLine(line string) (filter.StreamAction, string) {
-	cleaned := stripANSI(line)
+func (p *gradleStreamProcessor) ProcessLine(line string) (filter.StreamAction, string) {
+	cleaned := filter.StripANSI(line)
 	trimmed := strings.TrimSpace(cleaned)
 
 	// 1. 段落边界优先识别（必须在噪音判断前，避免段开头被噪音规则误杀）
@@ -506,7 +498,7 @@ func (p *GradleStreamProcessor) ProcessLine(line string) (filter.StreamAction, s
 
 // emit 是统一的发射出口：负责去重已经输出过的整行内容，并打 emittedAny 标记。
 // 缩进栈帧、空行不参与去重（它们的重复是正常结构）。
-func (p *GradleStreamProcessor) emit(line string) (filter.StreamAction, string) {
+func (p *gradleStreamProcessor) emit(line string) (filter.StreamAction, string) {
 	trimmed := strings.TrimSpace(line)
 	// 空行与栈帧不去重
 	if trimmed != "" && !gradleStackFrameRegexp.MatchString(line) {
@@ -520,7 +512,7 @@ func (p *GradleStreamProcessor) emit(line string) (filter.StreamAction, string) 
 }
 
 // Flush 在命令结束时调用：成功且无任何输出时补一行摘要，避免 LLM 收到空内容。
-func (p *GradleStreamProcessor) Flush(exitCode int) []string {
+func (p *gradleStreamProcessor) Flush(exitCode int) []string {
 	if exitCode == 0 && !p.emittedAny {
 		if p.taskCount > 0 {
 			return []string{"gw: gradle build ok (no notable output)"}

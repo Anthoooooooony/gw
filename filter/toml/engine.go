@@ -2,7 +2,6 @@ package toml
 
 import (
 	"embed"
-	"regexp"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -54,9 +53,6 @@ func LoadEngine() *TomlFilter {
 	return &TomlFilter{Rules: rules, Loaded: loaded}
 }
 
-// ansiRegex 匹配 ANSI 转义序列
-var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
-
 func (f *TomlFilter) Name() string { return "toml" }
 
 // Subname 实现 filter.SubnameResolver：返回本次 (cmd, args) 匹配到的 rule.Match，未匹配返回空。
@@ -104,7 +100,7 @@ func (f *TomlFilter) findRule(fullCmd string) *Rule {
 // applyRule 按管道顺序应用无损变换：strip_ansi → head_lines → tail_lines → max_lines → on_empty
 func applyRule(rule *Rule, content string) string {
 	if rule.StripAnsi {
-		content = ansiRegex.ReplaceAllString(content, "")
+		content = filter.StripANSI(content)
 	}
 
 	lines := strings.Split(content, "\n")
