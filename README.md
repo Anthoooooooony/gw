@@ -417,6 +417,20 @@ make test-fast   # 本地反复迭代用，不带 race 与 cover
 make ci          # 本地跑 CI 核心 gate（tidy / vet / test / bump-test）等价集
 ```
 
+## 调试 `gw claude` 代理
+
+当 `gw claude` 行为异常（请求没进代理、DCP 替换没生效等）时：
+
+- **verbose 模式打逐请求日志**：`gw -v claude` 会在 stderr 打每条 `/v1/messages` 的 `dcp: 替换 N 条 tool_result` / `dcp: 解析失败，透传` 信息
+- **每次退出都会打出统计摘要**（非 verbose 也会）：`gw: dcp: N 请求 / 扫 M tool_use / 替换 K tool_result / 节省 B 字节`；0 请求时静默
+- **健康检查端点**：代理监听的 127.0.0.1 随机端口暴露 `/_gw/health`，返回 `200 ok`；查到具体端口可用 `lsof -iTCP -sTCP:LISTEN -P | grep gw` 或读 verbose 日志里的 `apiproxy 已监听 http://127.0.0.1:PORT`
+- **上游逃生舱**：`GW_APIPROXY_UPSTREAM=https://xxx` 把上游替换为任意 URL，测试场景下可指向本地 mock
+- **不支持 Bedrock/Vertex**：`CLAUDE_CODE_USE_BEDROCK=1` / `CLAUDE_CODE_USE_VERTEX=1` 模式下 claude 忽略 `ANTHROPIC_BASE_URL`，代理失效；这些用户应直接运行 `claude`，不走 `gw claude`
+
+## 发布
+
+版本 bump、CHANGELOG 归档、tag 创建步骤见 [`RELEASING.md`](./RELEASING.md)。
+
 ## Contributing
 
 日常贡献流程（分支命名、Commit 约定、CHANGELOG 维护、release 步骤、测试层级）见 [`CONTRIBUTING.md`](./CONTRIBUTING.md)。Claude Code 的项目级开发约定与关键不变式见 [`CLAUDE.md`](./CLAUDE.md)。

@@ -49,9 +49,9 @@ type rawRule struct {
 // 高层同 ID 覆盖低层。解析错误只打 warning，不中断整个加载流程。
 // 返回按 ID 排序的规则列表。
 func LoadAllRules() []LoadedRule {
-	// byID 用于同 ID 覆盖；disabled[ID]=true 表示被更高层剔除
+	// byID 用于同 ID 覆盖；disabled 收集被更高层剔除的 ID（纯 set 语义，用 struct{}）
 	byID := make(map[string]LoadedRule)
-	disabled := make(map[string]bool)
+	disabled := make(map[string]struct{})
 
 	// 1. builtin：go:embed
 	loadEmbeddedInto(byID, disabled)
@@ -71,7 +71,7 @@ func LoadAllRules() []LoadedRule {
 	// 去除被禁用的规则
 	out := make([]LoadedRule, 0, len(byID))
 	for id, r := range byID {
-		if disabled[id] {
+		if _, off := disabled[id]; off {
 			continue
 		}
 		out = append(out, r)
@@ -83,7 +83,7 @@ func LoadAllRules() []LoadedRule {
 }
 
 // loadEmbeddedInto 从 go:embed 的 builtinRules 读取规则并注入 byID。
-func loadEmbeddedInto(byID map[string]LoadedRule, disabled map[string]bool) {
+func loadEmbeddedInto(byID map[string]LoadedRule, disabled map[string]struct{}) {
 	entries, err := builtinRules.ReadDir("rules")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "gw: warning: 读取内置规则目录失败: %v\n", err)
@@ -105,7 +105,7 @@ func loadEmbeddedInto(byID map[string]LoadedRule, disabled map[string]bool) {
 
 // loadDirInto 从指定目录扫描 *.toml 并按 sourcePrefix 注入 byID。
 // sourcePrefix 形如 "user://" / "project://"，最终 source 字段为 prefix + 绝对路径。
-func loadDirInto(dir, sourcePrefix string, byID map[string]LoadedRule, disabled map[string]bool) {
+func loadDirInto(dir, sourcePrefix string, byID map[string]LoadedRule, disabled map[string]struct{}) {
 	info, err := os.Stat(dir)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -145,7 +145,7 @@ func loadDirInto(dir, sourcePrefix string, byID map[string]LoadedRule, disabled 
 // parseAndMerge 解析 TOML 文本，按 section.name 作为 ID 注入 byID，
 // 同 ID 会被覆盖；disabled=true 的条目标记为剔除。
 // 解析错误只打 warning。
-func parseAndMerge(data, source string, byID map[string]LoadedRule, disabled map[string]bool) {
+func parseAndMerge(data, source string, byID map[string]LoadedRule, disabled map[string]struct{}) {
 	var raw map[string]map[string]rawRule
 	if _, err := toml.Decode(data, &raw); err != nil {
 		fmt.Fprintf(os.Stderr, "gw: warning: TOML 解析失败 (%s): %v\n", source, err)
@@ -155,7 +155,7 @@ func parseAndMerge(data, source string, byID map[string]LoadedRule, disabled map
 		for name, rr := range group {
 			id := section + "." + name
 			if rr.Disabled {
-				disabled[id] = true
+				disabled[id] = struct{}{}
 				// 同时剔除已存在的条目
 				delete(byID, id)
 				continue
