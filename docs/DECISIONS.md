@@ -18,7 +18,103 @@
 
 ---
 
-## 2026-04-22 — 放弃 release-please，改自写单 workflow 一体化发版 (Supersedes 同日 "切换到 release-please")
+## 2026-04-22 — Filter fallback invariant：锚点缺失绝不 silent data loss
+
+**上下文**：v0.11.1 前 `gw exec git log --oneline` 被压缩到 0 字节——`git/log` 的 `parseCommits` 依赖 `commit <hash>` + `Author:` 前缀；`--oneline` / `--pretty=format:` / `--graph` / 用户 `format.pretty` 配置均无此前缀，解析返回 0 条 commit，Apply 直接 join 成空串。类似风险面广：`CARGO_TERM_COLOR=always` 加色码破坏正则锚点、pytest 插件改 `=+ FAILURES =+` 结构、vitest 升级改 ` Test Files` 行前缀等。
+
+**决策**：所有 filter 的 Apply / ApplyOnError **必须保证锚点缺失时的行为是透传或 nil，不得返回空串或残缺内容**：
+
+1. Apply 锚点缺失 → `return filter.FilterOutput{Content: input.Stdout, Original: input.Stdout}`（透传原文）
+2. ApplyOnError 锚点缺失 → `return nil`（上层按原文走，语义同透传）
+3. 任何 `detectX / findX` 类辅助函数返回空值/索引 -1 时，外层必须走 fallback 分支
+
+**替代方案**：
+- 返回空串 + 日志 warn：用户看不到 warn，等于静默丢数据；否决
+- 设计"部分压缩"兜底：不稳定，不同命令需要手工调参；过度设计
+
+**影响**：
+- `filter/git/log.go` 增加 0-commit 兜底（原本代码路径在 `--oneline` 时会 join 空切片产出 ""）
+- 全部 Go filter 入口统一 `filter.StripANSI(input.Stdout)` 做防御性去色（见独立条目）
+- CLAUDE.md 的 "filter 契约" 节显式写入该 invariant
+- 对应 PR：#117 (git log 兜底)、#118 (ANSI 防御)
+
+## 2026-04-22 — Filter 设计约束：gw 按 "stdout + stderr" 拼接，切片起点须在 stdout
+
+**上下文**：vitest 失败输出把测试进度和 `Test Files N failed (1)` / `Tests N failed | M passed` 汇总写 stdout，`⎯ Failed Tests N ⎯` 详情分隔符及后续 AssertionError/code frame 写 stderr。gw 捕获子进程时按**先 stdout 后 stderr** 拼接成 `input.Stdout + input.Stderr`，与 TTY 终端按时间线交错的显示顺序不同。v0.10.0 的 vitest 嗅探器用 stderr 里的 `Failed Tests N` 作切片起点，结果丢掉了 stdout 尾部的 `Test Files` / `Tests` 汇总行——实机测试才暴露。
+
+**决策**：任何多源嗅探器必须优先使用 **stdout 里最早出现**的稳定锚点作为切片起点，让切片自然覆盖 stdout 尾部和整个 stderr。具体落地：
+
+- vitest：首选 ` ❯ \S+ \(\d+ tests? \| \d+ failed\)`（stdout 文件级失败摘要），回退才用 `Failed Tests N`
+- 测试 fixture 必须通过 `cmd >stdout.txt 2>stderr.txt && cat stdout.txt stderr.txt > fixture.txt` 生成，**不**能用 `cmd >file 2>&1`（后者是 terminal interleave 顺序，与 gw 实际捕获不符）
+
+**替代方案**：
+- 让 gw 按时间戳交错合并 stdout/stderr：需要 PTY 或子进程级时间戳，复杂度高；否决
+- 在 filter 里只看 stdout：失败详情常在 stderr 会全丢；否决
+- 改 gw 拼接顺序为 stderr + stdout：对既有过滤器破坏性强；否决
+
+**影响**：
+- `filter/npmtest/npmtest.go` vitest 嗅探器改锚点
+- `filter/toml/testdata/vitest_failure.txt` 重新按 stdout 后 stderr 顺序生成
+- 对应 PR：#116
+- CLAUDE.md "filter 契约" 节记录此约束
+
+## 2026-04-22 — TOML DSL v2 扩展 on_error 子表 (部分 Supersedes 同日 "TOML DSL v2：仅无损变换")
+
+**上下文**：原 v2 决策明确拒绝 `on_error`，要求按 exit_code 分场景走 Go filter。但实测发现 `cargo build` / `npm test` 的失败场景与成功场景 **tail 数量级不同**（失败要留更多上下文），单一 `tail_lines` 盖不住两种场景。又因专属 Go filter 覆盖面需要多个 PR 迭代，短期内大量命令卡在"失败 0% 压缩"。
+
+**决策**：TOML DSL v2 引入 `[section.name.on_error]` 子表，字段集与主规则**完全一致**（strip_ansi / head_lines / tail_lines / max_lines / on_empty）。**严守"仅无损变换"核心原则不变**——子表本身不引入 strip_lines / keep_lines 这类基于正则的裁剪；只是让成功/失败可以配不同的截断长度。
+
+**替代方案**：
+- 坚守原 v2 拒绝 on_error，等 Go filter 全覆盖：过渡期用户体验差；否决
+- 引入 `on_error` 支持 keep_lines 正则过滤：违反无损原则；否决
+- 把 on_error 收编到 Go filter 做"TOML 兜底 + Go 分支"：架构复杂；否决
+
+**影响**：
+- 新增 `OnErrorRule` struct + `rawOnErrorRule`；`ApplyOnError` 从硬编码 `return nil` 改为"有子表则按子表应用"
+- 内置规则新增 `[cargo.build|check|clippy.on_error]` / `[npm|yarn|pnpm.test.on_error]` / `[docker.pull|compose-up.on_error]`（部分在 Go filter 合入后被 supersede）
+- 对应 PR：#109；后续 Go filter 落地 PR (#110/#111/#113/#114) 逐步删除对应 TOML 节
+
+## 2026-04-22 — rtk 风格专属 Go filter 的包结构与命名约定
+
+**上下文**：#74 落地 cargo/pip/npmtest 多个专属 filter 后，需要固化统一的包结构，避免后续每个 contributor 各写一套。pytest 作为 rtk 首个落地（#73）已提供模板，但只有一个 filter 的情况没暴露多 filter 同包的命名矛盾。
+
+**决策**：
+
+1. **包命名**：按生态/工具名单复数小写，例如 `filter/cargo`、`filter/pip`、`filter/npmtest`。同生态下多子命令 filter 共用同包（cargo test/build/check/clippy 共居 `filter/cargo`）。
+2. **文件命名**：`filter/{pkg}/{subcmd}.go` + `{subcmd}_test.go`。避免文件名以 `_test` 结尾被 Go 误认为纯测试文件（早期写 `cargo_test.go` 被识别为测试文件是教训）。
+3. **Filter Name**：使用二级分层 `"pkg/subcmd"`（例如 `"cargo/test"`、`"pip/install"`、`"git/log"`），与 Maven/Gradle 的 `"java/maven"` / `"java/gradle"` 对齐。
+4. **注册**：每个文件 `init()` 单独调 `filter.Register(&FooFilter{})`；`filter/all/all.go` 按字母序 blank import 各包，不承担优先级语义（fallback 由 `IsFallback()` 接口管）。
+5. **Match 严格形态**：只认明确调用（`cargo test`），拒绝 wrapper（`cargo nextest run` / `uv pip install` / `npm run test:*`）；wrapper 的输出结构不保证与底层工具一致。
+6. **回退路径**：Apply 锚点缺失 → 返回原文；ApplyOnError 锚点缺失 → 返回 nil（见独立 invariant 条目）。
+
+**替代方案**：
+- 单包 `filter/rtk` 收拢所有：生态间相互 import 容易混；否决
+- 按命令名展平 `filter/cargotest` / `filter/cargobuild`：同生态多个小包冗余；否决
+- Filter Name 扁平 `"cargo-test"`：失去层级可观察性；否决
+
+**影响**：
+- 新增 `filter/cargo` / `filter/pip` / `filter/npmtest` 三个包
+- `filter/pytest` / `filter/java` / `filter/git` 既有命名回顾确认符合约定
+- 对应 PR：#110 (cargo/test)、#111 (cargo/build)、#113 (pip/install)、#114 (npm test)、#115 (vitest)
+
+## 2026-04-22 — settings.json 写回保留 key 顺序（引入 iancoleman/orderedmap）
+
+**上下文**：`gw init` / `gw uninstall` 用 `json.MarshalIndent(map[string]interface{})` 序列化 settings，Go 的 encoding/json 按 key 字母序输出。用户原 settings.json 通常按 Claude Code 的插入顺序组织（env 在前、permissions 居中等），经 gw 一次往返后整文件变字典序——纯语义无变化但：(a) 手工 diff 看不清 gw 到底改了什么；(b) git 纳管 dotfiles 的 commit history 被"首次跑 gw init"污染。
+
+**决策**：引入 `github.com/iancoleman/orderedmap` v0.3.0（MIT、零 transitive dep、200 行纯 Go）替代 `map[string]interface{}`；`readSettings` 同时侦测首行缩进（2/4 空格或 tab），`marshalSettings` / `writeSettingsAtomic` 原样沿用。
+
+**替代方案**：
+- 手写 json.Decoder.Token() 保序解析：180-250 行，corner case 多（nested array、number 精度）；否决
+- 接受字典序改写，在 README 告知用户：破坏 git history；否决
+- 改走 TOML/YAML 作为 settings 格式：不归我们决定（Claude Code 约定）；否决
+
+**影响**：
+- `readSettings` 返回新增 `indent string`；`applyInitToSettings` / `applyUninstallToSettings` / `marshalSettings` / `writeSettingsAtomic` 全部改签名
+- `cmd/testdata/settings_with_extras.json` fixture + `TestSettings_PreserveKeyOrderAndIndent` 做字节级 round-trip 断言
+- 限制：字节相等的前提是原文件已是 `json.MarshalIndent` 规范格式（每数组元素单行）；用户手写 inline 数组 `["a","b"]` 仍会被展开——`encoding/json` 固有行为，不在本 PR 解决
+- 对应 PR：#107
+
+
 
 **上下文**：切换 release-please 后试跑发现硬约束：`GITHUB_TOKEN` 触发的 tag push **不会**触发其他 workflow（GitHub 防递归设计），导致 release-please 打 tag 后 `release.yml` 不触发，binary assets 必须手工删 tag 重推才能上传（v0.3.2 就是这样补救的）。长期解法只有两条：引入 PAT/GitHub App 打破跨 workflow 限制；或彻底抛弃跨 workflow 架构。
 
