@@ -12,14 +12,14 @@
   parse 锚点缺失（输出被 `--tb=no` / `head` 截断等）时回退原文透传。
 
 ### Changed
-- **Breaking（TOML DSL v2）**：TOML 规则只保留语义无关的无损字段（`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`）。基于正则的 `strip_lines` / `keep_lines` / `on_error` 因误删风险移除。
 - 内置 node/python/rust TOML 规则精简为 strip_ansi + 长度兜底；需要语义压缩的命令（pytest 已接管，vitest / cargo test / npm test 待补）走专属 Go filter。
 - `filter/all` 注册顺序：专属 filter → toml（Registry 第一匹配胜出），保证 pytest 等优先命中 Go 实现。
 
 ### Fixed
 
 ### Removed
-- `filter/toml` 的 `strip_lines` / `keep_lines` / `on_error` 字段与对应 loader warning 兼容代码（不考虑 v1 配置前向兼容）。
+- **Breaking（TOML DSL v2）**：TOML 规则只保留语义无关的无损字段（`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`）。基于正则的 `strip_lines` / `keep_lines` / `on_error` 因误删风险移除，不考虑 v1 配置前向兼容。
+- `filter/toml` 的 `strip_lines` / `keep_lines` / `on_error` 字段与对应 loader warning 兼容代码。
 - `filter/toml/rules/python.toml` 的 `[pytest.*]` 规则（由专属 filter 接管）。
 
 [Unreleased]: https://github.com/Anthoooooooony/gw/compare/v0.2.0...HEAD

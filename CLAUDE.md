@@ -13,7 +13,10 @@ GitHub Flow 单干模型：
 | 分支 | 角色 | PR base |
 |------|------|---------|
 | `master` | 唯一长期分支，GitHub default branch，永远可发布 | —— |
-| `feature/*` | 功能/修复 | `master` |
+| `feature/*` | 新功能 | `master` |
+| `fix/*` | Bug 修复 | `master` |
+| `chore/*` | 构建、CI、依赖升级等非功能改动 | `master` |
+| `docs/*` | 纯文档改动 | `master` |
 | `hotfix/*` | 紧急修复已发布版本（语义与 feature 区分便于追踪） | `master` |
 
 短期分支合入 master 后立即删除。所有改动走 PR（`scripts/bump.sh` 的 release commit 例外——只有这一种场景允许直推 master）。
