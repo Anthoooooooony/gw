@@ -29,13 +29,13 @@ var builtinRules embed.FS
 //     仍严守"仅无损变换"。成功/失败的 tail_lines 往往差一个数量级，
 //     单一参数盖不住两种场景。
 type Rule struct {
-	Match     string        `toml:"match"`      // 命令前缀匹配
-	StripAnsi bool          `toml:"strip_ansi"` // 移除 ANSI 转义码（无损）
-	MaxLines  int           `toml:"max_lines"`  // 截断到 N 行
-	HeadLines int           `toml:"head_lines"` // 保留前 N 行
-	TailLines int           `toml:"tail_lines"` // 保留后 N 行
-	OnEmpty   string        `toml:"on_empty"`   // 输出为空时的替代消息
-	OnError   *OnErrorRule  `toml:"on_error"`   // 失败场景的独立参数；nil 时 ApplyOnError 透传
+	Match     string       `toml:"match"`      // 命令前缀匹配
+	StripAnsi bool         `toml:"strip_ansi"` // 移除 ANSI 转义码（无损）
+	MaxLines  int          `toml:"max_lines"`  // 截断到 N 行
+	HeadLines int          `toml:"head_lines"` // 保留前 N 行
+	TailLines int          `toml:"tail_lines"` // 保留后 N 行
+	OnEmpty   string       `toml:"on_empty"`   // 输出为空时的替代消息
+	OnError   *OnErrorRule `toml:"on_error"`   // 失败场景的独立参数；nil 时 ApplyOnError 透传
 }
 
 // OnErrorRule 是失败场景的独立参数表。字段集与 Rule 无损变换部分一致，
