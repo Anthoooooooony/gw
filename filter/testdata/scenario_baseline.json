@@ -17,15 +17,15 @@
     "name": "cargo test (failure, batch)",
     "mode": "batch",
     "orig_bytes": 2093,
-    "out_bytes": 2093,
-    "ratio": 0
+    "out_bytes": 595,
+    "ratio": 0.7157190635451505
   },
   {
     "name": "cargo test (success, batch)",
     "mode": "batch",
     "orig_bytes": 1468,
-    "out_bytes": 1468,
-    "ratio": 0
+    "out_bytes": 95,
+    "ratio": 0.9352861035422343
   },
   {
     "name": "docker images (batch)",

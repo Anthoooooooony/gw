@@ -36,14 +36,4 @@ on_empty = "cargo clippy: ok"
   tail_lines = 40
   on_empty = "cargo clippy: 失败但无输出"
 
-[cargo.test]
-match = "cargo test"
-strip_ansi = true
-tail_lines = 200
-on_empty = "cargo test: ok"
-
-  # 失败场景只看 failures 块 + summary，截到最后 80 行通常够覆盖几个失败用例。
-  [cargo.test.on_error]
-  strip_ansi = true
-  tail_lines = 80
-  on_empty = "cargo test: 失败但无输出"
+# 注：`cargo test` 已由 filter/cargo（Go filter）语义接管，不再需要 TOML 规则。
