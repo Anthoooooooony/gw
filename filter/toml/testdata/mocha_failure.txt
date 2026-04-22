@@ -1,0 +1,51 @@
+
+> gw-mocha-fixture@1.0.0 test
+> mocha
+
+
+
+  math
+    ✔ adds
+    ✔ subtracts
+    1) multiplies broken
+
+  strings
+    ✔ concat
+    2) uppercase broken
+
+
+  3 passing (4ms)
+  2 failing
+
+  1) math
+       multiplies broken:
+
+      AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+6 !== 7
+
+      + expected - actual
+
+      -6
+      +7
+      
+      at Context.<anonymous> (test.js:5:42)
+      at process.processImmediate (node:internal/timers:504:21)
+
+  2) strings
+       uppercase broken:
+
+      AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'ABC' !== 'XYZ'
+
+      + expected - actual
+
+      -ABC
+      +XYZ
+      
+      at Context.<anonymous> (test.js:9:41)
+      at process.processImmediate (node:internal/timers:504:21)
+
+
+

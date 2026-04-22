@@ -178,7 +178,7 @@ func fallbackTail(content string) string {
 
 // detectAndSlice 依次尝试每个 runner 的嗅探器，首个命中的结果生效。
 // 顺序按 runner 特征锚点的独占性排：vitest 和 jest 的 summary 行前缀唯一，
-// AVA 的 `  ─` 分隔符也唯一；无冲突。
+// AVA 的 `  ─` 分隔符、mocha 的 `  N passing` / `  N failing` 也各不冲突。
 func detectAndSlice(content string) string {
 	if s := detectAndSliceVitest(content); s != "" {
 		return s
@@ -186,10 +186,50 @@ func detectAndSlice(content string) string {
 	if s := detectAndSliceJest(content); s != "" {
 		return s
 	}
+	if s := detectAndSliceMocha(content); s != "" {
+		return s
+	}
 	if s := detectAndSliceAVA(content); s != "" {
 		return s
 	}
 	return ""
+}
+
+// --- mocha detection & compression ---
+
+// mochaPassingRe 匹配 mocha 成功摘要 `  3 passing (4ms)` / `  12 passing (1s)`。
+// 行首两空格缩进是 mocha spec reporter 稳定特征。
+var mochaPassingRe = regexp.MustCompile(`^  \d+ passing \(`)
+
+// mochaFailingRe 匹配失败汇总 `  2 failing`（单独成行，无括号）。
+var mochaFailingRe = regexp.MustCompile(`^  \d+ failing\s*$`)
+
+// detectAndSliceMocha 根据是否存在 `N failing` 行区分成功/失败：
+//   - 成功：保留 `  N passing (Xms)` 一行
+//   - 失败：从 `  N failing` 行起切到末尾，覆盖每条失败块与堆栈
+//
+// 未识别返回空字符串。
+func detectAndSliceMocha(content string) string {
+	lines := strings.Split(content, "\n")
+	// 必须有 passing 行才认定为 mocha
+	passingIdx := -1
+	for i := len(lines) - 1; i >= 0; i-- {
+		if mochaPassingRe.MatchString(strings.TrimRight(lines[i], "\r")) {
+			passingIdx = i
+			break
+		}
+	}
+	if passingIdx < 0 {
+		return ""
+	}
+	// 失败：切片从 `  N failing` 起
+	for i, line := range lines {
+		if mochaFailingRe.MatchString(strings.TrimRight(line, "\r")) {
+			return strings.Join(lines[i:], "\n")
+		}
+	}
+	// 成功：只留 passing 一行
+	return lines[passingIdx]
 }
 
 // --- jest detection & compression ---

@@ -228,6 +228,63 @@ func TestApplyOnError_Jest(t *testing.T) {
 	}
 }
 
+func TestApply_Success_Mocha(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "toml", "testdata", "mocha_success.txt"))
+	if err != nil {
+		t.Fatalf("读取 fixture 失败: %v", err)
+	}
+	out := (&Filter{}).Apply(filter.FilterInput{
+		Cmd:    "npm",
+		Args:   []string{"test"},
+		Stdout: string(data),
+	})
+	// 只保留 passing 汇总行
+	if !strings.Contains(out.Content, "passing") {
+		t.Fatalf("应保留 N passing 行, got %q", out.Content)
+	}
+	if strings.Contains(out.Content, "✔ adds") {
+		t.Error("mocha 成功应只留 summary, ✔ 进度行要丢")
+	}
+}
+
+func TestApplyOnError_Mocha(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "toml", "testdata", "mocha_failure.txt"))
+	if err != nil {
+		t.Fatalf("读取 fixture 失败: %v", err)
+	}
+	out := (&Filter{}).ApplyOnError(filter.FilterInput{
+		Cmd:      "npm",
+		Args:     []string{"test"},
+		Stdout:   string(data),
+		ExitCode: 1,
+	})
+	if out == nil {
+		t.Fatal("mocha failure 应返回非 nil")
+	}
+	// 起点应为 "N failing" 行
+	if !strings.HasPrefix(out.Content, "  2 failing") {
+		t.Errorf("应从 N failing 行开始, got %q", out.Content[:min(80, len(out.Content))])
+	}
+	// 关键信息
+	for _, want := range []string{
+		"1) math",
+		"multiplies broken",
+		"AssertionError",
+		"uppercase broken",
+	} {
+		if !strings.Contains(out.Content, want) {
+			t.Errorf("失败压缩应保留 %q", want)
+		}
+	}
+	// 进度树和 banner 应丢
+	if strings.Contains(out.Content, "✔ adds") {
+		t.Error("✔ 进度行应被丢弃")
+	}
+	if strings.Contains(out.Content, "> mocha") {
+		t.Error("npm banner 应被丢弃")
+	}
+}
+
 func TestApplyOnError_NonAVA_FallbackTail(t *testing.T) {
 	out := (&Filter{}).ApplyOnError(filter.FilterInput{
 		Cmd:      "npm",

@@ -1,0 +1,16 @@
+
+> gw-mocha-fixture@1.0.0 test
+> mocha
+
+
+
+  math
+    ✔ adds
+    ✔ subtracts
+
+  strings
+    ✔ concats
+
+
+  3 passing (3ms)
+
