@@ -67,12 +67,25 @@ func (f *MavenFilter) ApplyOnError(input filter.FilterInput) *filter.FilterOutpu
 	}
 }
 
+// mavenParallelMarker 是 Maven 开启并行构建时 reactor 必打的标识行。
+// `mvn -T 4 test` / `mvn -T 1C install` 都会出现 "Using the MultiThreadedBuilder
+// implementation with a thread count of N"；Maven 3.x 以来稳定。
+const mavenParallelMarker = "Using the MultiThreadedBuilder"
+
 // processMavenOutput 用状态机处理 Maven 输出
 func processMavenOutput(output string, successMode bool) string {
 	// 先剥 ANSI：maven 默认不加色，但用户若用 `mvn-color-plugin` / JPM 配色
 	// 或 Jenkins ANSIColor 会给 [INFO]/[ERROR] 前缀染色，破坏 classifyLine
 	// 的前缀识别。与 gradle 的 per-line StripANSI 行为对齐。
 	output = filter.StripANSI(output)
+
+	// 并行构建（mvn -T N）的多模块输出行会交错，单线程状态机会错分状态 →
+	// 宁可不压缩也不能输出错误的残缺内容（filter invariant：锚点缺失或无法
+	// 安全处理就 fallback 原文）。
+	if strings.Contains(output, mavenParallelMarker) {
+		return output
+	}
+
 	lines := strings.Split(output, "\n")
 	state := StateInit
 	seenErrors := make(map[string]bool)
@@ -283,9 +296,21 @@ type mavenStreamProcessor struct {
 	state      MavenState
 	seenErrors *boundedDedupSet
 	buffer     []string
+	// parallel 检测到 `Using the MultiThreadedBuilder` 后置 true。
+	// 置位后所有后续行直接 Emit 原文，不再走状态机——并行输出交错会污染单线程状态。
+	parallel bool
 }
 
 func (p *mavenStreamProcessor) ProcessLine(line string) (filter.StreamAction, string) {
+	// 并行构建检测：一旦见到 MultiThreadedBuilder 标识，后续全部原文透传。
+	if p.parallel {
+		return filter.StreamEmit, line
+	}
+	if strings.Contains(line, mavenParallelMarker) {
+		p.parallel = true
+		return filter.StreamEmit, line
+	}
+
 	lc := classifyLine(line)
 	p.state = nextState(p.state, lc)
 

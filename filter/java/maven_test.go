@@ -141,3 +141,73 @@ func TestMavenFilter_ApplyOnError(t *testing.T) {
 		t.Error("不应包含下载完成日志")
 	}
 }
+
+// TestMavenFilter_ParallelBuild_Fallback 并行 Maven 输出交错多模块行，
+// 单线程状态机无法正确分类；必须 fallback 原文，不能输出错误的残缺内容。
+func TestMavenFilter_ParallelBuild_Fallback(t *testing.T) {
+	// 模拟 `mvn -T 2 test` 典型头部：有 MultiThreadedBuilder 标识行，
+	// 接着是交错的模块行。
+	parallel := `[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] module-a                                                           [jar]
+[INFO] module-b                                                           [jar]
+[INFO]
+[INFO] Using the MultiThreadedBuilder implementation with a thread count of 2
+[INFO] ----------------< com.example:module-a >----------------
+[INFO] ----------------< com.example:module-b >----------------
+[INFO] Building module-a 1.0                                              [1/2]
+[INFO] Building module-b 1.0                                              [2/2]
+[INFO] BUILD SUCCESS
+`
+	f := &MavenFilter{}
+	out := f.Apply(filter.FilterInput{
+		Cmd:    "mvn",
+		Args:   []string{"-T", "2", "test"},
+		Stdout: parallel,
+	})
+	if out.Content != parallel {
+		t.Fatalf("并行构建应透传原文, 实际压缩了: got %d bytes, want %d bytes",
+			len(out.Content), len(parallel))
+	}
+
+	// ApplyOnError 也应透传
+	errResult := f.ApplyOnError(filter.FilterInput{
+		Cmd:      "mvn",
+		Args:     []string{"-T", "2", "test"},
+		Stdout:   parallel,
+		ExitCode: 1,
+	})
+	if errResult == nil || errResult.Content != parallel {
+		t.Fatal("并行构建 ApplyOnError 应透传原文")
+	}
+}
+
+// TestMavenStream_ParallelBuild_Fallback 流式 stream 处理器同样需要并行检测。
+func TestMavenStream_ParallelBuild_Fallback(t *testing.T) {
+	f := &MavenFilter{}
+	p := f.NewStreamInstance()
+
+	// 检测前的行照常被 state machine 处理
+	_, _ = p.ProcessLine("[INFO] Scanning for projects...")
+
+	// 检测到 MultiThreadedBuilder，此行本身 Emit 原文
+	act, out := p.ProcessLine("[INFO] Using the MultiThreadedBuilder implementation with a thread count of 4")
+	if act != filter.StreamEmit {
+		t.Errorf("MultiThreadedBuilder 行应 Emit, got %v", act)
+	}
+	if !strings.Contains(out, "MultiThreadedBuilder") {
+		t.Error("MultiThreadedBuilder 行原文应被保留")
+	}
+
+	// 之后的行全部原文透传
+	noisy := "[INFO] --- resources:3.3.1:resources (default-resources) @ module-a ---"
+	act, out = p.ProcessLine(noisy)
+	if act != filter.StreamEmit {
+		t.Errorf("并行模式后续 Mojo 行应 Emit, got %v", act)
+	}
+	if out != noisy {
+		t.Errorf("并行模式应 Emit 原文, got %q want %q", out, noisy)
+	}
+}
