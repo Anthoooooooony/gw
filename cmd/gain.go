@@ -60,6 +60,6 @@ func printStats(label string, s track.Stats) {
 	if s.TotalInput > 0 {
 		savePct = float64(s.TotalSaved) / float64(s.TotalInput) * 100
 	}
-	fmt.Printf("[%s]  命令: %d  输入tokens: %d  节省tokens: %d  (%.1f%%)\n",
+	fmt.Printf("%s — 命令: %d  输入tokens: %d  节省tokens: %d  (%.1f%%)\n",
 		label, s.CommandCount, s.TotalInput, s.TotalSaved, savePct)
 }

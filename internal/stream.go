@@ -39,12 +39,12 @@ func RunCommandStreamingFull(name string, args []string, onLine func(string), st
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return 0, fmt.Errorf("failed to create stdout pipe: %w", err)
+		return 0, fmt.Errorf("创建 stdout pipe 失败: %w", err)
 	}
 	cmd.Stderr = stderrWriter
 
 	if err := cmd.Start(); err != nil {
-		return 0, fmt.Errorf("failed to start %s: %w", name, err)
+		return 0, fmt.Errorf("启动 %s 失败: %w", name, err)
 	}
 
 	stop, sigkillFired, timedOut := startTimeoutKiller(ctx, cmd, timeoutKillGrace)
@@ -56,7 +56,7 @@ func RunCommandStreamingFull(name string, args []string, onLine func(string), st
 	}
 	// 进程被杀后 stdout pipe 会 EOF，Scanner 自然停止；若是读出错（非 EOF），打 warning
 	if scanErr := scanner.Err(); scanErr != nil {
-		fmt.Fprintf(os.Stderr, "gw: warning: scanner error: %v\n", scanErr)
+		fmt.Fprintf(os.Stderr, "gw: warning: scanner 读取失败: %v\n", scanErr)
 	}
 
 	waitErr := cmd.Wait()

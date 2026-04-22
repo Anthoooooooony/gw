@@ -37,7 +37,7 @@ func (t *Transformer) Transform(body []byte) []byte {
 
 	var req messagesRequest
 	if err := json.Unmarshal(body, &req); err != nil {
-		t.logger.Warnf("dcp: parse failed, passthrough: %v", err)
+		t.logger.Warnf("dcp: 解析失败，透传: %v", err)
 		return body
 	}
 
@@ -49,14 +49,14 @@ func (t *Transformer) Transform(body []byte) []byte {
 
 	out, err := json.Marshal(&req)
 	if err != nil {
-		t.logger.Warnf("dcp: marshal failed, passthrough: %v", err)
+		t.logger.Warnf("dcp: 序列化失败，透传: %v", err)
 		return body
 	}
 
 	t.stats.ResultsReplaced.Add(int64(replaced))
 	t.stats.BytesInput.Add(int64(len(body)))
 	t.stats.BytesOutput.Add(int64(len(out)))
-	t.logger.Infof("dcp: replaced %d tool_result(s), %d -> %d bytes", replaced, len(body), len(out))
+	t.logger.Infof("dcp: 替换 %d 条 tool_result，%d -> %d 字节", replaced, len(body), len(out))
 	return out
 }
 
@@ -119,7 +119,7 @@ func rewrite(req *messagesRequest, logger Logger) (toolUses, replaced int) {
 	replacement, err := json.Marshal(PlaceholderContent)
 	if err != nil {
 		// string marshal 不可能失败
-		logger.Warnf("dcp: placeholder marshal: %v", err)
+		logger.Warnf("dcp: 占位符序列化失败: %v", err)
 		return toolUses, 0
 	}
 

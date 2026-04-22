@@ -21,7 +21,7 @@ func upstreamURL() *url.URL {
 	u, err := url.Parse(raw)
 	if err != nil {
 		// 理论不可达：硬编码默认值一定合法。
-		panic("apiproxy: invalid upstream URL " + raw + ": " + err.Error())
+		panic("apiproxy: 上游 URL 非法 " + raw + ": " + err.Error())
 	}
 	return u
 }
@@ -64,9 +64,9 @@ func anthropicHandler(logger Logger, transform BodyTransformer) http.HandlerFunc
 		},
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
 			// 上游异常时回 502 并把错误写回 body，便于 claude 端看到。
-			logger.Warnf("apiproxy upstream error: %v", err)
+			logger.Warnf("apiproxy 上游错误: %v", err)
 			w.WriteHeader(http.StatusBadGateway)
-			_, _ = io.WriteString(w, "gw apiproxy: upstream error: "+err.Error())
+			_, _ = io.WriteString(w, "gw claude: 代理上游错误: "+err.Error())
 		},
 		// 透传 SSE：关闭 buffering，让 chunk 立即下发给 claude。
 		FlushInterval: -1,
@@ -77,12 +77,12 @@ func anthropicHandler(logger Logger, transform BodyTransformer) http.HandlerFunc
 		r.Header.Del("Proxy-Connection")
 		// Claude Code 暂不走 WS/upgrade，遇到就 501 明确提示。
 		if r.Header.Get("Upgrade") != "" {
-			http.Error(w, "gw apiproxy: HTTP upgrade not supported", http.StatusNotImplemented)
+			http.Error(w, "gw claude: 代理不支持 HTTP upgrade", http.StatusNotImplemented)
 			return
 		}
 		// Content-Length 已知时早拒大 body，省得 ReadAll 时才发现。
 		if r.ContentLength > maxBytes {
-			http.Error(w, "gw apiproxy: request body too large", http.StatusRequestEntityTooLarge)
+			http.Error(w, "gw claude: 代理请求体过大", http.StatusRequestEntityTooLarge)
 			return
 		}
 		// 仅对 POST 走 "读入-变换-注入" 路径；GET/HEAD 无 body 直接转发。
@@ -94,12 +94,12 @@ func anthropicHandler(logger Logger, transform BodyTransformer) http.HandlerFunc
 			if err != nil {
 				var mbe *http.MaxBytesError
 				if errors.As(err, &mbe) {
-					http.Error(w, "gw apiproxy: request body too large", http.StatusRequestEntityTooLarge)
+					http.Error(w, "gw claude: 代理请求体过大", http.StatusRequestEntityTooLarge)
 					return
 				}
 				// 其他 read 错误：记录并让 ReverseProxy 通过 ErrorHandler 走 502。
-				logger.Warnf("apiproxy: read body failed, returning 502: %v", err)
-				http.Error(w, "gw apiproxy: read body failed", http.StatusBadGateway)
+				logger.Warnf("apiproxy: 读取请求体失败，回 502: %v", err)
+				http.Error(w, "gw claude: 代理读取请求体失败", http.StatusBadGateway)
 				return
 			}
 			out := transform(raw)
