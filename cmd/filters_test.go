@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	tomlfilter "github.com/Anthoooooooony/gw/filter/toml"
+	"github.com/Anthoooooooony/gw/filter"
 )
 
 // TestCollectFilterRows_HasBuiltins 默认注册表应包含 Go 硬编码过滤器和内置 TOML 规则。
@@ -19,7 +19,7 @@ func TestCollectFilterRows_HasBuiltins(t *testing.T) {
 	for _, r := range rows {
 		if r.Type == "go" {
 			hasGo = true
-			if r.Source != tomlfilter.SourceBuiltin {
+			if r.Source != "builtin" {
 				t.Errorf("Go 过滤器 source 应为 builtin，实际 %s", r.Source)
 			}
 		}
@@ -37,7 +37,7 @@ func TestCollectFilterRows_HasBuiltins(t *testing.T) {
 
 // TestRenderFilters_TableFormat 渲染后的表格应包含表头和关键字段
 func TestRenderFilters_TableFormat(t *testing.T) {
-	rows := []filterRow{
+	rows := []filter.FilterRow{
 		{Name: "git/status", Type: "go", Source: "builtin", Match: "git status"},
 		{Name: "docker.ps", Type: "toml", Source: "user:///home/u/.config/gw/rules/docker-prod.toml", Match: "docker ps"},
 	}

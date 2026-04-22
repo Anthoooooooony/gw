@@ -1,10 +1,11 @@
-// Package all 通过空白导入触发所有过滤器包的 init() 自注册
+// Package all 通过空白导入触发所有过滤器包的 init() 自注册。
+// 匹配优先级由各 filter 自身声明（实现 filter.Fallback 的作为兜底），
+// 此处 import 顺序仅控制 init() 运行次序，**不再承载语义不变式**。
 package all
 
 import (
 	_ "github.com/Anthoooooooony/gw/filter/git"
 	_ "github.com/Anthoooooooony/gw/filter/java"
 	_ "github.com/Anthoooooooony/gw/filter/pytest"
-	// toml 放最后：专属 filter 优先（Registry.Find 是第一匹配胜出）
 	_ "github.com/Anthoooooooony/gw/filter/toml"
 )

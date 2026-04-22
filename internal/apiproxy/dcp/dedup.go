@@ -10,9 +10,9 @@ const PlaceholderContent = "[Output removed to save context - information supers
 
 // Logger 最小日志接口。
 //
-// 与 internal/apiproxy.Logger 形状相同但独立声明：dcp 设计为可单独使用的上下文
-// 压缩库，不应强耦合 apiproxy 包（虽然当前仅 apiproxy 调用它）。Go 结构化类型系统
-// 天然允许同形 interface 互用，调用方传任何同时实现 Infof/Warnf 的 logger 即可。
+// 声明在 dcp 包（而非 apiproxy）：dcp 设计为可单独使用的上下文压缩库，
+// 不反向依赖 apiproxy。apiproxy.Logger 是本接口的类型别名，两处引用
+// 同一类型，杜绝结构化同形漂移。
 type Logger interface {
 	Infof(format string, args ...any)
 	Warnf(format string, args ...any)

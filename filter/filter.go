@@ -36,6 +36,31 @@ type SubnameResolver interface {
 	Subname(cmd string, args []string) string
 }
 
+// Fallback 是可选接口：实现并返回 true 的 filter 在 Registry.Find 中作为兜底，
+// 即**所有非兜底 filter 未命中后**才考虑它。典型用例是 TOML 声明式规则——
+// 专属 Go filter 语义更精确，应当优先匹配。
+//
+// 这样匹配优先级由 filter 自身声明，而不是依赖 filter/all 的 import 顺序，
+// 后者是隐式不变式，一旦有新包插入中间就可能默默破坏。
+type Fallback interface {
+	IsFallback() bool
+}
+
+// FilterRow 是 `gw filters list` 表格的一行。
+type FilterRow struct {
+	Name   string // 展示名（TOML 里是 rule ID，Go 里是 Filter.Name()）
+	Type   string // go | toml
+	Source string // builtin | user://... | project://...
+	Match  string // 命令匹配模式
+}
+
+// Describable 是可选接口：实现后 `gw filters list` 用 Describe 生成表格行，
+// 而不是让 cmd 包对具体 filter 类型做 type assertion。TOML 过滤器承载多条规则，
+// 需要展开为多行——是该接口的主要用例。
+type Describable interface {
+	Describe() []FilterRow
+}
+
 // Match 是 Registry.Find 的返回值：匹配到的 filter 和（可选）本次匹配的子名。
 // 展示用的 FilterUsed 拼接为 "<Filter.Name>/<Subname>"；Subname 为空时只用 Filter.Name。
 type Match struct {

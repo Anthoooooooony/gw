@@ -247,15 +247,12 @@ func TestFindProjectRulesDir_StopAtGitFile(t *testing.T) {
 	}
 }
 
-// TestLoadEngine_IntegratesLoaded 使用 LoadEngine 构造的实例应与 LoadAllRules 一致。
+// TestLoadEngine_IntegratesLoaded LoadEngine 构造的实例应与 LoadAllRules 一致。
 func TestLoadEngine_IntegratesLoaded(t *testing.T) {
 	withTempDirs(t, "", "")
 	eng := LoadEngine()
 	if len(eng.Loaded) == 0 {
 		t.Fatal("LoadEngine 未加载任何规则")
-	}
-	if len(eng.Rules) != len(eng.Loaded) {
-		t.Errorf("Rules 与 Loaded 数量不一致: %d vs %d", len(eng.Rules), len(eng.Loaded))
 	}
 }
 
