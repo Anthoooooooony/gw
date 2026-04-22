@@ -4,10 +4,10 @@
 
 ## 分支与 PR
 
-- **GitHub Flow 单干**：`master` 唯一长期分支，所有改动走 `feature/*` / `fix/*` / `chore/*` / `docs/*` → PR → squash merge。
+- **GitHub Flow 单干**：`master` 唯一长期分支，所有改动走 `feature/*` / `fix/*` / `chore/*` / `docs/*` / `hotfix/*` → PR → squash merge。
 - 仅 **`scripts/bump.sh` 触发的 release commit** 允许直推 `master`。
 - 短期分支合入后立即删除（`gh pr merge --delete-branch`）。
-- PR 必须过 7 层 CI gate：`test (ubuntu/macos)` / `build` / `shellcheck` / `actionlint` / `golangci-lint` / `govulncheck` / `bash unit tests`。
+- PR 必须过 7 层 CI gate：`test (ubuntu-latest)` / `test (macos-latest)` / `build` / `shellcheck` / `actionlint` / `golangci-lint` / `govulncheck`。`test` job 内部串联 `go mod tidy check` / `go vet` / `gofmt` / `go test -race -cover` / `bash scripts/bump_test.sh`（最后一项只在 ubuntu runner 上跑）。
 
 ## Commit message
 
