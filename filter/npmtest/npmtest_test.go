@@ -25,6 +25,9 @@ func TestMatch(t *testing.T) {
 		{"npm", []string{"run", "test:unit"}, false},
 		{"pnpm", []string{}, false},
 		{"node", []string{"test"}, false},
+		{"vitest", []string{"run"}, true},
+		{"vitest", []string{}, true},
+		{"vitest", []string{"--run"}, true},
 	}
 	f := &Filter{}
 	for _, c := range cases {
@@ -103,6 +106,57 @@ func TestApplyOnError_AVA(t *testing.T) {
 	// 前 50 行 ✔ 进度行应丢弃
 	if strings.Contains(out.Content, "chalk › support multiple arguments") {
 		t.Error("AVA ✔ 进度行应被丢弃")
+	}
+}
+
+func TestApply_Success_Vitest(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "toml", "testdata", "vitest_success.txt"))
+	if err != nil {
+		t.Fatalf("读取 fixture 失败: %v", err)
+	}
+	out := (&Filter{}).Apply(filter.FilterInput{
+		Cmd:    "vitest",
+		Args:   []string{"run"},
+		Stdout: string(data),
+	})
+	if !strings.Contains(out.Content, "Test Files") || !strings.Contains(out.Content, "Tests") {
+		t.Fatalf("应保留 vitest 汇总 2 行, got %q", out.Content)
+	}
+	// 开头的 "RUN  v2.x" 和 ✓ 文件行应被丢弃
+	if strings.Contains(out.Content, "RUN  v") {
+		t.Error("RUN 头行应被丢弃")
+	}
+	if strings.Contains(out.Content, " ✓ math.test.js") {
+		t.Error("✓ 文件行应被丢弃")
+	}
+}
+
+func TestApplyOnError_Vitest(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "toml", "testdata", "vitest_failure.txt"))
+	if err != nil {
+		t.Fatalf("读取 fixture 失败: %v", err)
+	}
+	out := (&Filter{}).ApplyOnError(filter.FilterInput{
+		Cmd:      "vitest",
+		Args:     []string{"run"},
+		Stdout:   string(data),
+		ExitCode: 1,
+	})
+	if out == nil {
+		t.Fatal("vitest failure 应返回非 nil")
+	}
+	if !strings.Contains(out.Content, "Failed Tests") {
+		t.Error("应保留 Failed Tests 分隔符")
+	}
+	if !strings.Contains(out.Content, "AssertionError") {
+		t.Error("应保留 AssertionError 详情")
+	}
+	if !strings.Contains(out.Content, "Test Files") {
+		t.Error("应保留 Test Files 汇总")
+	}
+	// 前部的 ❯ 文件汇总与 × 测试行应在切片范围之前
+	if strings.HasPrefix(out.Content, " ❯ math.test.js") {
+		t.Error("切片应从 Failed Tests 起，而非 ❯ 文件汇总")
 	}
 }
 

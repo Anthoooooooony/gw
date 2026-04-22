@@ -1,0 +1,10 @@
+
+ RUN  v2.1.9 /private/tmp/gw-vitest-fixture
+
+ ✓ math.test.js (3 tests) 1ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  16:20:13
+   Duration  359ms (transform 11ms, setup 0ms, collect 5ms, tests 1ms, environment 0ms, prepare 55ms)
+

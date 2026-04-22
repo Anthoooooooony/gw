@@ -109,6 +109,9 @@ var scenarios = []scenario{
 	// pnpm：sindresorhus/is 实测捕获
 	{"pnpm install (batch)", "pnpm", []string{"install"}, "toml/testdata/pnpm_install.txt", 0, modeBatch},
 	{"pnpm test (failure, batch)", "pnpm", []string{"test"}, "toml/testdata/pnpm_test_failure.txt", 1, modeBatch},
+	// vitest：本地 minimal fixture
+	{"vitest (success, batch)", "vitest", []string{"run"}, "toml/testdata/vitest_success.txt", 0, modeBatch},
+	{"vitest (failure, batch)", "vitest", []string{"run"}, "toml/testdata/vitest_failure.txt", 1, modeBatch},
 	// Python：python-attrs/attrs
 	{"pip install (batch)", "pip", []string{"install"}, "toml/testdata/pip_install.txt", 0, modeBatch},
 	{"pytest (success, batch)", "pytest", nil, "toml/testdata/pytest_success.txt", 0, modeBatch},
