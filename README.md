@@ -97,6 +97,104 @@ go build -o gw .
 ./gw uninstall
 ```
 
+## 使用指南（Usage Guide）
+
+面向日常使用 gw 的读者：你只需要理解少数几个命令，剩下的过滤都是自动的。
+
+### 1. 它什么时候会自动介入
+
+`gw init` 之后，Claude Code 在执行任意 Bash 工具前都会先问 gw："这条命令你管吗？" gw 判断能压缩才改写成 `gw exec <原命令>`，否则静默透传。**不会改写**的情况（命令原样执行）：
+- 命令里含管道 `|` / 重定向 `>` / 链式 `&& || ;`（数据流向其他程序，压缩会破坏输入）
+- 命令找不到匹配的过滤器
+
+### 2. 开箱即用支持哪些命令
+
+安装后立刻生效的命令（按生态分组）：
+
+| 生态 | 命令示例 | 典型压缩率 |
+|------|---------|------------|
+| Git | `git status` / `git log` | 30–45% |
+| Java | `mvn compile/test/package` / `gradle build/test` / `java -jar *.jar` | 62–95% |
+| Python | `pytest` / `python -m pytest` / `pip install` / `python -m venv` | 80–99% |
+| Node | `npm install` / `yarn install` / `pnpm install` + test/build | ~70% |
+| Rust | `cargo build/test/check/clippy` | ~70% |
+| Docker | `docker ps` / `docker images` / `docker logs` | 50–80% |
+| Kubernetes | `kubectl get/logs/describe` | 60–80% |
+
+实际压缩率看命令输出噪音量。完整列表：`gw filters list`。
+
+### 3. 看效果
+
+```bash
+gw gain              # 累计：多少命令、省了多少 token、按命令排 Top N
+gw -v exec mvn test  # 单次：显示 "input_tokens=... output_tokens=... saved=... elapsed=..."
+gw inspect           # 最近 20 条执行记录（ID / 时间 / 命令 / 压缩率）
+gw inspect 42        # 查 ID 42 的详情
+gw inspect 42 --raw  # 打印原始未压缩输出（需执行时 GW_STORE_RAW=1 存过原文）
+```
+
+### 4. 临时让某条命令**不**走 gw
+
+几种方式，选一个顺手的：
+- **加管道**：`mvn test | cat` — 管道会让 gw 放弃改写，原样输出
+- **全路径**：`$(which mvn) test` — 当前 lexer 走命令名匹配，走全路径会绕过
+- **一次性救急保留原始日志**：`gw exec --dump-raw /tmp/raw.log mvn test` — 压缩仍会做，但 `/tmp/raw.log` 留一份未压缩全量
+- **完全关掉**：`gw uninstall` 移除 hook；之后 `gw init` 再开
+
+### 5. 自己加压缩规则（无须写代码）
+
+如果想让 gw 覆盖默认不支持的命令，在用户规则目录放一个 TOML 文件即可（无需重新编译）：
+
+- macOS：`~/Library/Application Support/gw/rules/*.toml`
+- Linux：`~/.config/gw/rules/*.toml`
+- 项目私有（优先级最高）：在仓库里新建 `.gw/rules/*.toml`
+
+例子——让 `terraform plan` 只保留前 100 行、去掉 ANSI 颜色：
+
+```toml
+# ~/.config/gw/rules/terraform.toml
+[terraform.plan]
+match = "terraform plan"
+strip_ansi = true
+max_lines = 100
+```
+
+保存后立即生效，下次跑 `terraform plan` 就会走新规则。TOML DSL 只做**无损变换**（strip_ansi / head_lines / tail_lines / max_lines / on_empty）；想做"失败留错误、成功只留摘要"这类语义压缩，需要写 Go filter（见后文开发者章节）。
+
+### 6. 在 Claude Code 之外用
+
+gw 本质是一个命令行工具，不绑定 Claude Code。任何场景都能用：
+
+```bash
+gw exec pytest -x                   # CI 脚本里压缩测试输出
+gw exec mvn -pl service-a compile   # 本地 shell 里手动调用
+```
+
+### 7. 如果压缩出错或者想看完整输出
+
+```bash
+gw exec --dump-raw /tmp/out.txt <cmd>  # 压缩同时备份原文到 /tmp/out.txt
+gw -v exec <cmd>                       # 详细 stderr 日志：哪条过滤器命中、省了多少
+GW_STORE_RAW=1 gw exec <cmd>           # 把原始输出落 SQLite，供 gw inspect --raw 事后回看
+```
+
+遇到误压缩（被裁掉的信息恰好关键）：把命令记录下来提 Issue，附 `gw inspect <id> --raw` 的输出对比。
+
+### 8. 数据落在哪里、涉不涉及隐私
+
+默认行为只把**统计摘要**（命令串、token 数、退出码、耗时、命中的过滤器名）存到 `~/.gw/tracking.db`（SQLite）。**不**存原始输出，除非你显式设 `GW_STORE_RAW=1`。数据库路径可通过 `GW_DB_PATH` 覆盖；`gw gain` / `gw inspect` 读的都是这份本地文件，不上传任何地方。
+
+### 9. 卸载
+
+```bash
+gw uninstall           # 移除 Claude Code hook
+rm -rf ~/.gw           # 连 tracking DB 一起删（可选）
+```
+
+---
+
+以下章节面向贡献者/开发者，日常使用可跳过。
+
 ## 环境变量
 
 | 变量 | 默认 | 用途 |
