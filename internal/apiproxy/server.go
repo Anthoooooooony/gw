@@ -28,7 +28,7 @@ type Server struct {
 func Start(logger Logger) (*Server, error) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		return nil, fmt.Errorf("apiproxy listen: %w", err)
+		return nil, fmt.Errorf("apiproxy 监听失败: %w", err)
 	}
 
 	mux := http.NewServeMux()
@@ -48,12 +48,12 @@ func Start(logger Logger) (*Server, error) {
 
 	go func() {
 		if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
-			logger.Warnf("apiproxy serve: %v", err)
+			logger.Warnf("apiproxy serve 异常: %v", err)
 		}
 	}()
 
 	addr := "http://" + ln.Addr().String()
-	logger.Infof("apiproxy listening at %s", addr)
+	logger.Infof("apiproxy 已监听 %s", addr)
 	return &Server{ln: ln, httpSrv: srv, addr: addr, transformer: transformer}, nil
 }
 
