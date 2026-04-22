@@ -25,7 +25,7 @@ func init() {
 
 // runUninstallWith 是 uninstall 的核心实现，接受注入的路径/输出，方便测试。
 func runUninstallWith(path string, dryRun bool, stdout io.Writer) error {
-	settings, err := readSettings(path)
+	settings, indent, err := readSettings(path)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func runUninstallWith(path string, dryRun bool, stdout io.Writer) error {
 	updated, status := applyUninstallToSettings(settings)
 
 	if dryRun {
-		data, err := marshalSettings(updated)
+		data, err := marshalSettings(updated, indent)
 		if err != nil {
 			return err
 		}
@@ -56,7 +56,7 @@ func runUninstallWith(path string, dryRun bool, stdout io.Writer) error {
 		fmt.Fprintln(stdout, "未找到带 _gw_managed 标记的 hook，无需卸载。")
 		return nil
 	case uninstallStatusRemoved:
-		if err := writeSettingsAtomic(path, updated); err != nil {
+		if err := writeSettingsAtomic(path, updated, indent); err != nil {
 			return err
 		}
 		fmt.Fprintf(stdout, "gw hook 已从 %s 中移除。\n", path)
