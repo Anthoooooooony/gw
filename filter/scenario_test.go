@@ -115,6 +115,11 @@ var scenarios = []scenario{
 	// jest：本地 minimal fixture（npm test 调用 jest）
 	{"jest (success, batch)", "npm", []string{"test"}, "toml/testdata/jest_success.txt", 0, modeBatch},
 	{"jest (failure, batch)", "npm", []string{"test"}, "toml/testdata/jest_failure.txt", 1, modeBatch},
+	// mocha：本地 minimal fixture
+	{"mocha (success, batch)", "npm", []string{"test"}, "toml/testdata/mocha_success.txt", 0, modeBatch},
+	{"mocha (failure, batch)", "npm", []string{"test"}, "toml/testdata/mocha_failure.txt", 1, modeBatch},
+	// yarn：chalk + lodash 依赖的 yarn install
+	{"yarn install (batch)", "yarn", []string{"install"}, "toml/testdata/yarn_install.txt", 0, modeBatch},
 	// Python：python-attrs/attrs
 	{"pip install (batch)", "pip", []string{"install"}, "toml/testdata/pip_install.txt", 0, modeBatch},
 	{"pytest (success, batch)", "pytest", nil, "toml/testdata/pytest_success.txt", 0, modeBatch},

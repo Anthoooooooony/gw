@@ -140,6 +140,20 @@
     "ratio": 0.594488188976378
   },
   {
+    "name": "mocha (failure, batch)",
+    "mode": "batch",
+    "orig_bytes": 772,
+    "out_bytes": 597,
+    "ratio": 0.22668393782383423
+  },
+  {
+    "name": "mocha (success, batch)",
+    "mode": "batch",
+    "orig_bytes": 128,
+    "out_bytes": 17,
+    "ratio": 0.8671875
+  },
+  {
     "name": "mvn compile (failure, batch)",
     "mode": "batch",
     "orig_bytes": 7665,
@@ -257,5 +271,12 @@
     "orig_bytes": 256,
     "out_bytes": 51,
     "ratio": 0.80078125
+  },
+  {
+    "name": "yarn install (batch)",
+    "mode": "batch",
+    "orig_bytes": 290,
+    "out_bytes": 290,
+    "ratio": 0
   }
 ]
