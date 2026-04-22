@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
+
+// claudeLookPath 探测 claude CLI 在 PATH 中的可见性，测试里替换成 stub 避免依赖真实环境。
+var claudeLookPath = exec.LookPath
 
 var initCmd = &cobra.Command{
 	Use:   "init",
@@ -261,8 +265,20 @@ func resolveGwPath() (string, error) {
 	return abs, nil
 }
 
+// reportClaudeVisibility 在 init 成功后提示 claude CLI 是否可见。
+// 非阻塞：缺失只 warn，已装但版本获取失败也只打印路径；任何错误都不影响 init 返回值。
+func reportClaudeVisibility(stderr io.Writer) {
+	claudePath, err := claudeLookPath("claude")
+	if err != nil {
+		fmt.Fprintln(stderr, "gw: warning: 未检测到 claude CLI，请先安装 Claude Code，hook 才会生效")
+		return
+	}
+	fmt.Fprintf(stderr, "gw init: 检测到 claude CLI: %s\n", claudePath)
+}
+
 // runInitWith 是 init 的核心实现，接受注入的 settings 路径、gw 绝对路径和输出目的地。
-func runInitWith(path string, gwPath string, dryRun bool, stdout io.Writer) error {
+// stderr 用于承载 `gw: warning:` / `gw init:` 这类带前缀的诊断信息。
+func runInitWith(path string, gwPath string, dryRun bool, stdout, stderr io.Writer) error {
 	settings, err := readSettings(path)
 	if err != nil {
 		return err
@@ -284,12 +300,14 @@ func runInitWith(path string, gwPath string, dryRun bool, stdout io.Writer) erro
 	switch status {
 	case initStatusAlready:
 		fmt.Fprintln(stdout, "gw hook 已安装，无需重复。")
+		reportClaudeVisibility(stderr)
 		return nil
 	case initStatusInstalled:
 		if err := writeSettingsAtomic(path, updated); err != nil {
 			return err
 		}
 		fmt.Fprintf(stdout, "gw hook 已安装到 %s\n", path)
+		reportClaudeVisibility(stderr)
 		return nil
 	default:
 		return fmt.Errorf("未知状态: %s", status)
@@ -301,5 +319,5 @@ func runInitCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	return runInitWith(getSettingsPath(), gwPath, initDryRun, os.Stdout)
+	return runInitWith(getSettingsPath(), gwPath, initDryRun, os.Stdout, os.Stderr)
 }

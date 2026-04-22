@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -332,7 +334,7 @@ func TestRunInit_DryRunDoesNotWrite(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "settings.json")
 	var buf strings.Builder
-	if err := runInitWith(path, testGwPath, true, &buf); err != nil {
+	if err := runInitWith(path, testGwPath, true, &buf, io.Discard); err != nil {
 		t.Fatalf("dry-run 失败: %v", err)
 	}
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
@@ -354,11 +356,11 @@ func TestRunInit_Idempotent(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "settings.json")
 	var buf strings.Builder
-	if err := runInitWith(path, testGwPath, false, &buf); err != nil {
+	if err := runInitWith(path, testGwPath, false, &buf, io.Discard); err != nil {
 		t.Fatalf("第一次 init 失败: %v", err)
 	}
 	buf.Reset()
-	if err := runInitWith(path, testGwPath, false, &buf); err != nil {
+	if err := runInitWith(path, testGwPath, false, &buf, io.Discard); err != nil {
 		t.Fatalf("第二次 init 失败: %v", err)
 	}
 	settings := readJSON(t, path)
@@ -381,7 +383,7 @@ func TestRunUninstall_KeepsForeignMatcher(t *testing.T) {
 		t.Fatalf("初始化失败: %v", err)
 	}
 	var buf strings.Builder
-	if err := runInitWith(path, testGwPath, false, &buf); err != nil {
+	if err := runInitWith(path, testGwPath, false, &buf, io.Discard); err != nil {
 		t.Fatalf("init 失败: %v", err)
 	}
 	buf.Reset()
@@ -401,7 +403,7 @@ func TestRunUninstall_DryRunDoesNotWrite(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "settings.json")
 	var buf strings.Builder
-	if err := runInitWith(path, testGwPath, false, &buf); err != nil {
+	if err := runInitWith(path, testGwPath, false, &buf, io.Discard); err != nil {
 		t.Fatalf("init 失败: %v", err)
 	}
 	stat1, _ := os.Stat(path)
@@ -419,5 +421,67 @@ func TestRunUninstall_DryRunDoesNotWrite(t *testing.T) {
 	out := buf.String()
 	if strings.Contains(out, "_gw_managed") {
 		t.Fatalf("dry-run 输出应展示移除后的 settings, 不应再含 _gw_managed: %s", out)
+	}
+}
+
+// withClaudeLookPath 临时替换包级 claudeLookPath 探针，并在清理时恢复。
+func withClaudeLookPath(t *testing.T, stub func(string) (string, error)) {
+	t.Helper()
+	orig := claudeLookPath
+	claudeLookPath = stub
+	t.Cleanup(func() { claudeLookPath = orig })
+}
+
+func TestRunInit_WarnWhenClaudeMissing(t *testing.T) {
+	withClaudeLookPath(t, func(string) (string, error) {
+		return "", errors.New("not found")
+	})
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "settings.json")
+	var stdout, stderr strings.Builder
+	if err := runInitWith(path, testGwPath, false, &stdout, &stderr); err != nil {
+		t.Fatalf("init 失败: %v", err)
+	}
+	if !strings.Contains(stderr.String(), "gw: warning: 未检测到 claude CLI") {
+		t.Fatalf("缺 claude 时应 warn, stderr = %q", stderr.String())
+	}
+}
+
+func TestRunInit_InfoWhenClaudePresent(t *testing.T) {
+	withClaudeLookPath(t, func(string) (string, error) {
+		return "/opt/test/claude", nil
+	})
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "settings.json")
+	var stdout, stderr strings.Builder
+	if err := runInitWith(path, testGwPath, false, &stdout, &stderr); err != nil {
+		t.Fatalf("init 失败: %v", err)
+	}
+	s := stderr.String()
+	if !strings.Contains(s, "gw init: 检测到 claude CLI") || !strings.Contains(s, "/opt/test/claude") {
+		t.Fatalf("claude 可见时应打印路径, stderr = %q", s)
+	}
+}
+
+func TestRunInit_DryRunSkipsVisibilityProbe(t *testing.T) {
+	called := false
+	withClaudeLookPath(t, func(string) (string, error) {
+		called = true
+		return "/opt/test/claude", nil
+	})
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "settings.json")
+	var stdout, stderr strings.Builder
+	if err := runInitWith(path, testGwPath, true, &stdout, &stderr); err != nil {
+		t.Fatalf("dry-run 失败: %v", err)
+	}
+	if called {
+		t.Fatal("dry-run 不应触发 claude 可见性探测")
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("dry-run 不应写 stderr, 得到 %q", stderr.String())
 	}
 }
