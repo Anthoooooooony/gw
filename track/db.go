@@ -6,11 +6,36 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+// 默认大小阈值 & 一次裁剪后的软目标（软目标 = 硬阈值 * softTargetRatio）。
+// 100 MiB 够存数千到数万条带 raw_output 的记录，足以覆盖日常回溯需求，又不会让
+// SQLite 文件在笔记本上爆炸。裁剪后压到 80 MiB，给后续写入留 20 MiB 预算，避免
+// 反复触发 trim。
+const (
+	defaultDBMaxBytes    int64   = 100 << 20 // 100 MiB
+	defaultSoftTargetPct float64 = 0.80
+)
+
+// DBMaxBytes 返回 DB 文件硬阈值字节数。
+// 由 GW_DB_MAX_BYTES 覆盖（支持纯数字字节数）；解析失败回落默认值。
+// 设为 0 或负数时视为"关闭大小裁剪"。
+func DBMaxBytes() int64 {
+	v := os.Getenv("GW_DB_MAX_BYTES")
+	if v == "" {
+		return defaultDBMaxBytes
+	}
+	n, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return defaultDBMaxBytes
+	}
+	return n
+}
 
 // dbWarnOnce 保证 HOME 只读降级的 warning 在同一进程内只打一次，
 // 避免并发调用方（如 verbose 模式下多次 NewDB）刷屏。
@@ -27,8 +52,8 @@ type Record struct {
 	SavedTokens  int
 	ElapsedMs    int64
 	FilterUsed   string
-	// RawOutput 保存命令的原始未过滤输出。默认不落盘（避免 DB 爆炸），
-	// 仅在 GW_STORE_RAW=1 时由调用方填充。
+	// RawOutput 保存命令的原始未过滤输出。始终落盘以便 inspect --raw 回溯，
+	// DB 体积由 TrimBySize 按阈值裁剪（默认 100 MiB，GW_DB_MAX_BYTES 可覆盖）。
 	RawOutput string
 }
 
@@ -327,4 +352,109 @@ func (d *DB) Cleanup(retentionDays int) error {
 	cutoff := time.Now().UTC().AddDate(0, 0, -retentionDays).Format(time.RFC3339)
 	_, err := d.db.Exec(`DELETE FROM tracking WHERE timestamp < ?`, cutoff)
 	return err
+}
+
+// sizeOnDisk 估算 SQLite 数据库的磁盘占用（含 WAL 文件）。
+// 使用文件大小而非 PRAGMA page_count*page_size：WAL 模式下未合并的页会长期留在
+// .wal 里，只看主文件会低估真实占用，从而让阈值形同虚设。
+func (d *DB) sizeOnDisk() (int64, error) {
+	var total int64
+	paths, err := dbFilePaths(d.db)
+	if err != nil {
+		return 0, err
+	}
+	for _, p := range paths {
+		info, err := os.Stat(p)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue // WAL / SHM 在静默期可能不存在
+			}
+			return 0, err
+		}
+		total += info.Size()
+	}
+	return total, nil
+}
+
+// dbFilePaths 返回 main DB 文件及其 WAL / SHM 辅助文件路径。
+func dbFilePaths(sqlDB *sql.DB) ([]string, error) {
+	var (
+		seq      int
+		name     string
+		filePath sql.NullString
+	)
+	row := sqlDB.QueryRow(`PRAGMA database_list`)
+	if err := row.Scan(&seq, &name, &filePath); err != nil {
+		return nil, fmt.Errorf("读取 database_list 失败: %w", err)
+	}
+	if !filePath.Valid || filePath.String == "" {
+		return nil, nil
+	}
+	main := filePath.String
+	return []string{main, main + "-wal", main + "-shm"}, nil
+}
+
+// TrimBySize 检查 DB 大小，若超过阈值则按 timestamp 删最旧记录直到低于软目标。
+// 返回实际删除的记录数。阈值由 DBMaxBytes() 决定（可经 GW_DB_MAX_BYTES 调）。
+// 阈值 ≤ 0 时直接跳过（视为关闭）。
+//
+// 实现：先按大小估算"每条平均字节数"，反推需要删除的条数并一次性 DELETE，
+// 再 VACUUM 回收页。相比逐条 DELETE 性能好，且避免在统计命令路径上 block 过久。
+func (d *DB) TrimBySize() (int, error) {
+	return d.trimBySize(DBMaxBytes(), defaultSoftTargetPct)
+}
+
+// trimBySize 是 TrimBySize 的可测试内核。
+func (d *DB) trimBySize(maxBytes int64, softRatio float64) (int, error) {
+	if maxBytes <= 0 {
+		return 0, nil
+	}
+	size, err := d.sizeOnDisk()
+	if err != nil {
+		return 0, err
+	}
+	if size <= maxBytes {
+		return 0, nil
+	}
+
+	// 算需要腾出多少字节才能降到 soft target。
+	target := int64(float64(maxBytes) * softRatio)
+	if target <= 0 {
+		target = maxBytes / 2
+	}
+	toFree := size - target
+
+	var rowCount int64
+	if err := d.db.QueryRow(`SELECT COUNT(*) FROM tracking`).Scan(&rowCount); err != nil {
+		return 0, fmt.Errorf("统计行数失败: %w", err)
+	}
+	if rowCount == 0 {
+		return 0, nil
+	}
+
+	avg := size / rowCount
+	if avg <= 0 {
+		avg = 1
+	}
+	// 至少删 1 条；最多删全表（VACUUM 会负责把空页还给 OS）。
+	toDelete := toFree/avg + 1
+	if toDelete > rowCount {
+		toDelete = rowCount
+	}
+
+	res, err := d.db.Exec(
+		`DELETE FROM tracking WHERE id IN (
+			SELECT id FROM tracking ORDER BY timestamp ASC, id ASC LIMIT ?
+		)`, toDelete)
+	if err != nil {
+		return 0, fmt.Errorf("裁剪旧记录失败: %w", err)
+	}
+	affected, _ := res.RowsAffected()
+
+	// VACUUM 回收页到 OS。在 WAL 模式下 VACUUM 自动处理 checkpoint，
+	// 失败不致命（只是 DB 文件仍然偏大，下次写入会复用空页）。
+	if _, err := d.db.Exec(`VACUUM`); err != nil {
+		return int(affected), fmt.Errorf("VACUUM 失败（裁剪已完成但未回收空间）: %w", err)
+	}
+	return int(affected), nil
 }

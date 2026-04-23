@@ -83,9 +83,9 @@ myapp.logs        toml  project:///workspace/.gw/rules/custom.toml             m
 - 进程组相关代码在 `internal/procgroup_unix.go`，`//go:build unix` 覆盖 macOS / Linux / *BSD
 - 非 unix 平台（如 Windows）在 `internal/procgroup_other.go` 提供仅杀主进程的降级实现
 
-### `GW_STORE_RAW` — 是否持久化原始输出到 SQLite
+### `GW_DB_MAX_BYTES` — tracking DB 硬阈值
 
-默认 **不** 把每次执行的原始输出写入 `~/.gw/tracking.db`（避免 DB 爆炸）。设为 `1` 后 `gw exec` 会把原始输出存入 `records.raw_output` 字段，供 `gw inspect [id] --raw` 回溯。
+默认 `104857600`（100 MiB）。`gw exec` 每次把原始输出连同统计一并写入 `records.raw_output`；DB 超过阈值时，`gw summary` 会按 timestamp 删最旧记录并 `VACUUM`，压到软目标（默认 80%）。设 `0` 或负值关闭裁剪。
 
 ### `GW_DB_PATH` — 覆盖 tracking DB 路径
 

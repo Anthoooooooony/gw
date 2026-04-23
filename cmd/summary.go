@@ -8,31 +8,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var gainCmd = &cobra.Command{
-	Use:   "gain",
-	Short: "显示 token 节省统计",
-	Long:  "显示今日、本周、全部的 token 节省统计和排名靠前的命令。",
-	Run:   runGain,
+var summaryCmd = &cobra.Command{
+	Use:     "summary",
+	Aliases: []string{"gain"},
+	Short:   "显示 token 节省统计",
+	Long:    "显示今日、本周、全部的 token 节省统计和排名靠前的命令。",
+	Run:     runSummary,
 }
 
 func init() {
-	rootCmd.AddCommand(gainCmd)
+	rootCmd.AddCommand(summaryCmd)
 }
 
-func runGain(cmd *cobra.Command, args []string) {
+func runSummary(cmd *cobra.Command, args []string) {
 	db, err := track.NewDB(track.DefaultDBPath())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "gw gain: 打开数据库失败: %v\n", err)
+		fmt.Fprintf(os.Stderr, "gw summary: 打开数据库失败: %v\n", err)
 		os.Exit(1)
 	}
 	defer func() { _ = db.Close() }()
 
-	// 清理超过 90 天的旧记录
 	_ = db.Cleanup(90)
+	// 大小阈值裁剪：DB 膨胀到阈值后按时间删最旧记录并 VACUUM，避免 raw_output 持续增长。
+	if trimmed, err := db.TrimBySize(); err != nil && Verbose {
+		fmt.Fprintf(os.Stderr, "gw: warning: DB 大小裁剪失败: %v\n", err)
+	} else if trimmed > 0 && Verbose {
+		fmt.Fprintf(os.Stderr, "gw: info: DB 大小超限，已裁剪 %d 条旧记录\n", trimmed)
+	}
 
 	today, err := db.TodayStats()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "gw gain: 查询统计失败: %v\n", err)
+		fmt.Fprintf(os.Stderr, "gw summary: 查询统计失败: %v\n", err)
 		os.Exit(1)
 	}
 
