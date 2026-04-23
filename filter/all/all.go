@@ -5,6 +5,7 @@ package all
 
 import (
 	_ "github.com/Anthoooooooony/gw/filter/cargo"
+	_ "github.com/Anthoooooooony/gw/filter/fs"
 	_ "github.com/Anthoooooooony/gw/filter/git"
 	_ "github.com/Anthoooooooony/gw/filter/java"
 	_ "github.com/Anthoooooooony/gw/filter/npmtest"

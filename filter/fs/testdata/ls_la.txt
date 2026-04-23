@@ -1,0 +1,26 @@
+total 34776
+drwxr-xr-x  25 mikaa  wheel       800 Apr 22 17:49 .
+drwx------@ 16 mikaa  staff       512 Apr 22 16:05 ..
+-rw-r--r--   1 mikaa  wheel       242 Apr 22 10:31 .editorconfig
+drwxr-xr-x  16 mikaa  wheel       512 Apr 23 11:04 .git
+-rw-r--r--   1 mikaa  wheel       202 Apr 22 10:31 .gitattributes
+drwxr-xr-x   7 mikaa  wheel       224 Apr 22 14:02 .github
+-rw-r--r--   1 mikaa  wheel       217 Apr 21 11:05 .gitignore
+-rw-r--r--   1 mikaa  wheel       548 Apr 17 18:21 .golangci.yml
+drwxr-xr-x  13 mikaa  wheel       416 Apr 23 11:04 .idea
+-rw-r--r--   1 mikaa  wheel     14383 Apr 22 14:27 CLAUDE.md
+drwxr-xr-x  22 mikaa  wheel       704 Apr 22 15:22 cmd
+-rw-r--r--   1 mikaa  wheel      6376 Apr 22 15:02 CONTRIBUTING.md
+-rw-r--r--   1 mikaa  wheel    108523 Apr 22 17:49 coverage.out
+drwxr-xr-x   3 mikaa  wheel        96 Apr 22 17:30 docs
+drwxr-xr-x  16 mikaa  wheel       512 Apr 23 11:03 filter
+-rw-r--r--   1 mikaa  wheel       317 Apr 22 15:22 go.mod
+-rw-r--r--   1 mikaa  wheel      1431 Apr 22 15:22 go.sum
+-rwxr-xr-x   1 mikaa  staff  17607874 Apr 22 17:49 gw
+drwxr-xr-x  14 mikaa  wheel       448 Apr 22 10:14 internal
+-rw-r--r--   1 mikaa  wheel       140 Apr 22 10:06 main.go
+-rw-r--r--   1 mikaa  wheel      1096 Apr 22 14:02 Makefile
+-rw-r--r--   1 mikaa  wheel     27921 Apr 22 14:38 README.md
+drwxr-xr-x   3 mikaa  wheel        96 Apr 22 14:27 scripts
+drwxr-xr-x   4 mikaa  wheel       128 Apr 21 15:16 shell
+drwxr-xr-x   5 mikaa  wheel       160 Apr 22 11:51 track
