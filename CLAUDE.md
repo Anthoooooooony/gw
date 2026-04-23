@@ -92,6 +92,21 @@ myapp.logs        toml  project:///workspace/.gw/rules/custom.toml             m
 默认 `~/.gw/tracking.db`。HOME 只读时降级到 `$TMPDIR/gw-tracking.db` 并 stderr warn 一次。
 设置该变量可把 DB 放在任意可写路径（CI 临时目录、共享挂载等），路径不存在时按常规 `MkdirAll` + open 流程处理。
 
+### `NO_BROWSER` — 抑制 `gw summary` 自动开浏览器
+
+默认未设。`gw summary` 默认启 `127.0.0.1` 本地 server 并调 `open`（macOS）/ `xdg-open`（Linux）/ `rundll32`（Windows）打开 dashboard。`NO_BROWSER` 非空时仍启 server，但跳过浏览器 spawn，只在 stderr 打印 URL。典型用途：SSH + port forward、headless 容器、CI 里想 probe 一下 dashboard URL 然后手工访问。
+
+## `gw summary` dashboard 降级矩阵
+
+`cmd/summary.go` 的 dispatch 顺序：
+
+1. `--text` 显式要求 → 纯文本，立即退出（无 server）
+2. `stdout` 非 TTY 且用户未显式要 server（`--port` / `--no-browser` / `NO_BROWSER` 都未设）→ 纯文本，立即退出
+3. 其余情况启 server。`openBrowserFlag = !--no-browser && NO_BROWSER == ""`；Linux 下 `$DISPLAY` + `$WAYLAND_DISPLAY` 都空时强制 `openBrowserFlag = false`（SSH 会话）
+4. `openBrowser` 失败不中断（打印 URL + 保留 server）；`Ctrl+C` → `signal.NotifyContext` → `srv.Shutdown(3s)`
+
+`cmd/summary_web.go` 持有 `//go:embed web` FS，静态资源零外部依赖（Chart.js 也 embed）。SSE `/api/events` 每 5s `buildSummaryPayload` → 每次新开 `track.NewDB`（用 `payloadMu` 串行化，避免 WAL 锁竞争）。payload schema 是前端契约，字段改名需同步 `cmd/web/index.html`。
+
 ## 日志与错误输出约定
 
 gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude Code hook 日志和 CI 抓取：
@@ -143,7 +158,10 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 | `internal/apiproxy/anthropic.go` | `/v1/messages` 反向代理 handler + BodyTransformer 注入点 |
 | `internal/apiproxy/env.go` | `GW_APIPROXY_*` 环境变量解析（body 上限 / header 超时 / shutdown grace） |
 | `internal/apiproxy/dcp/dedup.go` | DCP 风格 tool_result 去重：扫描 tool_use → 按签名分组 → 保留最后一次、其余内容替换为占位符 |
-| `track/db.go` | SQLite 存储 + raw_output 列 migration |
+| `track/db.go` | SQLite 存储 + raw_output 列 migration + `SizeOnDisk` / `RowCount` / `TrimBySize` |
+| `cmd/summary.go` | `gw summary` 入口；dispatch `--text` / web / TTY 降级 |
+| `cmd/summary_web.go` | embed 静态资源 + `/api/data` + `/api/events` SSE + 跨平台浏览器打开 |
+| `cmd/web/` | dashboard 前端：`index.html` + `chart.umd.js`（embed 进 binary） |
 | `filter/all/all.go` | blank import 聚合过滤器包；专属 filter 在 toml 之前注册（第一匹配胜出） |
 | `filter/pytest/pytest.go` | pytest / python -m pytest 语义过滤器（summary + FAILURES 锚点） |
 
