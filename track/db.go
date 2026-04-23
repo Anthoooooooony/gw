@@ -354,6 +354,17 @@ func (d *DB) Cleanup(retentionDays int) error {
 	return err
 }
 
+// SizeOnDisk 返回 SQLite DB 文件在磁盘上的总字节数（含 WAL/SHM 辅助文件）。
+// 暴露给上层做展示（summary dashboard）或监控。
+func (d *DB) SizeOnDisk() (int64, error) { return d.sizeOnDisk() }
+
+// RowCount 返回 tracking 表当前行数。
+func (d *DB) RowCount() (int64, error) {
+	var n int64
+	err := d.db.QueryRow(`SELECT COUNT(*) FROM tracking`).Scan(&n)
+	return n, err
+}
+
 // sizeOnDisk 估算 SQLite 数据库的磁盘占用（含 WAL 文件）。
 // 使用文件大小而非 PRAGMA page_count*page_size：WAL 模式下未合并的页会长期留在
 // .wal 里，只看主文件会低估真实占用，从而让阈值形同虚设。
