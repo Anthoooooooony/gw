@@ -90,10 +90,17 @@ var scenarios = []scenario{
 	{"gradle test (success, stream)", "gradle", []string{"test"}, "java/testdata/gradle_test_success.txt", 0, modeStream},
 	{"gradle test (failure, stream)", "gradle", []string{"test"}, "java/testdata/gradle_test_failure.txt", 1, modeStream},
 
-	// ---- Git（gw 仓库自身）----
+	// ---- Git（gw 仓库自身 + 临时 repo 捕获）----
 	{"git status (clean, batch)", "git", []string{"status"}, "git/testdata/git_status_clean.txt", 0, modeBatch},
 	{"git status (dirty, batch)", "git", []string{"status"}, "git/testdata/git_status_dirty.txt", 0, modeBatch},
 	{"git log (default, batch)", "git", []string{"log"}, "git/testdata/git_log_default.txt", 0, modeBatch},
+	{"git diff (mixed, batch)", "git", []string{"diff"}, "git/testdata/git_diff_mixed.txt", 0, modeBatch},
+	{"git commit (root, batch)", "git", []string{"commit", "-m", "x"}, "git/testdata/git_commit_root.txt", 0, modeBatch},
+	{"git push (first, batch)", "git", []string{"push", "-u", "origin", "main"}, "git/testdata/git_push_first.txt", 0, modeBatch},
+	{"git push (update, batch)", "git", []string{"push"}, "git/testdata/git_push_update.txt", 0, modeBatch},
+	{"git pull (merge, batch)", "git", []string{"pull"}, "git/testdata/git_pull_merge.txt", 0, modeBatch},
+	{"git branch -v (batch)", "git", []string{"branch", "-v"}, "git/testdata/git_branch_v.txt", 0, modeBatch},
+	{"git checkout new (batch)", "git", []string{"checkout", "-b", "newthing"}, "git/testdata/git_checkout_newbranch.txt", 0, modeBatch},
 
 	// ---- TOML 规则过滤器（真实项目 / 本机 state）----
 	// Docker：本机 Docker Desktop 状态 + nginx:1.25-alpine pull / compose 管理 web+cache
