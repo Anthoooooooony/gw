@@ -191,10 +191,8 @@ body::after {
   padding: 28px 28px 32px;
   border-right: 1px solid var(--line);
   position: relative;
-  transition: background .14s ease;
 }
 .stat:last-child { border-right: none; }
-.stat.flash { background: var(--amber-glow); }
 
 .stat .kicker {
   display: flex;
@@ -671,11 +669,6 @@ body::after {
     tweenNumber(ratioLbl, ratio);
 
     fill.style.width = Math.min(100, ratio).toFixed(1) + '%';
-
-    el.classList.remove('flash');
-    void el.offsetWidth;
-    el.classList.add('flash');
-    setTimeout(() => el.classList.remove('flash'), 120);
   }
 
   function makeEl(tag, cls, text) {
