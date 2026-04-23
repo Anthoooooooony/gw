@@ -63,6 +63,13 @@
     "ratio": 0.8311688311688312
   },
   {
+    "name": "eslint stylish (batch)",
+    "mode": "batch",
+    "orig_bytes": 922,
+    "out_bytes": 851,
+    "ratio": 0.07700650759219085
+  },
+  {
     "name": "find go files (batch)",
     "mode": "batch",
     "orig_bytes": 953,
@@ -350,6 +357,13 @@
     "ratio": 0.9595373986182036
   },
   {
+    "name": "prettier check (batch)",
+    "mode": "batch",
+    "orig_bytes": 205,
+    "out_bytes": 182,
+    "ratio": 0.1121951219512195
+  },
+  {
     "name": "pytest (failure, batch)",
     "mode": "batch",
     "orig_bytes": 10732,
@@ -362,6 +376,13 @@
     "orig_bytes": 8934,
     "out_bytes": 81,
     "ratio": 0.9909335124244459
+  },
+  {
+    "name": "tsc errors (batch)",
+    "mode": "batch",
+    "orig_bytes": 828,
+    "out_bytes": 828,
+    "ratio": 0
   },
   {
     "name": "vitest (failure, batch)",

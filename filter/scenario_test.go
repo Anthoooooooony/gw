@@ -118,6 +118,11 @@ var scenarios = []scenario{
 	{"gh issue list (batch)", "gh", []string{"issue", "list"}, "gh/testdata/gh_issue_list.txt", 0, modeBatch},
 	{"gh run list (batch)", "gh", []string{"run", "list"}, "gh/testdata/gh_run_list.txt", 0, modeBatch},
 
+	// ---- JS/TS lint（对齐 rtk 批次 E）----
+	{"eslint stylish (batch)", "eslint", []string{"."}, "jslint/testdata/eslint_stylish.txt", 1, modeBatch},
+	{"tsc errors (batch)", "tsc", []string{"--noEmit"}, "jslint/testdata/tsc_errors.txt", 1, modeBatch},
+	{"prettier check (batch)", "prettier", []string{"--check", "."}, "jslint/testdata/prettier_check.txt", 1, modeBatch},
+
 	// ---- TOML 规则过滤器（真实项目 / 本机 state）----
 	// Docker：本机 Docker Desktop 状态 + nginx:1.25-alpine pull / compose 管理 web+cache
 	{"docker ps (batch)", "docker", []string{"ps"}, "toml/testdata/docker_ps.txt", 0, modeBatch},
