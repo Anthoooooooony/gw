@@ -553,7 +553,9 @@ body::after {
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
-  const startedAt = Date.now();
+  // serverEpoch = 估算出的 server 启动瞬间（client 时间戳）。由首个 payload 的
+  // server_uptime_seconds 反推并在后续 tick 中轻量校正，避免客户端时钟漂移。
+  let serverEpoch = null;
   const live = $('#live-dot');
   const connState = $('#conn-state');
 
@@ -587,7 +589,8 @@ body::after {
   }
 
   setInterval(() => {
-    const ms = Date.now() - startedAt;
+    if (serverEpoch == null) return; // 等首个 payload 锚定
+    const ms = Date.now() - serverEpoch;
     const s = Math.floor(ms/1000) % 60;
     const m = Math.floor(ms/60000) % 60;
     const h = Math.floor(ms/3600000);
@@ -714,6 +717,12 @@ body::after {
   }
 
   function render(payload) {
+    // 用 payload.server_uptime_seconds 锚定 server 启动时刻。每次 tick 都重锚
+    // 成本为零，却能补偿客户端时钟漂移 / 休眠恢复，比只 init 一次更稳健。
+    if (typeof payload.server_uptime_seconds === 'number') {
+      serverEpoch = Date.now() - payload.server_uptime_seconds * 1000;
+    }
+
     const all = payload.all || {};
     tweenNumber($('#hero-val'), all.saved_tokens || 0);
 

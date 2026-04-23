@@ -29,6 +29,18 @@ const (
 	shutdownGrace   = 3 * time.Second
 )
 
+// serverStartTime 是 summary web server 首次进入 startSummaryWeb 的时刻。
+// 用 Lazy init（非 package-level var = time.Now()）避免把 gw 二进制任何入口的
+// 启动时间都算进来——只有实际跑 dashboard 时才记。
+var (
+	serverStartTime     time.Time
+	serverStartTimeOnce sync.Once
+)
+
+func markServerStart() {
+	serverStartTimeOnce.Do(func() { serverStartTime = time.Now() })
+}
+
 // ── Payload schema ─────────────────────────────────────────────────────────
 // 前端 app.js 依赖这个 JSON 结构，字段名是契约的一部分。
 
@@ -52,18 +64,20 @@ type dbInfoJSON struct {
 }
 
 type summaryJSON struct {
-	Today       statsJSON        `json:"today"`
-	Week        statsJSON        `json:"week"`
-	All         statsJSON        `json:"all"`
-	TopCommands []topCommandJSON `json:"top_commands"`
-	DB          dbInfoJSON       `json:"db"`
-	ServerTime  string           `json:"server_time"`
+	Today               statsJSON        `json:"today"`
+	Week                statsJSON        `json:"week"`
+	All                 statsJSON        `json:"all"`
+	TopCommands         []topCommandJSON `json:"top_commands"`
+	DB                  dbInfoJSON       `json:"db"`
+	ServerTime          string           `json:"server_time"`
+	ServerUptimeSeconds int64            `json:"server_uptime_seconds"`
 }
 
 // ── Server lifecycle ───────────────────────────────────────────────────────
 
 // startSummaryWeb 启动本地 dashboard server，阻塞直到用户 Ctrl+C 或 server 出错。
 func startSummaryWeb(dbPath string, port int, openBrowserFlag bool) error {
+	markServerStart()
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -239,8 +253,18 @@ func buildSummaryPayload(dbPath string) (summaryJSON, error) {
 			SizeBytes: size,
 			Rows:      rows,
 		},
-		ServerTime: time.Now().UTC().Format(time.RFC3339),
+		ServerTime:          time.Now().UTC().Format(time.RFC3339),
+		ServerUptimeSeconds: serverUptimeSeconds(),
 	}, nil
+}
+
+// serverUptimeSeconds 返回 server 自 markServerStart 以来运行的秒数。
+// 若 server 尚未启动（测试直接调 buildSummaryPayload 的场景）返回 0。
+func serverUptimeSeconds() int64 {
+	if serverStartTime.IsZero() {
+		return 0
+	}
+	return int64(time.Since(serverStartTime).Seconds())
 }
 
 func toStatsJSON(s track.Stats, output int) statsJSON {
