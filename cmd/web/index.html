@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>gw // telemetry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:          #0a0a0b;
+  --bg-elev:     #111114;
+  --bg-card:     #0f0f12;
+  --ink:         #ededee;
+  --ink-dim:     #9a9aa0;
+  --muted:       #56565c;
+  --line:        #1f1f24;
+  --line-soft:   #15151a;
+  --amber:       #ffaa2b;
+  --amber-dim:   #7a5a1f;
+  --amber-glow:  rgba(255, 170, 43, .14);
+  --steel:       #5c6a7a;
+  --danger:      #ff5a4a;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+}
+
+*,*::before,*::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(ellipse at top, rgba(255,170,43,.04), transparent 55%);
+  z-index: 0;
+}
+
+.frame {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 48px 56px;
+}
+
+.ticker {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.ticker .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 10px var(--amber);
+  animation: pulse 2s ease-in-out infinite;
+}
+.ticker .dot.dead {
+  background: var(--danger);
+  box-shadow: 0 0 10px var(--danger);
+  animation: none;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .45; transform: scale(.85); }
+}
+
+.ticker .sep { color: var(--muted); }
+.ticker .brand {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--ink);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ticker .brand em { font-style: normal; color: var(--amber); font-weight: 500; }
+.ticker .spacer { flex: 1; }
+.ticker .meta { display: flex; gap: 18px; }
+.ticker .meta b { color: var(--ink); font-weight: 500; }
+
+.hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  padding: 48px 0 32px;
+  border-bottom: 1px solid var(--line);
+  gap: 24px;
+}
+
+.hero .label {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 15px;
+  color: var(--ink-dim);
+  margin-bottom: 18px;
+  letter-spacing: 0;
+}
+.hero .label::before {
+  content: '— ';
+  color: var(--amber);
+  font-style: normal;
+}
+
+.hero .big {
+  font-family: var(--serif);
+  font-variation-settings: "opsz" 144, "SOFT" 100;
+  font-weight: 300;
+  font-size: clamp(72px, 12vw, 172px);
+  line-height: .88;
+  letter-spacing: -.035em;
+  color: var(--ink);
+  font-feature-settings: "tnum" 1;
+  transition: color .5s ease;
+}
+.hero .big .unit {
+  font-family: var(--mono);
+  font-size: .18em;
+  font-weight: 400;
+  color: var(--ink-dim);
+  margin-left: .3em;
+  vertical-align: .55em;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.hero .sub {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 12px;
+}
+.hero .sub .ratio {
+  font-family: var(--mono);
+  font-size: 32px;
+  letter-spacing: -.02em;
+  text-transform: none;
+  color: var(--amber);
+  font-weight: 500;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.statrow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--line);
+}
+
+.stat {
+  padding: 28px 28px 32px;
+  border-right: 1px solid var(--line);
+  position: relative;
+  transition: background .3s ease;
+}
+.stat:last-child { border-right: none; }
+.stat.flash { background: var(--amber-glow); }
+
+.stat .kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.stat .kicker::before {
+  content: '';
+  width: 18px;
+  height: 1px;
+  background: var(--amber);
+}
+
+.stat .num {
+  font-family: var(--serif);
+  font-variation-settings: "opsz" 144;
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -.02em;
+  color: var(--ink);
+  font-feature-settings: "tnum" 1;
+  margin-bottom: 14px;
+}
+.stat .num .sign {
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: .5em;
+  vertical-align: .35em;
+  margin-right: .15em;
+}
+
+.stat .bar {
+  height: 3px;
+  background: var(--line);
+  margin: 16px 0;
+  position: relative;
+  overflow: hidden;
+}
+.stat .bar .fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: var(--amber);
+  box-shadow: 0 0 12px var(--amber-glow);
+  transition: width .6s cubic-bezier(.2,.8,.2,1);
+}
+
+.stat dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+.stat dt {
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 10px;
+  align-self: center;
+}
+.stat dd {
+  margin: 0;
+  font-family: var(--mono);
+  text-align: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel {
+  padding: 32px 28px;
+  border-right: 1px solid var(--line);
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+.panel:last-child { border-right: none; }
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed var(--line);
+}
+.panel-head h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-variation-settings: "opsz" 40;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 22px;
+  letter-spacing: -.01em;
+  color: var(--ink);
+}
+.panel-head .tag {
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.panel-body { flex: 1; position: relative; min-height: 0; }
+
+.toplist {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.toplist .row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12px;
+}
+.toplist .row:last-child { border-bottom: none; }
+.toplist .idx {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .08em;
+}
+.toplist .cmd {
+  font-family: var(--mono);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.toplist .meter {
+  width: 140px;
+  height: 3px;
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+}
+.toplist .meter .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--amber);
+  transition: width .6s cubic-bezier(.2,.8,.2,1);
+}
+.toplist .val {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  min-width: 72px;
+  text-align: right;
+}
+.toplist .val .pct {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-style: italic;
+  font-family: var(--serif);
+  font-size: 15px;
+  text-align: center;
+  padding: 0 20px;
+}
+.empty code {
+  font-family: var(--mono);
+  font-style: normal;
+  color: var(--amber);
+  margin: 0 4px;
+}
+
+.footer {
+  display: flex;
+  gap: 32px;
+  padding: 18px 0 0;
+  flex-wrap: wrap;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.footer span b {
+  color: var(--ink-dim);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  margin-left: 6px;
+}
+.footer .motto {
+  flex: 1;
+  text-align: right;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.crosshair {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  color: var(--amber);
+  pointer-events: none;
+}
+.crosshair::before, .crosshair::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+}
+.crosshair::before { left: 50%; top: 0; bottom: 0; width: 1px; transform: translateX(-50%); }
+.crosshair::after { top: 50%; left: 0; right: 0; height: 1px; transform: translateY(-50%); }
+
+.frame > .crosshair.tl { top: 20px; left: 32px; }
+.frame > .crosshair.tr { top: 20px; right: 32px; }
+.frame > .crosshair.bl { bottom: 38px; left: 32px; }
+.frame > .crosshair.br { bottom: 38px; right: 32px; }
+
+@media (max-width: 900px) {
+  .frame { padding: 24px 20px 40px; }
+  .hero { grid-template-columns: 1fr; padding: 32px 0 24px; }
+  .hero .sub { text-align: left; }
+  .statrow { grid-template-columns: 1fr; }
+  .stat { border-right: none; border-bottom: 1px solid var(--line); }
+  .stat:last-child { border-bottom: none; }
+  .panels { grid-template-columns: 1fr; }
+  .panel { border-right: none; border-bottom: 1px solid var(--line); }
+  .panel:last-child { border-bottom: none; }
+  .frame > .crosshair { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <span class="crosshair tl"></span>
+  <span class="crosshair tr"></span>
+  <span class="crosshair bl"></span>
+  <span class="crosshair br"></span>
+
+  <header class="ticker">
+    <span class="dot" id="live-dot"></span>
+    <span class="brand">gw <em>//</em> telemetry</span>
+    <span class="sep">│</span>
+    <span>token salvage report</span>
+    <span class="spacer"></span>
+    <span class="meta">
+      <span>uptime <b id="uptime">00:00:00</b></span>
+      <span>tick <b id="tick">—</b></span>
+      <span id="conn-state">listening</span>
+    </span>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="label">cumulative tokens salvaged from the wire</div>
+      <div class="big" id="hero-num">
+        <span id="hero-val">0</span><span class="unit">tokens</span>
+      </div>
+    </div>
+    <div class="sub">
+      <span class="ratio" id="hero-ratio">0.0%</span>
+      <span>overall compression</span>
+      <span style="margin-top:6px;"><b id="hero-cmds" style="color:var(--ink);">0</b> commands observed</span>
+    </div>
+  </section>
+
+  <section class="statrow">
+    <article class="stat" id="stat-today">
+      <div class="kicker">today · last 24h</div>
+      <div class="num"><span class="sign">+</span><span data-num="saved">0</span></div>
+      <div class="bar"><div class="fill" data-fill="ratio" style="width:0%"></div></div>
+      <dl>
+        <dt>input</dt><dd data-num="input">0</dd>
+        <dt>output</dt><dd data-num="output">0</dd>
+        <dt>ratio</dt><dd data-num="ratio-label">0.0%</dd>
+        <dt>cmds</dt><dd data-num="cmds">0</dd>
+      </dl>
+    </article>
+    <article class="stat" id="stat-week">
+      <div class="kicker">week · last 7d</div>
+      <div class="num"><span class="sign">+</span><span data-num="saved">0</span></div>
+      <div class="bar"><div class="fill" data-fill="ratio" style="width:0%"></div></div>
+      <dl>
+        <dt>input</dt><dd data-num="input">0</dd>
+        <dt>output</dt><dd data-num="output">0</dd>
+        <dt>ratio</dt><dd data-num="ratio-label">0.0%</dd>
+        <dt>cmds</dt><dd data-num="cmds">0</dd>
+      </dl>
+    </article>
+    <article class="stat" id="stat-all">
+      <div class="kicker">all-time · cumulative</div>
+      <div class="num"><span class="sign">+</span><span data-num="saved">0</span></div>
+      <div class="bar"><div class="fill" data-fill="ratio" style="width:0%"></div></div>
+      <dl>
+        <dt>input</dt><dd data-num="input">0</dd>
+        <dt>output</dt><dd data-num="output">0</dd>
+        <dt>ratio</dt><dd data-num="ratio-label">0.0%</dd>
+        <dt>cmds</dt><dd data-num="cmds">0</dd>
+      </dl>
+    </article>
+  </section>
+
+  <section class="panels">
+    <article class="panel">
+      <div class="panel-head">
+        <h2>top commands</h2>
+        <span class="tag">by tokens saved · top 10</span>
+      </div>
+      <div class="panel-body">
+        <div class="toplist" id="toplist"></div>
+      </div>
+    </article>
+    <article class="panel">
+      <div class="panel-head">
+        <h2>salvage ratio</h2>
+        <span class="tag">input vs. output</span>
+      </div>
+      <div class="panel-body">
+        <canvas id="ratio-chart"></canvas>
+      </div>
+    </article>
+  </section>
+
+  <footer class="footer">
+    <span>db · <b id="db-path">—</b></span>
+    <span>size · <b id="db-size">—</b></span>
+    <span>rows · <b id="db-rows">—</b></span>
+    <span>refresh · <b>5s</b></span>
+    <span class="motto">silence is the filter between the signal and the noise.</span>
+  </footer>
+</div>
+
+<script src="chart.umd.js"></script>
+<script>
+(() => {
+  const $ = (s, el=document) => el.querySelector(s);
+
+  const startedAt = Date.now();
+  const live = $('#live-dot');
+  const connState = $('#conn-state');
+
+  const fmt = new Intl.NumberFormat('en-US');
+  const fmtBytes = (n) => {
+    if (n == null) return '—';
+    const u = ['B','KB','MB','GB'];
+    let i = 0, v = n;
+    while (v >= 1024 && i < u.length-1) { v /= 1024; i++; }
+    return (i === 0 ? v.toFixed(0) : v.toFixed(1)) + u[i];
+  };
+  const pct = (input, saved) => input > 0 ? (saved/input*100) : 0;
+
+  const tweenState = new WeakMap();
+  function tweenNumber(el, target, duration=600) {
+    const prev = tweenState.get(el) ?? parseFloat((el.textContent||'').replace(/[^0-9.\-]/g,'')) || 0;
+    if (prev === target) return;
+    tweenState.set(el, target);
+    const start = performance.now();
+    const step = (t) => {
+      const p = Math.min(1, (t - start)/duration);
+      const eased = 1 - Math.pow(1-p, 3);
+      const val = prev + (target - prev) * eased;
+      el.textContent = el.dataset.asPct === '1'
+        ? val.toFixed(1)+'%'
+        : fmt.format(Math.round(val));
+      if (p < 1) requestAnimationFrame(step);
+      else tweenState.set(el, target);
+    };
+    requestAnimationFrame(step);
+  }
+
+  setInterval(() => {
+    const ms = Date.now() - startedAt;
+    const s = Math.floor(ms/1000) % 60;
+    const m = Math.floor(ms/60000) % 60;
+    const h = Math.floor(ms/3600000);
+    $('#uptime').textContent =
+      String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  }, 1000);
+
+  let ratioChart;
+  function ensureChart() {
+    if (ratioChart) return ratioChart;
+    const ctx = $('#ratio-chart').getContext('2d');
+    ratioChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['saved', 'output (sent to LLM)'],
+        datasets: [{
+          data: [0, 0],
+          backgroundColor: ['#ffaa2b', '#2a2a30'],
+          borderColor: '#0f0f12',
+          borderWidth: 2,
+          hoverOffset: 6,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#9a9aa0',
+              font: { family: 'IBM Plex Mono, monospace', size: 11 },
+              boxWidth: 10,
+              boxHeight: 10,
+              padding: 14,
+            },
+          },
+          tooltip: {
+            backgroundColor: '#111114',
+            borderColor: '#1f1f24',
+            borderWidth: 1,
+            titleColor: '#ededee',
+            bodyColor: '#ededee',
+            titleFont: { family: 'IBM Plex Mono, monospace' },
+            bodyFont: { family: 'IBM Plex Mono, monospace' },
+            callbacks: {
+              label: (c) => ' ' + c.label + ': ' + fmt.format(c.raw) + ' tok',
+            },
+          },
+        },
+      },
+    });
+    return ratioChart;
+  }
+
+  function renderRatio(all) {
+    const c = ensureChart();
+    c.data.datasets[0].data = [all.saved_tokens || 0, all.output_tokens || 0];
+    c.update('active');
+  }
+
+  function renderStat(el, s) {
+    const ratio = pct(s.input_tokens, s.saved_tokens);
+    const saved = el.querySelector('[data-num="saved"]');
+    const input = el.querySelector('[data-num="input"]');
+    const output = el.querySelector('[data-num="output"]');
+    const cmds = el.querySelector('[data-num="cmds"]');
+    const ratioLbl = el.querySelector('[data-num="ratio-label"]');
+    const fill = el.querySelector('[data-fill="ratio"]');
+
+    tweenNumber(saved, s.saved_tokens || 0);
+    tweenNumber(input, s.input_tokens || 0);
+    tweenNumber(output, s.output_tokens || 0);
+    tweenNumber(cmds, s.command_count || 0);
+    ratioLbl.dataset.asPct = '1';
+    tweenNumber(ratioLbl, ratio);
+
+    fill.style.width = Math.min(100, ratio).toFixed(1) + '%';
+
+    el.classList.remove('flash');
+    void el.offsetWidth;
+    el.classList.add('flash');
+    setTimeout(() => el.classList.remove('flash'), 700);
+  }
+
+  function makeEl(tag, cls, text) {
+    const el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (text != null) el.textContent = text;
+    return el;
+  }
+
+  function renderTop(list) {
+    const host = $('#toplist');
+    host.replaceChildren();
+    if (!list || !list.length) {
+      const empty = makeEl('div', 'empty');
+      empty.append('no commands recorded yet — run ');
+      empty.appendChild(makeEl('code', null, 'gw exec <cmd>'));
+      host.appendChild(empty);
+      return;
+    }
+    const max = Math.max(...list.map(x => x.total_saved || 0)) || 1;
+    list.slice(0, 10).forEach((tc, i) => {
+      const row = makeEl('div', 'row');
+      row.appendChild(makeEl('span', 'idx', String(i+1).padStart(2,'0')));
+      const cmd = makeEl('span', 'cmd', tc.command || '');
+      cmd.title = tc.command || '';
+      row.appendChild(cmd);
+
+      const meter = makeEl('span', 'meter');
+      const fill = makeEl('span', 'fill');
+      fill.style.width = ((tc.total_saved || 0)/max*100).toFixed(1) + '%';
+      meter.appendChild(fill);
+      row.appendChild(meter);
+
+      const val = makeEl('span', 'val', fmt.format(tc.total_saved || 0));
+      val.appendChild(makeEl('span', 'pct', (tc.avg_pct || 0).toFixed(1) + '%'));
+      row.appendChild(val);
+
+      host.appendChild(row);
+    });
+  }
+
+  function render(payload) {
+    const all = payload.all || {};
+    tweenNumber($('#hero-val'), all.saved_tokens || 0);
+
+    const ratioVal = pct(all.input_tokens, all.saved_tokens);
+    const ratioEl = $('#hero-ratio');
+    ratioEl.dataset.asPct = '1';
+    tweenNumber(ratioEl, ratioVal);
+
+    tweenNumber($('#hero-cmds'), all.command_count || 0);
+
+    renderStat($('#stat-today'), payload.today || {});
+    renderStat($('#stat-week'), payload.week || {});
+    renderStat($('#stat-all'), all);
+    renderTop(payload.top_commands || []);
+    renderRatio(all);
+
+    const db = payload.db || {};
+    $('#db-path').textContent = db.path || '—';
+    $('#db-size').textContent = fmtBytes(db.size_bytes);
+    $('#db-rows').textContent = db.rows != null ? fmt.format(db.rows) : '—';
+    $('#tick').textContent = new Date().toLocaleTimeString('en-GB');
+  }
+
+  function boot() {
+    fetch('/api/data').then(r => r.json()).then(render).catch(() => {});
+
+    if (!window.EventSource) return pollFallback();
+
+    const es = new EventSource('/api/events');
+    es.onmessage = (e) => {
+      try { render(JSON.parse(e.data)); } catch {}
+      live.classList.remove('dead');
+      connState.textContent = 'live';
+    };
+    es.onerror = () => {
+      live.classList.add('dead');
+      connState.textContent = 'reconnecting…';
+    };
+    es.onopen = () => {
+      live.classList.remove('dead');
+      connState.textContent = 'live';
+    };
+  }
+
+  function pollFallback() {
+    connState.textContent = 'polling';
+    setInterval(() => {
+      fetch('/api/data').then(r => r.json()).then(render).catch(() => {
+        live.classList.add('dead');
+        connState.textContent = 'offline';
+      });
+    }, 5000);
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
