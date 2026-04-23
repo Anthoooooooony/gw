@@ -112,6 +112,12 @@ var scenarios = []scenario{
 	{"wget (simple, batch)", "wget", []string{"https://example.com"}, "net/testdata/wget_success.txt", 0, modeBatch},
 	{"wget (progress, batch)", "wget", []string{"https://example.com/large.bin"}, "net/testdata/wget_progress.txt", 0, modeBatch},
 
+	// ---- GitHub CLI（对齐 rtk 批次 D）----
+	{"gh pr list (batch)", "gh", []string{"pr", "list", "--state", "all"}, "gh/testdata/gh_pr_list.txt", 0, modeBatch},
+	{"gh pr view (batch)", "gh", []string{"pr", "view", "127"}, "gh/testdata/gh_pr_view.txt", 0, modeBatch},
+	{"gh issue list (batch)", "gh", []string{"issue", "list"}, "gh/testdata/gh_issue_list.txt", 0, modeBatch},
+	{"gh run list (batch)", "gh", []string{"run", "list"}, "gh/testdata/gh_run_list.txt", 0, modeBatch},
+
 	// ---- TOML 规则过滤器（真实项目 / 本机 state）----
 	// Docker：本机 Docker Desktop 状态 + nginx:1.25-alpine pull / compose 管理 web+cache
 	{"docker ps (batch)", "docker", []string{"ps"}, "toml/testdata/docker_ps.txt", 0, modeBatch},

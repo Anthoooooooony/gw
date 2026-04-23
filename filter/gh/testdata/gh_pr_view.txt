@@ -1,0 +1,39 @@
+title:	feat(net): 新增 wget filter（对齐 rtk 批次 C #124）
+state:	MERGED
+author:	Anthoooooooony (Anthooooony)
+labels:	
+assignees:	
+reviewers:	
+projects:	
+milestone:	
+number:	127
+url:	https://github.com/Anthoooooooony/gw/pull/127
+additions:	261
+deletions:	0
+auto-merge:	disabled
+--
+## Summary
+
+批次 C（见 #124）：对齐 rtk \`wget\`。新增 \`filter/net\` 包。
+
+- **net/wget**: 正则识别进度条（\`\\d+%\\[[=> ]*\\]\`）丢弃；丢 Resolving/Connecting/HTTP request/Proxy request 握手行；连续空行合并
+- 保留 URL 头行 + Length + Saving to + saved summary
+
+## 数据
+| 场景 | 原始 | 压缩后 | 压缩率 |
+|---|---|---|---|
+| wget (simple) | 352 B | 260 B | 26.1% |
+| wget (progress, 6 条进度条) | 683 B | 200 B | **70.7%** |
+
+## 设计约束
+- 入口 StripANSI
+- ApplyOnError 返回 nil（wget 失败信息短且关键）
+- filter invariant 沿用
+
+## Test plan
+- [x] \`go test ./filter/net/...\` 通过
+- [x] \`go test ./...\` 全仓通过
+- [x] gofmt / go vet / golangci-lint 干净
+- [ ] CI 全绿
+
+refs #124
