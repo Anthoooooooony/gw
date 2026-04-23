@@ -17,7 +17,7 @@ var inspectCmd = &cobra.Command{
 	Use:   "inspect [id]",
 	Short: "查看最近命令记录或单条详情",
 	Long: `不带参数显示最近 10 条记录列表。
-带 id 显示该记录详情。加 --raw 可打印原始未过滤输出（需 GW_STORE_RAW=1 时才会有内容）。`,
+带 id 显示该记录详情。加 --raw 可打印原始未过滤输出（原始输出默认始终落盘）。`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runInspect(cmd.OutOrStdout(), args, inspectShowRaw)
@@ -105,7 +105,7 @@ func showRecord(w io.Writer, db *track.DB, id int64, showRaw bool) error {
 	fmt.Fprintf(w, "Elapsed:       %dms\n", r.ElapsedMs)
 
 	if r.RawOutput == "" {
-		fmt.Fprintln(w, "Raw output:    (无，GW_STORE_RAW 未开启或该命令未记录原文)")
+		fmt.Fprintln(w, "Raw output:    (无，该记录未记录原文)")
 		return nil
 	}
 

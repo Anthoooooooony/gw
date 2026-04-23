@@ -255,18 +255,34 @@ func TestVersion_Command(t *testing.T) {
 	}
 }
 
-// TestGain_NoData 测试空数据库不崩溃
-func TestGain_NoData(t *testing.T) {
+// TestSummary_NoData 测试空数据库不崩溃
+func TestSummary_NoData(t *testing.T) {
 	// 设置一个新的 HOME 目录，使 DB 路径指向空目录
+	tmpDir := t.TempDir()
+	cmd := exec.Command(gwBinary, "summary")
+	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
+	out, err := cmd.CombinedOutput()
+	// summary 命令即使无数据也不应 panic
+	output := string(out)
+	if strings.Contains(output, "panic") {
+		t.Errorf("summary 命令不应 panic, output:\n%s", output)
+	}
+	// 允许正常退出或因空数据退出非零（但不能 panic/crash）
+	_ = err
+}
+
+// TestSummary_GainAlias 确保 gain 仍作为 summary 的别名可用（向后兼容）。
+func TestSummary_GainAlias(t *testing.T) {
 	tmpDir := t.TempDir()
 	cmd := exec.Command(gwBinary, "gain")
 	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
 	out, err := cmd.CombinedOutput()
-	// gain 命令即使无数据也不应 panic
 	output := string(out)
 	if strings.Contains(output, "panic") {
-		t.Errorf("gain 命令不应 panic, output:\n%s", output)
+		t.Errorf("gain alias 不应 panic, output:\n%s", output)
 	}
-	// 允许正常退出或因空数据退出非零（但不能 panic/crash）
+	if strings.Contains(output, "unknown command") {
+		t.Errorf("gain 应作为 summary 别名识别, output:\n%s", output)
+	}
 	_ = err
 }

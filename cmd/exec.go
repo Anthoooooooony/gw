@@ -178,10 +178,9 @@ func runExec(cmd *cobra.Command, args []string) {
 		ElapsedMs:    elapsedMs,
 		FilterUsed:   filterUsed,
 	}
-	// 默认不落盘 raw_output（否则 DB 会爆炸）；仅 GW_STORE_RAW=1 时写入。
-	if os.Getenv("GW_STORE_RAW") == "1" {
-		rec.RawOutput = originalOutput
-	}
+	// 无条件落盘原始输出，inspect --raw 永远可回溯。
+	// DB 膨胀由 track.TrimBySize 在 summary 命令里按阈值裁剪。
+	rec.RawOutput = originalOutput
 	writeTrackRecord(rec)
 
 	// 7. 使用原始命令的退出码退出
@@ -215,21 +214,15 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 	var originalChars int
 	var filteredChars int
 
-	// 诊断逃生舱：流式模式下边流式边累积写入 buffer，结束后一次性落盘。
-	// 选择"先 buffer 后落盘"而非边流边 append 是因为：
-	//   1) 避免每行 syscall，性能更好
-	//   2) 写失败时不会产生半截文件
-	//   3) 文件一旦打开不中断主流程
+	// 流式模式下边流式边累积到 buffer，结束后一次性写入 DB / --dump-raw。
+	// raw 恒存，供 inspect --raw 回溯；DB 体积由 summary 命令的 TrimBySize 兜底。
 	var rawBuf strings.Builder
-	storeRaw := os.Getenv("GW_STORE_RAW") == "1"
 
 	var stderrBuf strings.Builder
 	exitCode, err := internal.RunCommandStreamingFull(cmdName, cmdArgs, func(line string) {
 		originalChars += utf8.RuneCountInString(line)
-		if dumpRawPath != "" || storeRaw {
-			rawBuf.WriteString(line)
-			rawBuf.WriteByte('\n')
-		}
+		rawBuf.WriteString(line)
+		rawBuf.WriteByte('\n')
 		action, output := proc.ProcessLine(line)
 		if action == filter.StreamEmit {
 			filteredChars += utf8.RuneCountInString(output)
@@ -244,9 +237,7 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 
 	// stderr 透传 + 累积入 raw buffer（stderr 也是原始输出的一部分）
 	if stderrBuf.Len() > 0 {
-		if dumpRawPath != "" || storeRaw {
-			rawBuf.WriteString(stderrBuf.String())
-		}
+		rawBuf.WriteString(stderrBuf.String())
 		fmt.Fprint(os.Stderr, stderrBuf.String())
 	}
 
@@ -287,9 +278,7 @@ func runStreamExec(sf filter.StreamFilter, cmdName string, cmdArgs []string, dum
 		SavedTokens:  inputTokens - outputTokens,
 		ElapsedMs:    elapsed.Milliseconds(),
 		FilterUsed:   sf.Name() + ":stream",
-	}
-	if storeRaw {
-		rec.RawOutput = rawBuf.String()
+		RawOutput:    rawBuf.String(),
 	}
 	writeTrackRecord(rec)
 

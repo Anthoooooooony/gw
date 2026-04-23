@@ -2,6 +2,7 @@ package track
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -270,6 +271,118 @@ CREATE TABLE IF NOT EXISTS tracking (
 		t.Fatalf("二次 NewDB 失败: %v", err)
 	}
 	_ = db2.Close()
+}
+
+// TestTrimBySize_DisabledWhenUnderThreshold 未超阈值时不做任何改动。
+func TestTrimBySize_DisabledWhenUnderThreshold(t *testing.T) {
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "t.db")
+
+	db, err := NewDB(dbPath)
+	if err != nil {
+		t.Fatalf("NewDB: %v", err)
+	}
+	defer func() { _ = db.Close() }()
+
+	for i := 0; i < 5; i++ {
+		if err := db.InsertRecord(Record{
+			Timestamp: time.Now().UTC(), Command: "echo", InputTokens: 10, SavedTokens: 5,
+		}); err != nil {
+			t.Fatalf("InsertRecord: %v", err)
+		}
+	}
+
+	// 阈值远大于实际大小 → 无操作
+	n, err := db.trimBySize(100<<20, 0.8)
+	if err != nil {
+		t.Fatalf("trimBySize: %v", err)
+	}
+	if n != 0 {
+		t.Errorf("未超阈值应删 0 条，得到 %d", n)
+	}
+
+	// 阈值 0 视为关闭
+	n, err = db.trimBySize(0, 0.8)
+	if err != nil || n != 0 {
+		t.Errorf("maxBytes=0 应直接返回 0,nil, 得到 %d/%v", n, err)
+	}
+}
+
+// TestTrimBySize_DeletesOldestFirst 超阈值时按 timestamp 升序删旧记录。
+func TestTrimBySize_DeletesOldestFirst(t *testing.T) {
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "t.db")
+
+	db, err := NewDB(dbPath)
+	if err != nil {
+		t.Fatalf("NewDB: %v", err)
+	}
+	defer func() { _ = db.Close() }()
+
+	// 构造 20 条带较大 raw_output 的记录以撑起文件尺寸。
+	bigRaw := strings.Repeat("x", 4096)
+	base := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC)
+	for i := 0; i < 20; i++ {
+		if err := db.InsertRecord(Record{
+			Timestamp:   base.Add(time.Duration(i) * time.Hour),
+			Command:     fmt.Sprintf("cmd-%d", i),
+			InputTokens: 100, SavedTokens: 50,
+			RawOutput: bigRaw,
+		}); err != nil {
+			t.Fatalf("InsertRecord: %v", err)
+		}
+	}
+
+	// 设一个远低于当前文件的阈值，强制裁剪。
+	// 取 16KiB 作为硬阈值，softRatio 0.5 → 目标 8KiB，必然要删多数记录。
+	n, err := db.trimBySize(16*1024, 0.5)
+	if err != nil {
+		t.Fatalf("trimBySize: %v", err)
+	}
+	if n <= 0 {
+		t.Fatalf("应至少删 1 条，得到 %d", n)
+	}
+
+	// 剩下的记录 timestamp 必须都晚于被删的（先删最旧）。
+	recs, err := db.RecentRecords(100)
+	if err != nil {
+		t.Fatalf("RecentRecords: %v", err)
+	}
+	if len(recs) >= 20 {
+		t.Fatalf("期望裁剪后记录数 < 20, 得到 %d", len(recs))
+	}
+	// 最早剩下的应比被删的更晚
+	minIdx := 20
+	for _, r := range recs {
+		var idx int
+		if _, err := fmt.Sscanf(r.Command, "cmd-%d", &idx); err != nil {
+			t.Fatalf("Command 解析失败: %q", r.Command)
+		}
+		if idx < minIdx {
+			minIdx = idx
+		}
+	}
+	if minIdx < n {
+		t.Errorf("期望最早剩余 cmd-%d 之后，得到 cmd-%d（删了 %d 条）", n, minIdx, n)
+	}
+}
+
+// TestDBMaxBytes_EnvOverride 验证 GW_DB_MAX_BYTES 覆盖默认阈值。
+func TestDBMaxBytes_EnvOverride(t *testing.T) {
+	t.Setenv("GW_DB_MAX_BYTES", "12345")
+	if got := DBMaxBytes(); got != 12345 {
+		t.Errorf("期望 12345, 得到 %d", got)
+	}
+
+	t.Setenv("GW_DB_MAX_BYTES", "notanumber")
+	if got := DBMaxBytes(); got != defaultDBMaxBytes {
+		t.Errorf("非法值应回落默认，得到 %d", got)
+	}
+
+	_ = os.Unsetenv("GW_DB_MAX_BYTES")
+	if got := DBMaxBytes(); got != defaultDBMaxBytes {
+		t.Errorf("未设置应为默认，得到 %d", got)
+	}
 }
 
 // TestRawOutputRoundTrip 验证 InsertRecord + GetRecord 能正确保留 RawOutput。
