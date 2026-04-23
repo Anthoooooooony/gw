@@ -1,0 +1,17 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "app", schema "public" at "localhost:5432"
+
+Applying migration `20260423091532_add_users`
+
+The following migration(s) have been created and applied from new schema changes:
+
+migrations/
+  └─ 20260423091532_add_users/
+    └─ migration.sql
+
+Your database is now in sync with your schema.
+
+✔ Generated Prisma Client (v5.9.1) to ./node_modules/@prisma/client in 72ms
+
+Tip: Get real-time notifications when your data changes with Prisma Pulse. Try it now: https://pris.ly/tip-4-pulse
