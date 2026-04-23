@@ -571,7 +571,8 @@ body::after {
 
   const tweenState = new WeakMap();
   function tweenNumber(el, target, duration=600) {
-    const prev = tweenState.get(el) ?? parseFloat((el.textContent||'').replace(/[^0-9.\-]/g,'')) || 0;
+    // JS spec 禁止 ?? 与 || 无括号混用（SyntaxError），外层括号把 ?? 先结合。
+    const prev = (tweenState.get(el) ?? (parseFloat((el.textContent||'').replace(/[^0-9.\-]/g,'')) || 0));
     if (prev === target) return;
     tweenState.set(el, target);
     const start = performance.now();
