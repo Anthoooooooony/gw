@@ -1,0 +1,15 @@
+--2026-04-23 11:00:00--  https://example.com/large.bin
+Resolving example.com... 1.2.3.4
+Connecting to example.com (example.com)|1.2.3.4|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 10485760 (10M) [application/octet-stream]
+Saving to: 'large.bin'
+
+large.bin    0%[                   ]       0  --.-KB/s
+large.bin   10%[==>                ]     1M   1.2MB/s
+large.bin   20%[====>              ]     2M   1.5MB/s
+large.bin   50%[=========>         ]     5M   1.8MB/s
+large.bin   80%[===============>   ]     8M   2.0MB/s
+large.bin  100%[==================>]    10M   2.1MB/s   in 4.7s
+
+2026-04-23 11:00:05 (2.1 MB/s) - 'large.bin' saved [10485760/10485760]

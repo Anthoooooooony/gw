@@ -108,6 +108,10 @@ var scenarios = []scenario{
 	{"find go files (batch)", "find", []string{"filter", "-name", "*.go"}, "fs/testdata/find_go_files.txt", 0, modeBatch},
 	{"grep StripANSI (batch)", "grep", []string{"-rn", "StripANSI"}, "fs/testdata/grep_stripansi.txt", 0, modeBatch},
 
+	// ---- Net（wget，对齐 rtk 批次 C）----
+	{"wget (simple, batch)", "wget", []string{"https://example.com"}, "net/testdata/wget_success.txt", 0, modeBatch},
+	{"wget (progress, batch)", "wget", []string{"https://example.com/large.bin"}, "net/testdata/wget_progress.txt", 0, modeBatch},
+
 	// ---- TOML 规则过滤器（真实项目 / 本机 state）----
 	// Docker：本机 Docker Desktop 状态 + nginx:1.25-alpine pull / compose 管理 web+cache
 	{"docker ps (batch)", "docker", []string{"ps"}, "toml/testdata/docker_ps.txt", 0, modeBatch},

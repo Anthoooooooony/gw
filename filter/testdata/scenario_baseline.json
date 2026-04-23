@@ -350,6 +350,20 @@
     "ratio": 0.80078125
   },
   {
+    "name": "wget (progress, batch)",
+    "mode": "batch",
+    "orig_bytes": 683,
+    "out_bytes": 200,
+    "ratio": 0.7071742313323572
+  },
+  {
+    "name": "wget (simple, batch)",
+    "mode": "batch",
+    "orig_bytes": 352,
+    "out_bytes": 260,
+    "ratio": 0.26136363636363635
+  },
+  {
     "name": "yarn install (batch)",
     "mode": "batch",
     "orig_bytes": 290,

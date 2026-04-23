@@ -1,0 +1,10 @@
+--2026-04-23 11:10:51--  https://example.com/
+Connecting to 127.0.0.1:6152... connected.
+Proxy request sent, awaiting response... 200 OK
+Length: unspecified [text/html]
+Saving to: ‘/tmp/wget-test.html’
+
+     0K                                                         101M=0s
+
+2026-04-23 11:10:52 (101 MB/s) - ‘/tmp/wget-test.html’ saved [528]
+
