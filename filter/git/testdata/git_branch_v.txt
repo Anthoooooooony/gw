@@ -1,0 +1,3 @@
+  feature/bar f7761f7 init
+  feature/foo f7761f7 init
+* main        f7761f7 init

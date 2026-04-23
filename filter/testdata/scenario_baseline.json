@@ -63,11 +63,60 @@
     "ratio": 0.8311688311688312
   },
   {
+    "name": "git branch -v (batch)",
+    "mode": "batch",
+    "orig_bytes": 81,
+    "out_bytes": 81,
+    "ratio": 0
+  },
+  {
+    "name": "git checkout new (batch)",
+    "mode": "batch",
+    "orig_bytes": 36,
+    "out_bytes": 36,
+    "ratio": 0
+  },
+  {
+    "name": "git commit (root, batch)",
+    "mode": "batch",
+    "orig_bytes": 108,
+    "out_bytes": 82,
+    "ratio": 0.2407407407407407
+  },
+  {
+    "name": "git diff (mixed, batch)",
+    "mode": "batch",
+    "orig_bytes": 505,
+    "out_bytes": 406,
+    "ratio": 0.196039603960396
+  },
+  {
     "name": "git log (default, batch)",
     "mode": "batch",
     "orig_bytes": 3655,
     "out_bytes": 1508,
     "ratio": 0.5874145006839946
+  },
+  {
+    "name": "git pull (merge, batch)",
+    "mode": "batch",
+    "orig_bytes": 141,
+    "out_bytes": 141,
+    "ratio": 0
+  },
+  {
+    "name": "git push (first, batch)",
+    "mode": "batch",
+    "orig_bytes": 96,
+    "out_bytes": 96,
+    "ratio": 0
+  },
+  {
+    "name": "git push (update, batch)",
+    "mode": "batch",
+    "orig_bytes": 51,
+    "out_bytes": 51,
+    "ratio": 0
   },
   {
     "name": "git status (clean, batch)",

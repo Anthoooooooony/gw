@@ -1,0 +1,5 @@
+From ../remote
+   3be3a83..c800d52  main       -> origin/main
+Merge made by the 'ort' strategy.
+ a.txt | 1 +
+ 1 file changed, 1 insertion(+)

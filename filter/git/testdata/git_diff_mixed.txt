@@ -1,0 +1,37 @@
+diff --git a/bar.py b/bar.py
+index 038a752..e973c93 100644
+--- a/bar.py
++++ b/bar.py
+@@ -1,3 +1,3 @@
+-x=1
++x=10
+ y=2
+ z=3
+diff --git a/baz.md b/baz.md
+new file mode 100644
+index 0000000..8e66654
+--- /dev/null
++++ b/baz.md
+@@ -0,0 +1 @@
++new file content
+diff --git a/foo.go b/foo.go
+index ae57ad1..1442bc7 100644
+--- a/foo.go
++++ b/foo.go
+@@ -1,7 +1,7 @@
+ line1
+ line2
+ line3
+-line4
++CHANGED_EARLY
+ line5
+ line6
+ line7
+@@ -9,6 +9,7 @@ line8
+ line9
+ line10
+ line11
++INSERTED_MIDDLE
+ line12
+ line13
+ line14
