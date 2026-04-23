@@ -315,6 +315,13 @@
     "ratio": 0.7323025564438197
   },
   {
+    "name": "next build (batch)",
+    "mode": "batch",
+    "orig_bytes": 1448,
+    "out_bytes": 1226,
+    "ratio": 0.1533149171270718
+  },
+  {
     "name": "npm install (batch)",
     "mode": "batch",
     "orig_bytes": 961,
@@ -343,6 +350,20 @@
     "ratio": 0.9712121212121212
   },
   {
+    "name": "playwright failure (batch)",
+    "mode": "batch",
+    "orig_bytes": 1820,
+    "out_bytes": 1332,
+    "ratio": 0.2681318681318682
+  },
+  {
+    "name": "playwright success (batch)",
+    "mode": "batch",
+    "orig_bytes": 1101,
+    "out_bytes": 55,
+    "ratio": 0.9500454132606722
+  },
+  {
     "name": "pnpm install (batch)",
     "mode": "batch",
     "orig_bytes": 4244,
@@ -362,6 +383,20 @@
     "orig_bytes": 205,
     "out_bytes": 182,
     "ratio": 0.1121951219512195
+  },
+  {
+    "name": "prisma generate (batch)",
+    "mode": "batch",
+    "orig_bytes": 369,
+    "out_bytes": 79,
+    "ratio": 0.7859078590785908
+  },
+  {
+    "name": "prisma migrate (batch)",
+    "mode": "batch",
+    "orig_bytes": 612,
+    "out_bytes": 330,
+    "ratio": 0.4607843137254902
   },
   {
     "name": "pytest (failure, batch)",

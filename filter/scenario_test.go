@@ -123,6 +123,13 @@ var scenarios = []scenario{
 	{"tsc errors (batch)", "tsc", []string{"--noEmit"}, "jslint/testdata/tsc_errors.txt", 1, modeBatch},
 	{"prettier check (batch)", "prettier", []string{"--check", "."}, "jslint/testdata/prettier_check.txt", 1, modeBatch},
 
+	// ---- JS/TS build+test（对齐 rtk 批次 F）----
+	{"playwright success (batch)", "playwright", []string{"test"}, "jsbuild/testdata/playwright_success.txt", 0, modeBatch},
+	{"playwright failure (batch)", "playwright", []string{"test"}, "jsbuild/testdata/playwright_failure.txt", 1, modeBatch},
+	{"prisma generate (batch)", "prisma", []string{"generate"}, "jsbuild/testdata/prisma_generate.txt", 0, modeBatch},
+	{"prisma migrate (batch)", "prisma", []string{"migrate", "dev", "--name", "add_users"}, "jsbuild/testdata/prisma_migrate.txt", 0, modeBatch},
+	{"next build (batch)", "next", []string{"build"}, "jsbuild/testdata/next_build.txt", 0, modeBatch},
+
 	// ---- TOML 规则过滤器（真实项目 / 本机 state）----
 	// Docker：本机 Docker Desktop 状态 + nginx:1.25-alpine pull / compose 管理 web+cache
 	{"docker ps (batch)", "docker", []string{"ps"}, "toml/testdata/docker_ps.txt", 0, modeBatch},
