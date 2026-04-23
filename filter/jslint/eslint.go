@@ -23,12 +23,6 @@ func (f *ESLintFilter) Match(cmd string, args []string) bool {
 	return cmd == "eslint" || cmd == "biome"
 }
 
-// 问题行：`  1:1  error  msg  rule`
-var eslintProblemRe = regexp.MustCompile(`^\s+\d+:\d+\s+(error|warning)\s+`)
-
-// summary 行：`✖ 9 problems (7 errors, 2 warnings)`
-var eslintSummaryRe = regexp.MustCompile(`^.\s*\d+ problems? \(`)
-
 // fixable hint：`  6 errors and 0 warnings potentially fixable with the ...`
 var eslintFixableHintRe = regexp.MustCompile(`potentially fixable with`)
 
