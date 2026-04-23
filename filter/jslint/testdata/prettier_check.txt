@@ -1,0 +1,6 @@
+Checking formatting...
+[warn] src/components/Button.tsx
+[warn] src/components/Modal.tsx
+[warn] src/index.ts
+[warn] src/utils.ts
+[warn] Code style issues found in 4 files. Run Prettier with --write to fix.

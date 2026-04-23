@@ -9,6 +9,7 @@ import (
 	_ "github.com/Anthoooooooony/gw/filter/gh"
 	_ "github.com/Anthoooooooony/gw/filter/git"
 	_ "github.com/Anthoooooooony/gw/filter/java"
+	_ "github.com/Anthoooooooony/gw/filter/jslint"
 	_ "github.com/Anthoooooooony/gw/filter/net"
 	_ "github.com/Anthoooooooony/gw/filter/npmtest"
 	_ "github.com/Anthoooooooony/gw/filter/pip"

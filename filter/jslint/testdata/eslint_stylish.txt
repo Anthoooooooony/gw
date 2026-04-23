@@ -1,0 +1,17 @@
+
+/Users/app/src/index.ts
+  1:1   error    Missing semicolon                                  semi
+  5:7   error    'foo' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  8:3   warning  Unexpected console statement                       no-console
+  12:5  error    'bar' is defined but never used                    @typescript-eslint/no-unused-vars
+
+/Users/app/src/utils.ts
+  3:1   error    Expected indentation of 2 spaces but found 4       indent
+  7:10  warning  Missing return type on function                    @typescript-eslint/explicit-module-boundary-types
+
+/Users/app/src/components/Button.tsx
+  15:1  error    'React' must be in scope when using JSX            react/react-in-jsx-scope
+  22:5  error    Missing key prop for element in iterator           react/jsx-key
+
+✖ 9 problems (7 errors, 2 warnings)
+  6 errors and 0 warnings potentially fixable with the `--fix` option.
