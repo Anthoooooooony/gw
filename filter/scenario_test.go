@@ -102,6 +102,12 @@ var scenarios = []scenario{
 	{"git branch -v (batch)", "git", []string{"branch", "-v"}, "git/testdata/git_branch_v.txt", 0, modeBatch},
 	{"git checkout new (batch)", "git", []string{"checkout", "-b", "newthing"}, "git/testdata/git_checkout_newbranch.txt", 0, modeBatch},
 
+	// ---- FS（ls/find/grep，对齐 rtk 批次 B）----
+	{"ls -la (batch)", "ls", []string{"-la"}, "fs/testdata/ls_la.txt", 0, modeBatch},
+	{"ls plain (batch)", "ls", nil, "fs/testdata/ls_plain.txt", 0, modeBatch},
+	{"find go files (batch)", "find", []string{"filter", "-name", "*.go"}, "fs/testdata/find_go_files.txt", 0, modeBatch},
+	{"grep StripANSI (batch)", "grep", []string{"-rn", "StripANSI"}, "fs/testdata/grep_stripansi.txt", 0, modeBatch},
+
 	// ---- TOML 规则过滤器（真实项目 / 本机 state）----
 	// Docker：本机 Docker Desktop 状态 + nginx:1.25-alpine pull / compose 管理 web+cache
 	{"docker ps (batch)", "docker", []string{"ps"}, "toml/testdata/docker_ps.txt", 0, modeBatch},

@@ -1,0 +1,20 @@
+filter/toml/engine.go:145:		content = filter.StripANSI(content)
+filter/npmtest/npmtest.go:296:// 入口 StripANSI：AVA 的 ✔ / ✖ 常被加色码、vitest 的 ❯ 同样带色码；
+filter/npmtest/npmtest.go:300:	content := filter.StripANSI(original)
+filter/npmtest/npmtest.go:311:	content := filter.StripANSI(original)
+filter/pytest/pytest.go:99:// 入口 StripANSI：pytest 默认 TTY 外关色，但用户开 `--color=yes` 会强制输出色码
+filter/pytest/pytest.go:103:	content := filter.StripANSI(original)
+filter/pytest/pytest.go:120:	content := filter.StripANSI(original)
+filter/cargo/build.go:61:	content := filter.StripANSI(original)
+filter/cargo/build.go:75:// 入口 StripANSI 防 `CARGO_TERM_COLOR=always` 给 `error:` 加红色码破坏锚点。
+filter/cargo/build.go:78:	content := filter.StripANSI(original)
+filter/cargo/test.go:75:// 入口做 StripANSI：`CARGO_TERM_COLOR=always` 会给 `ok` / `FAILED` 加色码
+filter/cargo/test.go:79:	content := filter.StripANSI(original)
+filter/cargo/test.go:97:	content := filter.StripANSI(original)
+filter/java/gradle.go:96:		cleaned := filter.StripANSI(line)
+filter/java/gradle.go:356:	cleaned := filter.StripANSI(line)
+filter/java/maven.go:79:	// 的前缀识别。与 gradle 的 per-line StripANSI 行为对齐。
+filter/java/maven.go:80:	output = filter.StripANSI(output)
+filter/pip/install.go:82:// 入口 StripANSI：pip 23+ 在 TTY 外也会因 `--progress-bar on` 或插件打色码。
+filter/pip/install.go:85:	content := filter.StripANSI(original)
+filter/pip/install.go:99:	content := filter.StripANSI(original)

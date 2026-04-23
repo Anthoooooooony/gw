@@ -63,6 +63,13 @@
     "ratio": 0.8311688311688312
   },
   {
+    "name": "find go files (batch)",
+    "mode": "batch",
+    "orig_bytes": 953,
+    "out_bytes": 953,
+    "ratio": 0
+  },
+  {
     "name": "git branch -v (batch)",
     "mode": "batch",
     "orig_bytes": 81,
@@ -175,6 +182,13 @@
     "ratio": 0.9964384853087519
   },
   {
+    "name": "grep StripANSI (batch)",
+    "mode": "batch",
+    "orig_bytes": 1587,
+    "out_bytes": 1587,
+    "ratio": 0
+  },
+  {
     "name": "jest (failure, batch)",
     "mode": "batch",
     "orig_bytes": 1375,
@@ -187,6 +201,20 @@
     "orig_bytes": 254,
     "out_bytes": 103,
     "ratio": 0.594488188976378
+  },
+  {
+    "name": "ls -la (batch)",
+    "mode": "batch",
+    "orig_bytes": 1493,
+    "out_bytes": 1374,
+    "ratio": 0.07970529135967852
+  },
+  {
+    "name": "ls plain (batch)",
+    "mode": "batch",
+    "orig_bytes": 128,
+    "out_bytes": 128,
+    "ratio": 0
   },
   {
     "name": "mocha (failure, batch)",
