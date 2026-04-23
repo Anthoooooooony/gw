@@ -70,6 +70,34 @@
     "ratio": 0
   },
   {
+    "name": "gh issue list (batch)",
+    "mode": "batch",
+    "orig_bytes": 1092,
+    "out_bytes": 1092,
+    "ratio": 0
+  },
+  {
+    "name": "gh pr list (batch)",
+    "mode": "batch",
+    "orig_bytes": 2331,
+    "out_bytes": 2331,
+    "ratio": 0
+  },
+  {
+    "name": "gh pr view (batch)",
+    "mode": "batch",
+    "orig_bytes": 1057,
+    "out_bytes": 1001,
+    "ratio": 0.052980132450331174
+  },
+  {
+    "name": "gh run list (batch)",
+    "mode": "batch",
+    "orig_bytes": 1493,
+    "out_bytes": 1493,
+    "ratio": 0
+  },
+  {
     "name": "git branch -v (batch)",
     "mode": "batch",
     "orig_bytes": 81,

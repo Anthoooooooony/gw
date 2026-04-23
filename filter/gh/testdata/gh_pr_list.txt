@@ -1,0 +1,20 @@
+127	feat(net): 新增 wget filter（对齐 rtk 批次 C #124）	feat/net-wget	MERGED	2026-04-23T03:13:11Z
+126	feat(fs): 新增 ls/find/grep filter（对齐 rtk 批次 B #124）	feat/fs-filters	MERGED	2026-04-23T03:08:28Z
+125	feat(git): 新增 diff + ops filter（对齐 rtk git 扩展，批次 A #124）	feat/git-extended	MERGED	2026-04-23T03:02:05Z
+122	feat(npmtest): mocha 嗅探器 + yarn install fixture	feat/mocha-and-yarn-fixtures	MERGED	2026-04-22T09:50:49Z
+121	feat(npmtest): 新增 jest 格式嗅探器	feat/jest-detection	MERGED	2026-04-22T09:43:53Z
+120	fix(java/maven): 并行构建 -T N 透传原文避免状态机错分	fix/maven-parallel-builder-fallback	MERGED	2026-04-22T09:33:57Z
+119	docs: 补记会话架构决策（5 条）	docs/session-decisions	MERGED	2026-04-22T09:28:58Z
+118	chore(filter): 全部 Go filter 入口 StripANSI 防御强制彩色	chore/ansi-strip-go-filters	MERGED	2026-04-22T09:23:55Z
+117	fix(git/log): 非标准格式透传避免 0-byte 压缩	fix/git-log-nonstandard-format	MERGED	2026-04-22T08:53:22Z
+116	fix(npmtest): vitest 切片保留 Test Files/Tests 汇总	fix/vitest-lose-summary	MERGED	2026-04-22T08:38:03Z
+115	feat(npmtest): 扩展 vitest 锚点识别 + Match vitest 命令	feat/vitest-filter	MERGED	2026-04-22T08:23:57Z
+114	feat(npmtest): 新增 npm/yarn/pnpm test AVA 语义过滤器	feat/npm-test-filter	MERGED	2026-04-22T08:16:10Z
+113	feat(pip): 新增 pip install 语义过滤器	feat/pip-install-filter	MERGED	2026-04-22T08:09:03Z
+112	feat(filter): 新增 docker pull/compose 规则 + 捕获 pnpm fixture	feat/docker-pull-compose-and-pnpm-fixtures	MERGED	2026-04-22T08:02:32Z
+111	feat(cargo): 新增 cargo build/check/clippy 语义过滤器	feat/cargo-build-filter	MERGED	2026-04-22T07:51:12Z
+110	feat(cargo): 新增 cargo test 语义过滤器	feat/cargo-test-filter	MERGED	2026-04-22T07:46:12Z
+109	feat(toml): 新增 on_error 子表，失败场景可独立截断	feat/toml-on-error-dsl	MERGED	2026-04-22T07:35:39Z
+108	fix(maven): batch 失败模式按 stream 对齐丢弃 TestOutput 噪音	fix/mvn-test-batch-compression	MERGED	2026-04-22T07:26:21Z
+107	chore(init): 保留 settings.json 原 key 顺序和缩进	chore/settings-key-order	MERGED	2026-04-22T07:17:40Z
+106	feat(init): 安装 hook 后探测 claude CLI 可见性	feat/init-detect-claude	MERGED	2026-04-22T07:05:00Z
