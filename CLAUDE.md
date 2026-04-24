@@ -1,27 +1,128 @@
 # CLAUDE.md
 
-该文件为 Claude Code（claude.ai/code）在本仓库工作时提供指引，记录开发约定、环境变量与关键不变式。
+该文件为 Claude Code（claude.ai/code）在本仓库工作时提供 Runbook：顶部 "快速导航" 给出最常回查的文件索引，中段 "日常任务模板" 固化高频操作流程，底部 "开发流程与雷区" 标明必须遵守的 DO/DON'T 与既有不变式。
 
 ## 项目概览
 
-gw 是一个 CLI 代理，拦截 shell 命令并过滤输出，减少 LLM token 消耗。详见 `README.md`。
+gw 是一个 CLI 代理，作为 Claude Code PreToolUse Hook 运行，拦截 shell 命令并压缩输出，减少 LLM token 消耗。产品简介见 `README.md`；架构与扩展细节见 [`docs/DEVELOPING.md`](./docs/DEVELOPING.md)；决策留痕见 [`docs/DECISIONS.md`](./docs/DECISIONS.md)。
 
-## 分支约定
+## 快速导航
 
-GitHub Flow 单干模型：
+开发时最常回查的文件一览（其余文件按需 `Grep`）：
 
-| 分支 | 角色 | PR base |
-|------|------|---------|
-| `master` | 唯一长期分支，GitHub default branch，永远可发布 | —— |
-| `feature/*` | 新功能 | `master` |
-| `fix/*` | Bug 修复 | `master` |
-| `chore/*` | 构建、CI、依赖升级等非功能改动 | `master` |
-| `docs/*` | 纯文档改动 | `master` |
-| `hotfix/*` | 紧急修复已发布版本（语义与 feature 区分便于追踪） | `master` |
+| 任务 | 先读 |
+|------|------|
+| `gw exec` 执行管道（PARSE → ROUTE → EXECUTE → FILTER → PRINT → TRACK） | `cmd/exec.go` |
+| `gw claude` 代理入口 + DCP 去重摘要 | `cmd/claude.go` |
+| 过滤器接口定义（Filter / StreamFilter / Fallback / Describable） | `filter/filter.go` |
+| 过滤器注册与优先级（"第一匹配胜出"） | `filter/registry.go` + `filter/all/all.go` |
+| 压缩率 baseline 断言与更新流程 | `filter/scenario_test.go` + `filter/testdata/scenario_baseline.json` |
+| TOML DSL v2 无损变换约束 | `filter/toml/engine.go` |
+| TOML 三级加载（builtin → user → project） | `filter/toml/loader.go` |
+| Maven 状态机（语义过滤器参考实现） | `filter/java/maven.go` |
+| DCP 风格 tool_result 去重 | `internal/apiproxy/dcp/dedup.go` |
+| 引号感知 shell tokenizer | `shell/lexer.go` |
+| Release 版本号计算 + CC 前缀分类 | `scripts/release-helpers.sh` |
+| DB schema 迁移约定 | `track/db.go` |
 
-短期分支合入 master 后立即删除。所有人工改动走 PR；**release-please bot** 直接向 master 开 release PR 并在合入后 push tag，是唯一合法的非人工写入路径。
+## 日常任务模板
 
-版本机制：SemVer + 自写 CI workflow（`.github/workflows/release.yml` 一体化 decide → build → release）。PR title 必须是 Conventional Commits，每次 master push workflow 扫 squash-merge commit subject；有 user-facing commit 就 bump + tag + GitHub Release + 上传 assets，全流程在单 workflow run 内完成，不依赖 PAT 或跨 workflow 触发。核心分类/bump 函数在 `scripts/release-helpers.sh`。不维护仓库内 `CHANGELOG.md`，发布记录看 [Releases 页面](https://github.com/Anthoooooooony/gw/releases)。
+### 新增过滤器
+
+先判断类型：
+
+| 需求 | 用 | 原因 |
+|------|----|------|
+| 按 exit_code / 结构化语义压缩（成功摘要、失败留错误） | **Go 硬编码** | TOML 无语义能力 |
+| 纯前后裁剪、去 ANSI、按行数限制 | **TOML** | 零代码、用户可覆盖 |
+
+**Go 硬编码 3 步最短路径**：
+
+1. 新建 `filter/<pkg>/<name>.go`，`init()` 里调 `filter.Register(&XxxFilter{})`
+2. `filter/all/all.go` 加一条空白 import：`_ "github.com/Anthoooooooony/gw/filter/<pkg>"`
+3. 在 `filter/scenario_test.go` 的 `scenarios` 切片追加条目 → 跑 `go test ./filter/ -run TestScenarioCompression -args -update` 更新 baseline → **人工 review diff 再提交**
+
+**TOML 1 步**：`filter/toml/rules/*.toml` 新增（全局 builtin，需要 PR）或让用户放到 `.gw/rules/*.toml`（项目级覆盖，无需 PR）。
+
+流式能力：同时实现 `filter.StreamFilter` 接口即可让长驻命令（`tail -f` 类）走流式路径；`Registry.FindStream()` 的 type assertion 失败会自动降级到批量。
+
+### 跑测试
+
+| 命令 | 何时用 |
+|------|------|
+| `make test` | 推分支前、与 CI 对齐（race + cover + 全平台） |
+| `make test-fast` | 本地快速迭代（无 race / 无 cover） |
+| `go test ./filter/ -run TestScenarioCompression -args -update` | 改过滤器后更新 baseline |
+| `go test -run Timeout ./internal/ -timeout 60s` | 超时相关专项 |
+| `make ci` | 本地复现 CI 主路径（tidy + vet + test） |
+
+**`CGO_ENABLED=1` 是硬性前提**（`mattn/go-sqlite3` 依赖 CGO）。Makefile 已强制开启；手跑 `go test` 前若 shell 环境显式关了 CGO，会直接 cc 编译失败。
+
+场景 baseline 断言偏差 ≤ 2pp。有意改动压缩率后必须跑 `-args -update` 重写 baseline，否则 CI 的 `TestScenarioCompression` 会红。
+
+### Release（全自动，不可手工干预）
+
+每次 master push，`.github/workflows/release.yml` 的 decide job 扫自上个 tag 以来的 commit subject，按 CC 前缀决定 bump：
+
+| CC 前缀 | 动作 |
+|---------|------|
+| `feat:` | minor bump + 发版 |
+| `fix:` / `perf:` / `refactor:` / `revert:` / `deps:` | patch bump + 发版 |
+| `docs:` / `chore:` / `ci:` / `test:` | **不触发**发版 |
+
+验证预期 bump 读 `scripts/release-helpers.sh::classify_commit`。**禁止**手工 tag / 手工 release notes / 维护 `CHANGELOG.md`（workflow 全包）。发布记录看 [Releases 页面](https://github.com/Anthoooooooony/gw/releases)。
+
+### 调 `gw claude` 代理
+
+```bash
+gw -v claude   # stderr 打 dcp: 替换 N 条 / 扫 M tool_use / 退出摘要
+```
+
+apiproxy 相关环境变量详见 [`docs/DEVELOPING.md`](./docs/DEVELOPING.md)：`GW_APIPROXY_MAX_BODY` / `GW_APIPROXY_HEADER_TIMEOUT` / `GW_APIPROXY_SHUTDOWN_TIMEOUT` / `GW_APIPROXY_UPSTREAM`。
+
+### 复杂 feature 开发（跨模块 / 新 ADR / 影响面广）
+
+优先调度 feature-dev 子代理，不要主 agent 全包：
+
+1. `feature-dev:code-explorer` — 摸清相关模块、调用链、测试覆盖
+2. `feature-dev:code-architect` — 出设计（文件清单 / 数据流 / 构建顺序）
+3. 实现 + TDD
+4. `feature-dev:code-reviewer` — PR 前自检
+
+## 开发流程与雷区
+
+### GitHub Flow（默认）
+
+所有改动走分支 → PR → 等 7-gate CI 全绿 → squash merge。分支前缀与 CC type 对齐：
+
+| 前缀 | 语义 |
+|------|------|
+| `feature/` | 新功能 |
+| `fix/` | Bug 修复 |
+| `docs/` | 纯文档改动（不触发发版） |
+| `chore/` | 构建、CI、依赖升级等非功能改动 |
+| `refactor/` | 重构（可能触发 patch bump） |
+| `hotfix/` | 紧急修复已发布版本 |
+
+PR title 必须是 Conventional Commits。**仅当用户明确说"直推"时**才 push master。短期分支合入后立即删除。
+
+### DO
+
+- 推分支前本地跑 `make test` 对齐 CI
+- 改过滤器时同步更新 `filter/testdata/scenario_baseline.json` diff，提交前人工 review
+- `CGO_ENABLED=1` 始终开启
+- 触发架构 / 公开接口 / 产品边界变更时同批提交 `docs/DECISIONS.md` 新条目（见下方 "决策留痕" 节）
+- 脚本先在 macOS（BSD utils）跑通再推，确保 CI 不爆
+
+### DON'T
+
+- **别直推 master**（例外：用户明确说"直推"）
+- **别给 TOML DSL 加语义字段**（`strip_lines` / `keep_lines` / `on_error` 永久否决；要语义压缩写 Go filter）
+- **别在 worktree 布局下** `git checkout <主分支>`（会报 `'<branch>' is already used by worktree`，用 `git -C <worktree> ...` 或新建 worktree）
+- **别用 GNU-only 工具选项**：`cat -A`、`grep --color=when`、BSD awk 不接受多行 `-v var=...`；本地若缺 `shellcheck` / `actionlint`，不要耗时间装，直接推分支让 CI 跑
+- **别手工 bump 版本号**或维护 `CHANGELOG.md`（release.yml 全包）
+- **别 `os.MkdirTemp + defer os.RemoveAll`**，用 `t.TempDir()`
+- **别 `DROP TABLE` / `DROP COLUMN`**（用户 `~/.gw/tracking.db` 是生产数据；schema 只进不退）
 
 ## TOML 规则 DSL（v2：仅无损变换）
 
@@ -107,20 +208,6 @@ myapp.logs        toml  project:///workspace/.gw/rules/custom.toml             m
 
 `cmd/summary_web.go` 持有 `//go:embed web` FS，静态资源零外部依赖（Chart.js 也 embed）。SSE `/api/events` 每 5s `buildSummaryPayload` → 每次新开 `track.NewDB`（用 `payloadMu` 串行化，避免 WAL 锁竞争）。payload schema 是前端契约，字段改名需同步 `cmd/web/index.html`。
 
-## 日志与错误输出约定
-
-gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude Code hook 日志和 CI 抓取：
-
-| 前缀 | 场景 | 示例 |
-|------|------|------|
-| `gw <subcmd>: <msg>` | 子命令致命错误，紧邻非零 exit | `gw exec: failed to open db: ...` |
-| `gw: warning: <msg>` | 非致命降级 / 回退提示，程序继续执行 | `gw: warning: GW_CMD_TIMEOUT=abc unparseable, fallback to 10m` |
-| `gw: info: <msg>` | 详细统计 / 调试信息，仅在 `--verbose` flag 下输出 | `gw: info: input_tokens=120 output_tokens=40 saved=80 elapsed=200ms` |
-
-**禁止**使用 `[gw] warning: ...` 这种方括号风格 —— 与表格其他消息不一致，且在终端日志中难以 grep。
-
-同一降级场景只 warn 一次（如 `GW_DB_PATH` 降级），避免多进程并发污染日志。
-
 ## 执行路径关键不变式
 
 - `RunCommand` 与 `RunCommandStreamingFull` 的函数签名**稳定**，超时/落盘等只通过环境变量或 flag 控制
@@ -141,29 +228,19 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 - `gw init --dry-run` / `gw uninstall --dry-run` 只打印变更，不落盘
 - 写入走同目录临时文件 + rename 原子替换，失败不留半截文件
 
-## 关键文件
+## 日志与错误输出约定
 
-| 路径 | 职责 |
-|------|------|
-| `filter/toml/loader.go` | TOML 三级加载器、来源追踪、disabled 支持 |
-| `filter/toml/engine.go` | TOML 过滤引擎（v2 DSL，仅 strip_ansi + head/tail/max_lines + on_empty 无损字段） |
-| `filter/registry.go` | 全局注册表 + `List()`（给 `gw filters list` 用） |
-| `cmd/filters.go` | `gw filters list` 命令 |
-| `cmd/claude.go` | `gw claude` 子命令：启动本地 API 代理 + 注入 ANTHROPIC_BASE_URL + exec claude + 退出摘要 |
-| `cmd/version.go` | `gw --version` / `gw version`（ldflags + runtime/debug fallback） |
-| `cmd/inspect.go` | `gw inspect [id]` 查询 DB 历史记录 |
-| `internal/timeout.go` | `GW_CMD_TIMEOUT` 解析 + 超时提示 |
-| `internal/procgroup_*.go` | 进程组 SIGTERM/SIGKILL（跨平台拆分） |
-| `internal/apiproxy/server.go` | 本地 HTTP 代理 Server（127.0.0.1 随机端口 + Transformer 共享） |
-| `internal/apiproxy/anthropic.go` | `/v1/messages` 反向代理 handler + BodyTransformer 注入点 |
-| `internal/apiproxy/env.go` | `GW_APIPROXY_*` 环境变量解析（body 上限 / header 超时 / shutdown grace） |
-| `internal/apiproxy/dcp/dedup.go` | DCP 风格 tool_result 去重：扫描 tool_use → 按签名分组 → 保留最后一次、其余内容替换为占位符 |
-| `track/db.go` | SQLite 存储 + raw_output 列 migration + `SizeOnDisk` / `RowCount` / `TrimBySize` |
-| `cmd/summary.go` | `gw summary` 入口；dispatch `--text` / web / TTY 降级 |
-| `cmd/summary_web.go` | embed 静态资源 + `/api/data` + `/api/events` SSE + 跨平台浏览器打开 |
-| `cmd/web/` | dashboard 前端：`index.html` + `chart.umd.js`（embed 进 binary） |
-| `filter/all/all.go` | blank import 聚合过滤器包；专属 filter 在 toml 之前注册（第一匹配胜出） |
-| `filter/pytest/pytest.go` | pytest / python -m pytest 语义过滤器（summary + FAILURES 锚点） |
+gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude Code hook 日志和 CI 抓取：
+
+| 前缀 | 场景 | 示例 |
+|------|------|------|
+| `gw <subcmd>: <msg>` | 子命令致命错误，紧邻非零 exit | `gw exec: failed to open db: ...` |
+| `gw: warning: <msg>` | 非致命降级 / 回退提示，程序继续执行 | `gw: warning: GW_CMD_TIMEOUT=abc unparseable, fallback to 10m` |
+| `gw: info: <msg>` | 详细统计 / 调试信息，仅在 `--verbose` flag 下输出 | `gw: info: input_tokens=120 output_tokens=40 saved=80 elapsed=200ms` |
+
+**禁止**使用 `[gw] warning: ...` 这种方括号风格 —— 与表格其他消息不一致，且在终端日志中难以 grep。
+
+同一降级场景只 warn 一次（如 `GW_DB_PATH` 降级），避免多进程并发污染日志。
 
 ## 代码规范
 
@@ -172,7 +249,6 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
 - Go 代码注释、日志、错误消息使用中文（项目主语言）
 - 文件末尾统一 `\n` 行结尾
 - 不引新依赖（TOML 解析器固定 `github.com/BurntSushi/toml`）
-- 测试：`go test ./...`；超时相关 `go test -run Timeout ./internal/ -timeout 60s`
 - 加载失败只 warning 不 panic（企业部署稳定性硬要求）
 
 ### 决策留痕（ADR-lite）
@@ -224,7 +300,7 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
   顺序反了会导致 Close 等 handler、handler 等 close(block)，测试 hang 到超时
 - 流式过滤器（`filter.StreamFilter`）的 `Flush` 必须覆盖三条路径：成功无 buffer / 失败有 buffer / 失败空 buffer
 - 写 stderr/stdout 的函数参数化 `io.Writer`，测试注入 `&bytes.Buffer{}` 断言内容。示例：`cmd/claude.go::writeDCPSummary(w io.Writer, ...)`
-- 场景压缩率改动同时更新 `filter/testdata/scenario_baseline.json`（流程见 `CONTRIBUTING.md`）
+- 场景压缩率改动同时更新 `filter/testdata/scenario_baseline.json`（见顶部 "跑测试" 节）
 
 ### API 边界
 
