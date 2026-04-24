@@ -1,8 +1,8 @@
-package dcp
+package dedup
 
 import "sync/atomic"
 
-// Stats 汇总 DCP 在 Transformer 生命周期内的观测数据。
+// Stats 汇总 dedup 在 Transformer 生命周期内的观测数据。
 // 所有字段通过 atomic 操作读写，可在多请求并发下安全累加。
 type Stats struct {
 	// RequestsProcessed 所有进入 Transform 的请求数（含解析失败透传）。

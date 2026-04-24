@@ -1,9 +1,9 @@
-124	OPEN	tracking: 扩大命令压缩覆盖（对标 rtk 24 模块）	priority:mid	2026-04-23T02:54:05Z
+124	OPEN	tracking: 扩大命令压缩覆盖（对标 24 命令模块）	priority:mid	2026-04-23T02:54:05Z
 123	OPEN	tracking: Go filter plugin 系统（社区可扩展）	priority:long	2026-04-22T09:57:43Z
 104	OPEN	tracking: Windows 适配	priority:long	2026-04-22T06:52:51Z
-77	CLOSED	feat: gw claude 子命令 + 内置 LLM API 代理（DCP 风格 tool_result 去重）	priority:mid	2026-04-22T02:25:43Z
+77	CLOSED	feat: gw claude 子命令 + 内置 LLM API 代理（tool_result 去重）	priority:mid	2026-04-22T02:25:43Z
 76	OPEN	feat: 本地小模型做语义压缩兜底（长尾命令 / 无锚点场景）	priority:long	2026-04-22T06:51:32Z
-74	CLOSED	feat: 按 rtk 思路为 vitest/cargo test/npm test/pip 等写专属 Go filter	priority:mid	2026-04-22T08:26:25Z
+74	CLOSED	feat: 按命令语义为 vitest/cargo test/npm test/pip 等写专属 Go filter	priority:mid	2026-04-22T08:26:25Z
 69	CLOSED	feat(init): gw init 后探测 claude 与 gw 在 PATH 中的可见性	priority:near	2026-04-22T07:06:40Z
 68	CLOSED	analysis: shell/lexer.go 对 $VAR 不拦截（评估后为非 bug，归档）		2026-04-22T02:25:45Z
 66	CLOSED	fix(rewrite): strings.Fields 不感知引号，与 AnalyzeCommand 分词语义不一致		2026-04-22T02:25:46Z

@@ -306,7 +306,6 @@ const (
 )
 
 // gradleNoiseRegexps 是在任何状态下都直接丢弃的噪音行模式。
-// 灵感来自 rtk gradle.toml 的 strip_lines_matching 配置。
 var gradleNoiseRegexps = []*regexp.Regexp{
 	regexp.MustCompile(`^> Configure project`),
 	regexp.MustCompile(`^> Configuring project`),

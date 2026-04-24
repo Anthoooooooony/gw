@@ -1,4 +1,4 @@
-title:	feat(net): 新增 wget filter（对齐 rtk 批次 C #124）
+title:	feat(net): 新增 wget filter（批次 C #124）
 state:	MERGED
 author:	Anthoooooooony (Anthooooony)
 labels:	
@@ -14,7 +14,7 @@ auto-merge:	disabled
 --
 ## Summary
 
-批次 C（见 #124）：对齐 rtk \`wget\`。新增 \`filter/net\` 包。
+批次 C（见 #124）：新增 \`wget\` 专属压缩。对应 \`filter/net\` 包。
 
 - **net/wget**: 正则识别进度条（\`\\d+%\\[[=> ]*\\]\`）丢弃；丢 Resolving/Connecting/HTTP request/Proxy request 握手行；连续空行合并
 - 保留 URL 头行 + Length + Saving to + saved summary

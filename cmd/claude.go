@@ -11,7 +11,7 @@ import (
 	"syscall"
 
 	"github.com/Anthoooooooony/gw/internal/apiproxy"
-	"github.com/Anthoooooooony/gw/internal/apiproxy/dcp"
+	"github.com/Anthoooooooony/gw/internal/apiproxy/dedup"
 	"github.com/Anthoooooooony/gw/track"
 	"github.com/spf13/cobra"
 )
@@ -65,11 +65,11 @@ func runClaude(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	// 5. 打印 dcp 统计摘要。非 verbose 也打印，总结性信息视作必看。
+	// 5. 打印 dedup 统计摘要。非 verbose 也打印，总结性信息视作必看。
 	//   仅在本次 session 至少处理了 1 个请求时打印，避免干扰未真实使用代理的场景。
 	//   调用时机：http.Server.Shutdown 返回即代表所有 active handler 已完成，
 	//   Stats 计数不会再被写入，故对其做多次 Load 读取是一致性快照。
-	writeDCPSummary(os.Stderr, srv.Stats())
+	writeDedupSummary(os.Stderr, srv.Stats())
 
 	os.Exit(code)
 }
@@ -145,12 +145,12 @@ func runChild(args, env []string, logger apiproxy.Logger) int {
 	return 1
 }
 
-// writeDCPSummary 向 w 写入 dcp 统计摘要（请求数、tool_use 扫描数、替换次数、
+// writeDedupSummary 向 w 写入 dedup 统计摘要（请求数、tool_use 扫描数、替换次数、
 // 节省字节及估算 token 数）。只在处理过至少 1 个请求时才写入，避免对未触发代理
 // 的场景（如 /help 等瞬间退出的子命令）造成干扰。
 //
 // 抽出 io.Writer 参数便于单测捕获输出；生产调用固定传 os.Stderr。
-func writeDCPSummary(w io.Writer, stats *dcp.Stats) {
+func writeDedupSummary(w io.Writer, stats *dedup.Stats) {
 	reqs := stats.RequestsProcessed.Load()
 	if reqs == 0 {
 		return
@@ -158,7 +158,7 @@ func writeDCPSummary(w io.Writer, stats *dcp.Stats) {
 	saved := stats.BytesSaved()
 	tokens := track.EstimateTokensByLen(int(saved))
 	fmt.Fprintf(w,
-		"gw: dcp: %d 请求 / 扫 %d tool_use / 替换 %d tool_result / 节省 %d 字节 (~%d tokens)\n",
+		"gw: dedup: %d 请求 / 扫 %d tool_use / 替换 %d tool_result / 节省 %d 字节 (~%d tokens)\n",
 		reqs,
 		stats.ToolUseScanned.Load(),
 		stats.ResultsReplaced.Load(),
