@@ -51,7 +51,7 @@ func (r *messagesRequest) MarshalJSON() ([]byte, error) {
 		buf.Write(value)
 	}
 
-	msgBytes, err := json.Marshal(r.Messages)
+	msgBytes, err := marshalNoEscape(r.Messages)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (m *message) UnmarshalJSON(data []byte) error {
 		trimmed := bytes.TrimSpace(content)
 		if len(trimmed) > 0 && trimmed[0] == '"' {
 			// content 是字符串：包成单 text block 供下游同构处理
-			textBlock, err := json.Marshal(map[string]json.RawMessage{
+			textBlock, err := marshalNoEscape(map[string]json.RawMessage{
 				"type": json.RawMessage(`"text"`),
 				"text": content,
 			})
@@ -125,7 +125,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		return m.raw, nil
 	}
 	// mutated：按 array 形式重建，同时保留未来/消息级未知字段
-	contentBytes, err := json.Marshal(m.Content)
+	contentBytes, err := marshalNoEscape(m.Content)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 	for k, v := range m.extra {
 		out[k] = v
 	}
-	return json.Marshal(out)
+	return marshalNoEscape(out)
 }
 
 // blockType 只用来 peek content 数组元素的 type 字段。
@@ -217,7 +217,7 @@ func (b *toolResultBlock) MarshalJSON() ([]byte, error) {
 	for k, v := range b.extra {
 		out[k] = v
 	}
-	return json.Marshal(out)
+	return marshalNoEscape(out)
 }
 
 func mustMarshal(v any) json.RawMessage {

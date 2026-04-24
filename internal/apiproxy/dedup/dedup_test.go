@@ -185,3 +185,42 @@ func TestTransform_NoDedupReturnsOriginalBytes(t *testing.T) {
 		t.Errorf("无命中应原字节返回:\n in  = %s\n out = %s", in, out)
 	}
 }
+
+// TestTransform_NoHTMLEscapeInflation 验证命中 dedup 后，输出 body 不会被 Go
+// 默认 json.Marshal 的 HTML escape 污染（< > & 保持原样，不变成 < 等）。
+// 该行为保证：
+//  1. request body 只减不增（除必要的占位符替换外），小替换场景 BytesSaved 不再被吞；
+//  2. 未被 dedup 的字段（system prompt、tool schema、其他 message）字节级原样转发，
+//     不破坏 Anthropic prompt cache。
+func TestTransform_NoHTMLEscapeInflation(t *testing.T) {
+	// 1) system / tools / messages 都含 < > &；
+	// 2) 有两次同签名 tool_use 触发一次替换；
+	// 3) 被替换的 tool_result 原文足够长，保证 Transform 后字节严格 < 原 body。
+	longOrig := `<pre>` + strings.Repeat("x", 200) + `</pre>`
+	in := []byte(`{"system":"<policy>use tools & reply promptly</policy>","model":"x","max_tokens":1,"messages":[
+		{"role":"assistant","content":[{"type":"tool_use","id":"tu_1","name":"Read","input":{"path":"/a"}}]},
+		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_1","content":"` + longOrig + `"}]},
+		{"role":"assistant","content":[{"type":"tool_use","id":"tu_2","name":"Read","input":{"path":"/a"}}]},
+		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_2","content":"fresh <output>"}]}
+	]}`)
+	out := NewTransformer(quietLogger{}).Transform(in)
+
+	// 任何一种 HTML escape 形式出现都视为回归
+	for _, bad := range []string{"\\u003c", "\\u003e", "\\u0026"} {
+		if bytes.Contains(out, []byte(bad)) {
+			t.Errorf("输出不应包含 HTMLEscape %q:\n%s", bad, out)
+		}
+	}
+	// system 字段应字节级保留（含 < > &）
+	if !bytes.Contains(out, []byte(`"<policy>use tools & reply promptly</policy>"`)) {
+		t.Errorf("system 原文被篡改:\n%s", out)
+	}
+	// 第二次 tool_result 的 "fresh <output>" 应保留原字符
+	if !bytes.Contains(out, []byte(`fresh <output>`)) {
+		t.Errorf("未 dedup 的 tool_result 原文被篡改:\n%s", out)
+	}
+	// 命中 dedup 且原文 > 占位符时，输出字节必然小于输入
+	if len(out) >= len(in) {
+		t.Errorf("dedup 应净减字节: in=%d out=%d", len(in), len(out))
+	}
+}
