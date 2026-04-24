@@ -2,7 +2,8 @@
 *.db
 .gw/
 .superpowers/
-.claude/
+.claude/*
+!.claude/skills/
 dist/
 
 # IDE
