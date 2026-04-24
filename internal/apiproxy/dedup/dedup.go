@@ -50,7 +50,7 @@ func (t *Transformer) Transform(body []byte) []byte {
 		return body
 	}
 
-	out, err := json.Marshal(&req)
+	out, err := marshalNoEscape(&req)
 	if err != nil {
 		t.logger.Warnf("dedup: 序列化失败，透传: %v", err)
 		return body
@@ -152,7 +152,7 @@ func rewrite(req *messagesRequest, logger Logger) (toolUses, replaced int) {
 			}
 
 			tr.Content = replacement
-			newBlock, err := json.Marshal(&tr)
+			newBlock, err := marshalNoEscape(&tr)
 			if err != nil {
 				continue
 			}
