@@ -1,16 +1,15 @@
-package dcp
+package dedup
 
 import (
 	"encoding/json"
 )
 
 // PlaceholderContent 是替换被 dedup 掉的 tool_result 内容的固定字符串。
-// 与 Opencode-DCP 保持一致（lib/messages/prune.ts:9）。
 const PlaceholderContent = "[Output removed to save context - information superseded or no longer needed]"
 
 // Logger 最小日志接口。
 //
-// 声明在 dcp 包（而非 apiproxy）：dcp 设计为可单独使用的上下文压缩库，
+// 声明在 dedup 包（而非 apiproxy）：dedup 设计为可单独使用的上下文压缩库，
 // 不反向依赖 apiproxy。apiproxy.Logger 是本接口的类型别名，两处引用
 // 同一类型，杜绝结构化同形漂移。
 type Logger interface {
@@ -41,7 +40,7 @@ func (t *Transformer) Transform(body []byte) []byte {
 
 	var req messagesRequest
 	if err := json.Unmarshal(body, &req); err != nil {
-		t.logger.Warnf("dcp: 解析失败，透传: %v", err)
+		t.logger.Warnf("dedup: 解析失败，透传: %v", err)
 		return body
 	}
 
@@ -53,18 +52,18 @@ func (t *Transformer) Transform(body []byte) []byte {
 
 	out, err := json.Marshal(&req)
 	if err != nil {
-		t.logger.Warnf("dcp: 序列化失败，透传: %v", err)
+		t.logger.Warnf("dedup: 序列化失败，透传: %v", err)
 		return body
 	}
 
 	t.stats.ResultsReplaced.Add(int64(replaced))
 	t.stats.BytesInput.Add(int64(len(body)))
 	t.stats.BytesOutput.Add(int64(len(out)))
-	t.logger.Infof("dcp: 替换 %d 条 tool_result，%d -> %d 字节", replaced, len(body), len(out))
+	t.logger.Infof("dedup: 替换 %d 条 tool_result，%d -> %d 字节", replaced, len(body), len(out))
 	return out
 }
 
-// rewrite 扫描 messages，按 DCP 规则标记要裁剪的 tool_use_id，
+// rewrite 扫描 messages，按签名分组标记要裁剪的 tool_use_id，
 // 然后重写对应 tool_result 的 content 为占位符。
 // 返回 (tool_use 扫描总数, 替换次数)。
 func rewrite(req *messagesRequest, logger Logger) (toolUses, replaced int) {
@@ -123,7 +122,7 @@ func rewrite(req *messagesRequest, logger Logger) (toolUses, replaced int) {
 	replacement, err := json.Marshal(PlaceholderContent)
 	if err != nil {
 		// string marshal 不可能失败
-		logger.Warnf("dcp: 占位符序列化失败: %v", err)
+		logger.Warnf("dedup: 占位符序列化失败: %v", err)
 		return toolUses, 0
 	}
 

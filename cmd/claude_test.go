@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Anthoooooooony/gw/internal/apiproxy/dcp"
+	"github.com/Anthoooooooony/gw/internal/apiproxy/dedup"
 )
 
 func TestStderrLogger_VerboseOn_WritesInfoAndWarn(t *testing.T) {
@@ -40,29 +40,29 @@ func TestStderrLogger_VerboseOff_SuppressesInfo(t *testing.T) {
 	}
 }
 
-func TestWriteDCPSummary_SkipsWhenNoRequests(t *testing.T) {
+func TestWriteDedupSummary_SkipsWhenNoRequests(t *testing.T) {
 	var buf bytes.Buffer
-	var stats dcp.Stats
-	writeDCPSummary(&buf, &stats)
+	var stats dedup.Stats
+	writeDedupSummary(&buf, &stats)
 	if buf.Len() != 0 {
 		t.Errorf("无请求时不应产生摘要，got=%q", buf.String())
 	}
 }
 
-func TestWriteDCPSummary_EmitsStats(t *testing.T) {
+func TestWriteDedupSummary_EmitsStats(t *testing.T) {
 	var buf bytes.Buffer
-	var stats dcp.Stats
+	var stats dedup.Stats
 	stats.RequestsProcessed.Add(3)
 	stats.ToolUseScanned.Add(10)
 	stats.ResultsReplaced.Add(4)
 	stats.BytesInput.Add(2000)
 	stats.BytesOutput.Add(1500)
 
-	writeDCPSummary(&buf, &stats)
+	writeDedupSummary(&buf, &stats)
 
 	out := buf.String()
 	for _, want := range []string{
-		"gw: dcp:",
+		"gw: dedup:",
 		"3 请求",
 		"扫 10 tool_use",
 		"替换 4 tool_result",

@@ -13,14 +13,14 @@ gw 是一个 CLI 代理，作为 Claude Code PreToolUse Hook 运行，拦截 she
 | 任务 | 先读 |
 |------|------|
 | `gw exec` 执行管道（PARSE → ROUTE → EXECUTE → FILTER → PRINT → TRACK） | `cmd/exec.go` |
-| `gw claude` 代理入口 + DCP 去重摘要 | `cmd/claude.go` |
+| `gw claude` 代理入口 + 去重摘要 | `cmd/claude.go` |
 | 过滤器接口定义（Filter / StreamFilter / Fallback / Describable） | `filter/filter.go` |
 | 过滤器注册与优先级（"第一匹配胜出"） | `filter/registry.go` + `filter/all/all.go` |
 | 压缩率 baseline 断言与更新流程 | `filter/scenario_test.go` + `filter/testdata/scenario_baseline.json` |
 | TOML DSL v2 无损变换约束 | `filter/toml/engine.go` |
 | TOML 三级加载（builtin → user → project） | `filter/toml/loader.go` |
 | Maven 状态机（语义过滤器参考实现） | `filter/java/maven.go` |
-| DCP 风格 tool_result 去重 | `internal/apiproxy/dcp/dedup.go` |
+| tool_result 内容去重 | `internal/apiproxy/dedup/dedup.go` |
 | 引号感知 shell tokenizer | `shell/lexer.go` |
 | Release 版本号计算 + CC 前缀分类 | `scripts/release-helpers.sh` |
 | DB schema 迁移约定 | `track/db.go` |
@@ -75,7 +75,7 @@ gw 是一个 CLI 代理，作为 Claude Code PreToolUse Hook 运行，拦截 she
 ### 调 `gw claude` 代理
 
 ```bash
-gw -v claude   # stderr 打 dcp: 替换 N 条 / 扫 M tool_use / 退出摘要
+gw -v claude   # stderr 打 dedup: 替换 N 条 / 扫 M tool_use / 退出摘要
 ```
 
 apiproxy 相关环境变量详见 [`docs/DEVELOPING.md`](./docs/DEVELOPING.md)：`GW_APIPROXY_MAX_BODY` / `GW_APIPROXY_HEADER_TIMEOUT` / `GW_APIPROXY_SHUTDOWN_TIMEOUT` / `GW_APIPROXY_UPSTREAM`。
@@ -248,7 +248,7 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
   - 过滤器在全局注册表中的优先级由 `filter.Fallback` 接口表达（`IsFallback() bool`），而不是靠 `filter/all/all.go` 的 import 顺序
   - `gw filters list` 通过 `filter.Describable` 拿过滤器来源，不 import `filter/toml` 具体类型
 - `cmd/` 只依赖 `filter/` / `internal/` 的公开接口；新增"向 cmd 层暴露的能力"先在目标包加接口，再改 cmd，避免反向依赖
-- 同名接口跨包复用时用类型别名（`type Logger = dcp.Logger`），不要重复声明
+- 同名接口跨包复用时用类型别名（`type Logger = dedup.Logger`），不要重复声明
 
 ### 并发
 
@@ -275,11 +275,11 @@ gw 的 stderr 输出严格区分致命错误与非致命降级，便于 Claude C
   ```
   顺序反了会导致 Close 等 handler、handler 等 close(block)，测试 hang 到超时
 - 流式过滤器（`filter.StreamFilter`）的 `Flush` 必须覆盖三条路径：成功无 buffer / 失败有 buffer / 失败空 buffer
-- 写 stderr/stdout 的函数参数化 `io.Writer`，测试注入 `&bytes.Buffer{}` 断言内容。示例：`cmd/claude.go::writeDCPSummary(w io.Writer, ...)`
+- 写 stderr/stdout 的函数参数化 `io.Writer`，测试注入 `&bytes.Buffer{}` 断言内容。示例：`cmd/claude.go::writeDedupSummary(w io.Writer, ...)`
 - 场景压缩率改动同时更新 `filter/testdata/scenario_baseline.json`（见顶部 "跑测试" 节）
 
 ### API 边界
 
-- `gw claude` 代理只接入 Anthropic 原生协议（`ANTHROPIC_BASE_URL` 指向本地 apiproxy）。**不**支持 `ANTHROPIC_BEDROCK` / `ANTHROPIC_VERTEX` 切换——DCP 上下文压缩依赖 Anthropic messages schema，第三方供应商协议差异会让去重逻辑失配
+- `gw claude` 代理只接入 Anthropic 原生协议（`ANTHROPIC_BASE_URL` 指向本地 apiproxy）。**不**支持 `ANTHROPIC_BEDROCK` / `ANTHROPIC_VERTEX` 切换——上下文去重依赖 Anthropic messages schema，第三方供应商协议差异会让去重逻辑失配
 - DB schema 演进只走 `ALTER TABLE ADD COLUMN`，**禁止** `DROP COLUMN` / `DROP TABLE`（见 `track/db.go` 迁移约定）
 - `RunCommand` / `RunCommandStreamingFull` 的函数签名稳定；新配置开关走环境变量或 flag，不改签名

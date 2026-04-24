@@ -1,4 +1,4 @@
-package dcp
+package dedup
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// quietLogger 测试里屏蔽 dcp 的 warn 输出。
+// quietLogger 测试里屏蔽 dedup 的 warn 输出。
 type quietLogger struct{}
 
 func (quietLogger) Infof(string, ...any) {}

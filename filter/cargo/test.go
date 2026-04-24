@@ -1,6 +1,6 @@
 // Package cargo 是 cargo 子命令的语义感知过滤器集合。
 //
-// 设计哲学（对齐 rtk 的专属 cmd 模块，参见 filter/pytest）：**按稳定锚点切片**，
+// 设计哲学（专属 cmd 模块，参见 filter/pytest）：**按稳定锚点切片**，
 // 而不是靠正则 strip 原文行。锚点缺失就透传原文，绝不盲删。
 //
 // 当前仅覆盖 `cargo test`。后续 `cargo build/check/clippy` 等作为独立 Filter

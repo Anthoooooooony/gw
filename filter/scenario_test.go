@@ -102,28 +102,28 @@ var scenarios = []scenario{
 	{"git branch -v (batch)", "git", []string{"branch", "-v"}, "git/testdata/git_branch_v.txt", 0, modeBatch},
 	{"git checkout new (batch)", "git", []string{"checkout", "-b", "newthing"}, "git/testdata/git_checkout_newbranch.txt", 0, modeBatch},
 
-	// ---- FS（ls/find/grep，对齐 rtk 批次 B）----
+	// ---- FS（ls/find/grep）----
 	{"ls -la (batch)", "ls", []string{"-la"}, "fs/testdata/ls_la.txt", 0, modeBatch},
 	{"ls plain (batch)", "ls", nil, "fs/testdata/ls_plain.txt", 0, modeBatch},
 	{"find go files (batch)", "find", []string{"filter", "-name", "*.go"}, "fs/testdata/find_go_files.txt", 0, modeBatch},
 	{"grep StripANSI (batch)", "grep", []string{"-rn", "StripANSI"}, "fs/testdata/grep_stripansi.txt", 0, modeBatch},
 
-	// ---- Net（wget，对齐 rtk 批次 C）----
+	// ---- Net（wget）----
 	{"wget (simple, batch)", "wget", []string{"https://example.com"}, "net/testdata/wget_success.txt", 0, modeBatch},
 	{"wget (progress, batch)", "wget", []string{"https://example.com/large.bin"}, "net/testdata/wget_progress.txt", 0, modeBatch},
 
-	// ---- GitHub CLI（对齐 rtk 批次 D）----
+	// ---- GitHub CLI ----
 	{"gh pr list (batch)", "gh", []string{"pr", "list", "--state", "all"}, "gh/testdata/gh_pr_list.txt", 0, modeBatch},
 	{"gh pr view (batch)", "gh", []string{"pr", "view", "127"}, "gh/testdata/gh_pr_view.txt", 0, modeBatch},
 	{"gh issue list (batch)", "gh", []string{"issue", "list"}, "gh/testdata/gh_issue_list.txt", 0, modeBatch},
 	{"gh run list (batch)", "gh", []string{"run", "list"}, "gh/testdata/gh_run_list.txt", 0, modeBatch},
 
-	// ---- JS/TS lint（对齐 rtk 批次 E）----
+	// ---- JS/TS lint ----
 	{"eslint stylish (batch)", "eslint", []string{"."}, "jslint/testdata/eslint_stylish.txt", 1, modeBatch},
 	{"tsc errors (batch)", "tsc", []string{"--noEmit"}, "jslint/testdata/tsc_errors.txt", 1, modeBatch},
 	{"prettier check (batch)", "prettier", []string{"--check", "."}, "jslint/testdata/prettier_check.txt", 1, modeBatch},
 
-	// ---- JS/TS build+test（对齐 rtk 批次 F）----
+	// ---- JS/TS build+test ----
 	{"playwright success (batch)", "playwright", []string{"test"}, "jsbuild/testdata/playwright_success.txt", 0, modeBatch},
 	{"playwright failure (batch)", "playwright", []string{"test"}, "jsbuild/testdata/playwright_failure.txt", 1, modeBatch},
 	{"prisma generate (batch)", "prisma", []string{"generate"}, "jsbuild/testdata/prisma_generate.txt", 0, modeBatch},

@@ -1,4 +1,4 @@
-package dcp
+package dedup
 
 import (
 	"encoding/json"
@@ -32,7 +32,7 @@ func TestSignature_NestedObjectKeysSorted(t *testing.T) {
 	}
 }
 
-// TestSignature_ArrayOrderPreserved 验证 array 元素顺序影响签名（DCP 不排序 array）。
+// TestSignature_ArrayOrderPreserved 验证 array 元素顺序影响签名（不排序 array）。
 func TestSignature_ArrayOrderPreserved(t *testing.T) {
 	sigA := createSignature("Bash", json.RawMessage(`{"cmd":["ls","-la"]}`))
 	sigB := createSignature("Bash", json.RawMessage(`{"cmd":["-la","ls"]}`))

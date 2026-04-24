@@ -74,9 +74,9 @@
 - 内置规则新增 `[cargo.build|check|clippy.on_error]` / `[npm|yarn|pnpm.test.on_error]` / `[docker.pull|compose-up.on_error]`（部分在 Go filter 合入后被 supersede）
 - 对应 PR：#109；后续 Go filter 落地 PR (#110/#111/#113/#114) 逐步删除对应 TOML 节
 
-## 2026-04-22 — rtk 风格专属 Go filter 的包结构与命名约定
+## 2026-04-22 — 专属 Go filter 的包结构与命名约定
 
-**上下文**：#74 落地 cargo/pip/npmtest 多个专属 filter 后，需要固化统一的包结构，避免后续每个 contributor 各写一套。pytest 作为 rtk 首个落地（#73）已提供模板，但只有一个 filter 的情况没暴露多 filter 同包的命名矛盾。
+**上下文**：#74 落地 cargo/pip/npmtest 多个专属 filter 后，需要固化统一的包结构，避免后续每个 contributor 各写一套。pytest 作为首个落地（#73）已提供模板，但只有一个 filter 的情况没暴露多 filter 同包的命名矛盾。
 
 **决策**：
 
@@ -88,7 +88,7 @@
 6. **回退路径**：Apply 锚点缺失 → 返回原文；ApplyOnError 锚点缺失 → 返回 nil（见独立 invariant 条目）。
 
 **替代方案**：
-- 单包 `filter/rtk` 收拢所有：生态间相互 import 容易混；否决
+- 单包 `filter/toolkit` 收拢所有：生态间相互 import 容易混；否决
 - 按命令名展平 `filter/cargotest` / `filter/cargobuild`：同生态多个小包冗余；否决
 - Filter Name 扁平 `"cargo-test"`：失去层级可观察性；否决
 
@@ -165,13 +165,13 @@
 
 ## 2026-04-22 — 不支持 ANTHROPIC_BEDROCK_* / ANTHROPIC_VERTEX_* 环境变量
 
-**上下文**：`gw claude` 子命令透明代理 Claude Code 请求以实现 DCP 上下文压缩。Claude Code 原生支持通过环境变量切换到 AWS Bedrock / GCP Vertex 后端。用户需要明确 gw 在多厂商场景下的边界。
+**上下文**：`gw claude` 子命令透明代理 Claude Code 请求以实现上下文去重。Claude Code 原生支持通过环境变量切换到 AWS Bedrock / GCP Vertex 后端。用户需要明确 gw 在多厂商场景下的边界。
 
 **决策**：gw 只接入 Anthropic 原生协议，代理启动后仅通过 `ANTHROPIC_BASE_URL` 指向本地 apiproxy。检测到 Bedrock/Vertex 环境变量时**不**做兼容分支，用户需要走这两家时请直接使用原版 Claude Code。
 
 **替代方案**：
 - 检测 Bedrock/Vertex 变量后回退到"透明透传、不压缩"——否决：给用户造成"gw 启动了但没生效"的认知裂缝，不如一开始明确不支持
-- 实现多厂商 body transformer——否决：DCP 去重依赖 Anthropic messages schema（tool_use/tool_result 结构），Bedrock/Vertex 的 wrapper 差异会让压缩逻辑持续打补丁，偏离项目主线
+- 实现多厂商 body transformer——否决：去重依赖 Anthropic messages schema（tool_use/tool_result 结构），Bedrock/Vertex 的 wrapper 差异会让压缩逻辑持续打补丁，偏离项目主线
 
 **影响**：
 - 移除 `internal/apiproxy/env.go::BedrockOrVertexEnabled()` 及对应测试

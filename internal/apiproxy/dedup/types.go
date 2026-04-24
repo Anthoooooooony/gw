@@ -1,12 +1,9 @@
-// Package dcp 实现 DCP 风格的 Anthropic Messages 请求上下文裁剪：
+// Package dedup 实现 Anthropic Messages 请求的上下文去重：
 // 对同签名 tool_use 的历史 tool_result 内容做去重，只保留最后一次。
 //
-// 设计思路参考 Opencode-DCP/opencode-dynamic-context-pruning，核心为
-// lib/strategies/deduplication.ts + lib/messages/prune.ts。
-//
-// v0.2（PR2）：无状态 per-request 扫描（Claude Code 每次请求带完整 history）。
+// v0.2：无状态 per-request 扫描（Claude Code 每次请求带完整 history）。
 // 未来可按 X-Claude-Code-Session-Id 加 session LRU 做跨请求增量优化。
-package dcp
+package dedup
 
 import (
 	"bytes"
@@ -227,7 +224,7 @@ func mustMarshal(v any) json.RawMessage {
 	b, err := json.Marshal(v)
 	if err != nil {
 		// 仅接 string/bool 基础类型，理论不可达
-		panic("dcp: marshal failed: " + err.Error())
+		panic("dedup: marshal failed: " + err.Error())
 	}
 	return b
 }
