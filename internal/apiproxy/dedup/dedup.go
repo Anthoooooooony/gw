@@ -1,6 +1,8 @@
 package dedup
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 )
 
@@ -66,10 +68,37 @@ func (t *Transformer) Transform(body []byte) []byte {
 // rewrite 扫描 messages，按签名分组标记要裁剪的 tool_use_id，
 // 然后重写对应 tool_result 的 content 为占位符。
 // 返回 (tool_use 扫描总数, 替换次数)。
+//
+// 签名由 tool name + 归一化 input + 对应 tool_result content 指纹三段组成。
+// 内容指纹保证：同参数的两次调用如果 tool_result 字节不同（例如 Read 之间文件被改、
+// Bash 输出随时间变化），会被分到不同组，不会互相 dedup 导致历史信息无声丢失。
 func rewrite(req *messagesRequest, logger Logger) (toolUses, replaced int) {
 	type toolUseRef struct {
 		id  string
 		sig string
+	}
+
+	// 第一遍之前的预扫：从 user 消息里收集 tool_use_id → content bytes。
+	// 扫 tool_use 时用它给签名拼指纹。
+	contentByUseID := map[string][]byte{}
+	for _, msg := range req.Messages {
+		if msg.Role != "user" {
+			continue
+		}
+		for _, raw := range msg.Content {
+			var bt blockType
+			if err := json.Unmarshal(raw, &bt); err != nil {
+				continue
+			}
+			if bt.Type != "tool_result" {
+				continue
+			}
+			var tr toolResultBlock
+			if err := json.Unmarshal(raw, &tr); err != nil {
+				continue
+			}
+			contentByUseID[tr.ToolUseID] = []byte(tr.Content)
+		}
 	}
 
 	// 第一遍：扫描 assistant 消息里的 tool_use，按消息位置顺序收集。
@@ -90,10 +119,15 @@ func rewrite(req *messagesRequest, logger Logger) (toolUses, replaced int) {
 			if err := json.Unmarshal(raw, &tu); err != nil {
 				continue
 			}
-			uses = append(uses, toolUseRef{
-				id:  tu.ID,
-				sig: createSignature(tu.Name, tu.Input),
-			})
+			sig := createSignature(tu.Name, tu.Input)
+			if c, ok := contentByUseID[tu.ID]; ok {
+				// sha256[:8] = 16 hex 字符，防碰撞概率 2^-64，足够用、又不让签名串膨胀
+				h := sha256.Sum256(c)
+				sig += "::" + hex.EncodeToString(h[:8])
+			}
+			// 没找到对应 tool_result 的 tool_use（最后一轮还未返回结果的情况）
+			// 保持无指纹后缀，自然与已完成的同参数调用签名不同，互不干扰。
+			uses = append(uses, toolUseRef{id: tu.ID, sig: sig})
 		}
 	}
 

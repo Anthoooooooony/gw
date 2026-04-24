@@ -23,12 +23,14 @@ func TestStats_NoOpRequestStillCounts(t *testing.T) {
 }
 
 // TestStats_DedupCountsReplacements 验证 dedup 命中时各计数正确。
+// 同参数 + 同内容的两次调用才会触发替换（内容指纹策略）。
 func TestStats_DedupCountsReplacements(t *testing.T) {
+	big := strings.Repeat("a", 200)
 	in := []byte(`{"model":"x","max_tokens":1,"messages":[
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_1","name":"Read","input":{"path":"/a"}}]},
-		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_1","content":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}]},
+		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_1","content":"` + big + `"}]},
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_2","name":"Read","input":{"path":"/a"}}]},
-		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_2","content":"second"}]}
+		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_2","content":"` + big + `"}]}
 	]}`)
 	tr := NewTransformer(quietLogger{})
 	out := tr.Transform(in)
@@ -90,12 +92,14 @@ func TestStats_BytesSavedClampsNegative(t *testing.T) {
 }
 
 // TestStats_BytesSavedAccumulates 多次 Transform 的 BytesSaved 应累加。
+// 同参数 + 同内容才触发替换；使用足够长的 content 保证单次替换净减 > 占位符。
 func TestStats_BytesSavedAccumulates(t *testing.T) {
+	big := strings.Repeat("x", 500)
 	in := []byte(`{"model":"x","max_tokens":1,"messages":[
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_1","name":"R","input":{"p":"/a"}}]},
-		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_1","content":"` + strings.Repeat("x", 500) + `"}]},
+		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_1","content":"` + big + `"}]},
 		{"role":"assistant","content":[{"type":"tool_use","id":"tu_2","name":"R","input":{"p":"/a"}}]},
-		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_2","content":"last"}]}
+		{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_2","content":"` + big + `"}]}
 	]}`)
 	tr := NewTransformer(quietLogger{})
 	tr.Transform(in)
