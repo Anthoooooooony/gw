@@ -97,7 +97,20 @@ strip_ansi = true
 max_lines = 100
 ```
 
-保存后立即生效。TOML DSL 仅支持无损变换：`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`。需要按语义压缩（例如"失败保留错误、成功仅保留摘要"），需编写 Go filter，详见 [`DEVELOPING.md` 的扩展过滤器章节](./DEVELOPING.md#扩展过滤器)。
+成功和失败需要不同截断长度时，用 `[section.name.on_error]` 子表为失败场景配独立参数。例如 `cargo build` 成功只保留后 30 行摘要，失败保留后 200 行以便看错误上下文：
+
+```toml
+[cargo.build]
+match = "cargo build"
+strip_ansi = true
+tail_lines = 30
+
+  [cargo.build.on_error]
+  strip_ansi = true
+  tail_lines = 200
+```
+
+保存后立即生效。TOML DSL 仅支持无损变换，字段集：`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`；`on_error` 子表字段集与主规则一致，禁止嵌套。需要按语义压缩（例如"pytest 只留 failures 详情"），需编写 Go filter，详见 [`DEVELOPING.md` 的扩展过滤器章节](./DEVELOPING.md#扩展过滤器)。
 
 ## 在 Claude Code 之外使用
 

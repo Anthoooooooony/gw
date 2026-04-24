@@ -114,7 +114,7 @@
 - 限制：字节相等的前提是原文件已是 `json.MarshalIndent` 规范格式（每数组元素单行）；用户手写 inline 数组 `["a","b"]` 仍会被展开——`encoding/json` 固有行为，不在本 PR 解决
 - 对应 PR：#107
 
-
+## 2026-04-22 — 放弃 release-please，改自写单 workflow 一体化发版 (Supersedes 同日 "切换到 release-please")
 
 **上下文**：切换 release-please 后试跑发现硬约束：`GITHUB_TOKEN` 触发的 tag push **不会**触发其他 workflow（GitHub 防递归设计），导致 release-please 打 tag 后 `release.yml` 不触发，binary assets 必须手工删 tag 重推才能上传（v0.3.2 就是这样补救的）。长期解法只有两条：引入 PAT/GitHub App 打破跨 workflow 限制；或彻底抛弃跨 workflow 架构。
 

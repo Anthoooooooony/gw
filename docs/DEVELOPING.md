@@ -75,9 +75,9 @@ strip_ansi = true
 max_lines = 50
 ```
 
-v2 DSL 只提供语义无关的安全变换：`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`。
+v2 DSL 只提供语义无关的安全变换：`strip_ansi` / `head_lines` / `tail_lines` / `max_lines` / `on_empty`，并支持 `[section.name.on_error]` 子表为失败场景配独立参数（字段集与主规则完全一致，严守无损原则）。
 
-**故意不提供** `strip_lines` / `keep_lines` / `on_error` 这类基于正则的行级裁剪——词法匹配无法区分"真噪音"和"用户恰好需要的那一行"，长期会制造误删信任危机。想要 "pytest 只留 failures"、"vitest 生成 PASS/FAIL 摘要" 这种语义压缩，请写专属 Go filter（第一层），按命令语义 parse 后生成摘要、parse 失败 fallback 到原文。用户规则里若出现已弃用字段，loader 会打一次 warning 指引迁移，规则的无损部分仍然生效。
+**故意不提供** `strip_lines` / `keep_lines` 这类基于正则的行级裁剪——词法匹配无法区分"真噪音"和"用户恰好需要的那一行"，长期会制造误删信任危机。想要 "pytest 只留 failures"、"vitest 生成 PASS/FAIL 摘要" 这种语义压缩，请写专属 Go filter（第一层），按命令语义 parse 后生成摘要、parse 失败 fallback 到原文。用户规则里若出现已弃用字段，loader 会打一次 warning 指引迁移，规则的无损部分仍然生效。
 
 内置 TOML 规则覆盖：`docker`（ps/images/logs）、`kubectl`、`node`（npm/yarn/pnpm install/test/build）、`python`（pip/pytest/venv）、`rust`（cargo build/test/check/clippy）。
 
