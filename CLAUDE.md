@@ -160,44 +160,18 @@ myapp.logs        toml  project:///workspace/.gw/rules/custom.toml             m
 
 ## 环境变量
 
-### `GW_CMD_TIMEOUT` — 命令执行超时兜底
+速查表。完整语义（超时两阶段终止、进程组杀死、平台差异、代理细节）见 [`docs/DEVELOPING.md` "环境变量参考"](./docs/DEVELOPING.md#环境变量参考)。
 
-控制 `gw exec` 执行外部命令时的最长耗时，避免恶意命令或网络挂死导致 Claude Code 的 PreToolUse hook 无限阻塞。
-
-| 值 | 语义 |
-|----|------|
-| 未设置 / 空 | 使用默认值 `10m` |
-| `10m` / `30s` / `500ms` / `2h` 等 | 使用 `time.ParseDuration` 可解析的任意 duration |
-| `0` / `off` / `none` / `disable` / `disabled` | 禁用超时（长驻命令场景） |
-| `-1s` / `-500ms` 等负值 | 视为禁用，等同 `off` |
-| 无法解析的值 | 写 warning 到 stderr，fallback 到默认 `10m` |
-
-**两阶段终止**：
-1. 到期后对整个进程组（`Setpgid` + `kill(-pgid, sig)`）发送 `SIGTERM`
-2. 5 秒宽限期后若进程仍存活，发送 `SIGKILL`
-
-**退出码约定**：超时场景统一返回 `124`（GNU `timeout(1)` 惯例），stderr 末尾追加 `gw: command timed out after <dur> (SIGTERM[, SIGKILL])`。
-
-**批量 vs 流式**：
-- 批量路径（`internal.RunCommand`）：超时后 `CommandResult.ExitCode = 124`，stderr 追加提示，不返回 Go error，走正常 `ApplyOnError` 路径
-- 流式路径（`internal.RunCommandStreamingFull`）：超时后返回 `exitCode = 124`（非 `-1`），调用方 `proc.Flush(124)` 能拿到非零 exit 从而输出错误上下文
-
-**平台兼容**：
-- 进程组相关代码在 `internal/procgroup_unix.go`，`//go:build unix` 覆盖 macOS / Linux / *BSD
-- 非 unix 平台（如 Windows）在 `internal/procgroup_other.go` 提供仅杀主进程的降级实现
-
-### `GW_DB_MAX_BYTES` — tracking DB 硬阈值
-
-默认 `104857600`（100 MiB）。`gw exec` 每次把原始输出连同统计一并写入 `records.raw_output`；DB 超过阈值时，`gw summary` 会按 timestamp 删最旧记录并 `VACUUM`，压到软目标（默认 80%）。设 `0` 或负值关闭裁剪。
-
-### `GW_DB_PATH` — 覆盖 tracking DB 路径
-
-默认 `~/.gw/tracking.db`。HOME 只读时降级到 `$TMPDIR/gw-tracking.db` 并 stderr warn 一次。
-设置该变量可把 DB 放在任意可写路径（CI 临时目录、共享挂载等），路径不存在时按常规 `MkdirAll` + open 流程处理。
-
-### `NO_BROWSER` — 抑制 `gw summary` 自动开浏览器
-
-默认未设。`gw summary` 默认启 `127.0.0.1` 本地 server 并调 `open`（macOS）/ `xdg-open`（Linux）/ `rundll32`（Windows）打开 dashboard。`NO_BROWSER` 非空时仍启 server，但跳过浏览器 spawn，只在 stderr 打印 URL。典型用途：SSH + port forward、headless 容器、CI 里想 probe 一下 dashboard URL 然后手工访问。
+| 变量 | 类别 | 默认 | 用途 |
+|------|------|------|------|
+| `GW_CMD_TIMEOUT` | 执行 | `10m` | 命令执行超时兜底；`0` / `off` / 负值禁用；超时退出码 `124`（两阶段 SIGTERM → SIGKILL） |
+| `GW_DB_PATH` | 存储 | `~/.gw/tracking.db` | tracking DB 路径；HOME 只读时降级到 `$TMPDIR/` |
+| `GW_DB_MAX_BYTES` | 存储 | `104857600`（100 MiB） | DB 硬阈值，超限 `gw summary` 自动 VACUUM 裁剪；`0` / 负值关闭 |
+| `NO_BROWSER` | Dashboard | 未设 | 非空时 `gw summary` 启 server 但不开浏览器 |
+| `GW_APIPROXY_MAX_BODY` | 代理 | `33554432`（32 MiB） | `gw claude` 代理 POST body 上限，超限 413 |
+| `GW_APIPROXY_HEADER_TIMEOUT` | 代理 | `60s` | 代理等上游响应头超时（不影响 SSE 正文） |
+| `GW_APIPROXY_SHUTDOWN_TIMEOUT` | 代理 | `5s` | 代理 shutdown grace period |
+| `GW_APIPROXY_UPSTREAM` | 代理 | `https://api.anthropic.com` | 代理上游 URL（测试逃生舱） |
 
 ## `gw summary` dashboard 降级矩阵
 
