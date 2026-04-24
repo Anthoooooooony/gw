@@ -81,6 +81,15 @@ func TestBuildSummaryPayload_WithData(t *testing.T) {
 	if p.Today.CommandCount < 2 {
 		t.Errorf("today should include 2+ recent commands, got %d", p.Today.CommandCount)
 	}
+	// Today / Week 的 OutputTokens 必须用 allOutputTokens 反推（不得硬编码 0）
+	if p.Today.OutputTokens != p.Today.InputTokens-p.Today.SavedTokens {
+		t.Errorf("today.output_tokens expected %d, got %d",
+			p.Today.InputTokens-p.Today.SavedTokens, p.Today.OutputTokens)
+	}
+	if p.Week.OutputTokens != p.Week.InputTokens-p.Week.SavedTokens {
+		t.Errorf("week.output_tokens expected %d, got %d",
+			p.Week.InputTokens-p.Week.SavedTokens, p.Week.OutputTokens)
+	}
 	if len(p.TopCommands) == 0 || p.TopCommands[0].Command != "mvn test" {
 		t.Errorf("top[0] should be mvn test (largest saved), got %+v", p.TopCommands)
 	}

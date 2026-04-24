@@ -244,8 +244,8 @@ func buildSummaryPayload(dbPath string) (summaryJSON, error) {
 	rows, _ := db.RowCount()
 
 	return summaryJSON{
-		Today:       toStatsJSON(today, 0),
-		Week:        toStatsJSON(week, 0),
+		Today:       toStatsJSON(today, allOutputTokens(today)),
+		Week:        toStatsJSON(week, allOutputTokens(week)),
 		All:         toStatsJSON(all, allOutputTokens(all)),
 		TopCommands: toTopJSON(top),
 		DB: dbInfoJSON{
