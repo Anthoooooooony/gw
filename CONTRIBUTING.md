@@ -8,11 +8,15 @@
 - 两档模板：
   - `bug_report.md`：汇报异常行为，须给现象 / 复现步骤 / 预期 vs 实际 / 环境信息。
   - `feature_request.md`：新功能、改进行为、或长程 **tracking / meta** 类议题。tracking 类在 title 加 `tracking: ` 前缀（如 `tracking: Windows 适配`）。
-- **Label 只用 priority 系列**，按紧迫度贴一个，不贴多：
-  - `priority:near` 近期（1-2 周内会动手）
-  - `priority:mid` 中期（1-2 月内可能启动）
-  - `priority:long` 长期 / YAGNI 观察，先挂着不排期
-- type / area / breaking / security 等维度信息通过 title 前缀和 body 内容承载，**不再用 label 表达**——减少标签噪音。
+- **每个 issue 必须同时贴 priority + 类型两个维度的 label**，缺一不可：
+  - **priority 维度**（按紧迫度三选一）：
+    - `priority:near` 近期（1-2 周内会动手）
+    - `priority:mid` 中期（1-2 月内可能启动）
+    - `priority:long` 长期 / YAGNI 观察，先挂着不排期
+  - **类型维度**（二选一）：
+    - `bug` 异常行为修复
+    - `feature` 新功能 / 行为改进 / 长程 tracking
+- area / breaking / security 等其它维度信息通过 title 前缀和 body 内容承载，**不再用 label 表达**——减少标签噪音。
 - 关闭策略：被 PR 修复由 commit message 里的 `Closes #N` 自动关闭；失效或决定不做的挂 `priority:long` 或直接 close 并在评论里说明。
 
 ## 分支与 PR
